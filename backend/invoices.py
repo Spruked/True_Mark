@@ -114,6 +114,9 @@ def generate_invoice_pdf(order: Dict[str, Any]) -> Path:
         ["Invoice Number", order["invoice_number"]],
         ["Mint Serial", order["serial"]],
         ["NFT Identifier", order.get("nft_identifier") or "Assigned at mint"],
+        ["Node ID", order.get("node_id") or "TM01"],
+        ["Region", order.get("region_code") or "US"],
+        ["Registrant Code", order.get("registrant_code") or "PUBLIC"],
         ["Payment Reference", order.get("payment_reference") or "Not recorded"],
         ["Receipt Number", order.get("receipt_number") or "Not recorded"],
         ["Issued", order["created_at"]],
@@ -210,8 +213,10 @@ def generate_invoice_pdf(order: Dict[str, Any]) -> Path:
         Paragraph(
             (
                 f"NFT Type: {order.get('nft_type')}<br/>"
-                f"Prefix: {order.get('prefix') or 'GENERAL'}<br/>"
-                f"Industry: {order.get('industry') or 'DIGITAL'}<br/>"
+                f"Type Code: {order.get('type_code') or 'NFT'}<br/>"
+                f"Node ID: {order.get('node_id') or 'TM01'}<br/>"
+                f"Region: {order.get('region_code') or 'US'}<br/>"
+                f"Registrant Code: {order.get('registrant_code') or 'PUBLIC'}<br/>"
                 f"Package: {order.get('package_tier')}<br/>"
                 f"Encryption: {order.get('encryption')}<br/>"
                 f"Chain: {order.get('chain')}<br/>"

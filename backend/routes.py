@@ -32,6 +32,7 @@ try:
         create_payment_session,
         create_user,
         get_analytics,
+        get_mint_standard,
         get_next_invoice_number,
         get_next_nft_identifier,
         get_next_payment_reference,
@@ -69,6 +70,7 @@ except ImportError:
         create_payment_session,
         create_user,
         get_analytics,
+        get_mint_standard,
         get_next_invoice_number,
         get_next_nft_identifier,
         get_next_payment_reference,
@@ -238,8 +240,12 @@ def _payment_session_response(payment_session: Dict[str, Any], request: Request)
         "status": payment_session["status"],
         "user_name": payment_session["user_name"],
         "user_email": payment_session["user_email"],
-        "prefix": payment_session.get("prefix") or "",
-        "industry": payment_session.get("industry") or "",
+        "type_code": payment_session.get("type_code") or "",
+        "node_id": payment_session.get("node_id") or get_mint_standard()["node_id"],
+        "region_code": payment_session.get("region_code") or get_mint_standard()["region_code"],
+        "registrant_code": payment_session.get("registrant_code") or "",
+        "prefix": payment_session.get("registrant_code") or payment_session.get("prefix") or "",
+        "industry": payment_session.get("region_code") or payment_session.get("industry") or "",
         "nft_type": payment_session["nft_type"],
         "package_tier": payment_session["package_tier"],
         "encryption": payment_session["encryption"],
@@ -287,8 +293,10 @@ def process_payment(
     request: Request,
     name: str = Form(...),
     email: str = Form(...),
-    prefix: str = Form("GENERAL"),
-    industry: str = Form("DIGITAL"),
+    registrant_code: str = Form(""),
+    region_code: str = Form(""),
+    prefix: str = Form(""),
+    industry: str = Form(""),
     nft_type: str = Form(...),
     file: UploadFile = File(...),
     metadata: str = Form(...),
@@ -298,6 +306,9 @@ def process_payment(
     quantity: int = Form(1),
     payment_method: str = Form("fiat"),
 ):
+    mint_standard = get_mint_standard()
+    resolved_registrant_code = (registrant_code or prefix).strip().upper() or "PUBLIC"
+    resolved_region_code = (region_code or industry).strip().upper() or mint_standard["region_code"]
     payment_reference = get_next_payment_reference()
     receipt_number = get_next_receipt_number()
     payment_public_token = uuid.uuid4().hex
@@ -342,6 +353,10 @@ def process_payment(
             "payment_public_token": payment_public_token,
             "receipt_number": receipt_number,
             "receipt_public_token": receipt_public_token,
+            "type_code": mint_standard["type_codes"].get(nft_type, nft_type),
+            "node_id": mint_standard["node_id"],
+            "region_code": resolved_region_code,
+            "registrant_code": resolved_registrant_code,
             "user_id": user.get("id") if user else None,
             "user_email": email,
             "user_name": customer_name,
@@ -352,8 +367,8 @@ def process_payment(
             "billing_postal_code": user.get("postal_code", "") if user else "",
             "billing_phone": user.get("phone", "") if user else "",
             "billing_dob": user.get("dob", "") if user else "",
-            "prefix": prefix.strip().upper(),
-            "industry": industry.strip().upper(),
+            "prefix": resolved_registrant_code,
+            "industry": resolved_region_code,
             "nft_type": nft_type,
             "package_tier": package_tier,
             "encryption": encryption,
@@ -449,6 +464,7 @@ def cancel_payment(payment_token: str, request: Request):
 
 @app.post("/mint/complete")
 def mint_nft(request: Request, payload: MintFinalizeRequest):
+    mint_standard = get_mint_standard()
     payment_session = get_payment_session_by_token(payload.payment_token)
     if not payment_session:
         raise HTTPException(
@@ -473,6 +489,9 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
             "serial": payment_session.get("minted_serial"),
             "nft_identifier": payment_session.get("minted_nft_identifier"),
             "invoice_number": payment_session.get("minted_invoice_number"),
+            "node_id": payment_session.get("node_id"),
+            "region_code": payment_session.get("region_code"),
+            "registrant_code": payment_session.get("registrant_code"),
             "invoice_download_url": _public_url(request, f"/downloads/invoices/{existing_order['invoice_public_token']}"),
             "vault_download_url": _public_url(request, f"/downloads/vault/{existing_order['vault_public_token']}"),
             "receipt_download_url": _public_url(request, f"/downloads/receipts/{payment_session['receipt_public_token']}"),
@@ -491,10 +510,11 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
     invoice_public_token = uuid.uuid4().hex
     vault_public_token = uuid.uuid4().hex
     minted_at = datetime.now(timezone.utc).isoformat()
-    nft_identifier = get_next_nft_identifier(
+    nft_identifier, identifier_year, identifier_sequence, type_code = get_next_nft_identifier(
         payment_session["nft_type"],
-        payment_session.get("prefix"),
-        payment_session.get("industry"),
+        payment_session.get("node_id"),
+        payment_session.get("region_code"),
+        payment_session.get("registrant_code"),
         minted_at,
     )
     invoice_download_url = _public_url(request, f"/downloads/invoices/{invoice_public_token}")
@@ -508,6 +528,12 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
         order_payload = {
             "serial": serial,
             "nft_identifier": nft_identifier,
+            "type_code": type_code,
+            "node_id": payment_session.get("node_id"),
+            "region_code": payment_session.get("region_code"),
+            "registrant_code": payment_session.get("registrant_code"),
+            "identifier_year": identifier_year,
+            "identifier_sequence": identifier_sequence,
             "invoice_number": invoice_number,
             "invoice_public_token": invoice_public_token,
             "vault_public_token": vault_public_token,
@@ -523,8 +549,8 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
             "billing_postal_code": payment_session.get("billing_postal_code", ""),
             "billing_phone": payment_session.get("billing_phone", ""),
             "billing_dob": payment_session.get("billing_dob", ""),
-            "prefix": payment_session.get("prefix", ""),
-            "industry": payment_session.get("industry", ""),
+            "prefix": payment_session.get("registrant_code", ""),
+            "industry": payment_session.get("region_code", ""),
             "nft_type": payment_session["nft_type"],
             "package_tier": payment_session["package_tier"],
             "encryption": payment_session["encryption"],
@@ -550,8 +576,16 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
 
         metadata_payload = payment_session.get("metadata", {})
         nft_record = {
+            "identifier": nft_identifier,
+            "identifier_format": mint_standard["identifier_format"],
             "serial": serial,
             "nft_identifier": nft_identifier,
+            "type_code": type_code,
+            "node_id": payment_session.get("node_id"),
+            "region_code": payment_session.get("region_code"),
+            "registrant_code": payment_session.get("registrant_code"),
+            "identifier_year": identifier_year,
+            "identifier_sequence": identifier_sequence,
             "invoice_number": invoice_number,
             "payment_reference": payment_session["payment_reference"],
             "receipt_number": payment_session["receipt_number"],
@@ -560,8 +594,8 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
             "receipt_download_url": receipt_download_url,
             "customer_name": payment_session["user_name"],
             "customer_email": payment_session["user_email"],
-            "prefix": payment_session.get("prefix", ""),
-            "industry": payment_session.get("industry", ""),
+            "prefix": payment_session.get("registrant_code", ""),
+            "industry": payment_session.get("region_code", ""),
             "nft_type": payment_session["nft_type"],
             "package_tier": payment_session["package_tier"],
             "encryption": payment_session["encryption"],
@@ -595,8 +629,14 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
                 "invoice_number": invoice_number,
                 "serial": serial,
                 "nft_identifier": nft_identifier,
-                "prefix": payment_session.get("prefix", ""),
-                "industry": payment_session.get("industry", ""),
+                "type_code": type_code,
+                "node_id": payment_session.get("node_id"),
+                "region_code": payment_session.get("region_code"),
+                "registrant_code": payment_session.get("registrant_code"),
+                "identifier_year": identifier_year,
+                "identifier_sequence": identifier_sequence,
+                "prefix": payment_session.get("registrant_code", ""),
+                "industry": payment_session.get("region_code", ""),
                 "nft_type": payment_session["nft_type"],
                 "package_tier": payment_session["package_tier"],
                 "encryption": payment_session["encryption"],
@@ -652,6 +692,9 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
             "serial": serial,
             "nft_identifier": nft_identifier,
             "invoice_number": invoice_number,
+            "node_id": payment_session.get("node_id"),
+            "region_code": payment_session.get("region_code"),
+            "registrant_code": payment_session.get("registrant_code"),
             "payment_reference": payment_session["payment_reference"],
             "receipt_number": payment_session["receipt_number"],
             "invoice_download_url": invoice_download_url,
@@ -809,6 +852,11 @@ def get_public_pricing():
     return JSONResponse(content=load_pricing())
 
 
+@app.get("/mint-standard")
+def get_public_mint_standard():
+    return JSONResponse(content=get_mint_standard())
+
+
 @app.get("/tax-table")
 def get_public_tax_table():
     return JSONResponse(content=load_tax_table())
@@ -824,7 +872,10 @@ def get_quote(quote_request: QuoteRequest):
 
 @app.get("/serial/next")
 def get_public_next_serial():
-    return {"next_serial": get_next_truemark_serial()}
+    return {
+        "next_serial": get_next_truemark_serial(),
+        **get_mint_standard(),
+    }
 
 
 @app.get("/admin/serial")

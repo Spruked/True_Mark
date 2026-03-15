@@ -11,10 +11,13 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from dotenv import load_dotenv
+
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 DB_PATH = DATA_DIR / "truemark.db"
+load_dotenv(BASE_DIR / ".env")
 
 
 USER_COLUMNS = {
@@ -38,6 +41,12 @@ ORDER_COLUMNS = {
     "id": "TEXT",
     "serial": "TEXT",
     "nft_identifier": "TEXT",
+    "type_code": "TEXT",
+    "node_id": "TEXT",
+    "region_code": "TEXT",
+    "registrant_code": "TEXT",
+    "identifier_year": "INTEGER",
+    "identifier_sequence": "INTEGER",
     "invoice_number": "TEXT",
     "invoice_public_token": "TEXT",
     "vault_public_token": "TEXT",
@@ -86,6 +95,10 @@ PAYMENT_SESSION_COLUMNS = {
     "payment_public_token": "TEXT",
     "receipt_number": "TEXT",
     "receipt_public_token": "TEXT",
+    "type_code": "TEXT",
+    "node_id": "TEXT",
+    "region_code": "TEXT",
+    "registrant_code": "TEXT",
     "user_id": "TEXT",
     "user_email": "TEXT",
     "user_name": "TEXT",
@@ -140,6 +153,12 @@ MINT_EVENT_COLUMNS = {
     "invoice_number": "TEXT",
     "serial": "TEXT",
     "nft_identifier": "TEXT",
+    "type_code": "TEXT",
+    "node_id": "TEXT",
+    "region_code": "TEXT",
+    "registrant_code": "TEXT",
+    "identifier_year": "INTEGER",
+    "identifier_sequence": "INTEGER",
     "prefix": "TEXT",
     "industry": "TEXT",
     "nft_type": "TEXT",
@@ -172,6 +191,36 @@ def parse_iso_datetime(value: str) -> datetime:
 def normalize_identifier_component(value: str | None, fallback: str) -> str:
     cleaned = re.sub(r"[^A-Z0-9]+", "", (value or "").upper())
     return cleaned or fallback
+
+
+NFT_TYPE_CODE_MAP = {
+    "K-NFT": "KNFT",
+    "H-NFT": "HNFT",
+    "L-NFT": "LNFT",
+    "C-NFT": "CNFT",
+}
+
+
+def get_nft_type_code(nft_type: str | None) -> str:
+    normalized_nft_type = (nft_type or "").strip().upper()
+    return NFT_TYPE_CODE_MAP.get(normalized_nft_type, normalize_identifier_component(normalized_nft_type, "NFT"))
+
+
+def get_mint_node_id() -> str:
+    return normalize_identifier_component(os.getenv("TRUEMARK_NODE_ID", "TM01"), "TM01")
+
+
+def get_default_region_code() -> str:
+    return normalize_identifier_component(os.getenv("TRUEMARK_REGION_CODE", "US"), "US")
+
+
+def get_mint_standard() -> Dict[str, Any]:
+    return {
+        "identifier_format": "TYPE-NODE-REGION-YEAR-USER-SEQ",
+        "node_id": get_mint_node_id(),
+        "region_code": get_default_region_code(),
+        "type_codes": NFT_TYPE_CODE_MAP,
+    }
 
 
 def get_connection() -> sqlite3.Connection:
@@ -244,6 +293,9 @@ def _ensure_indexes(connection: sqlite3.Connection) -> None:
     connection.execute(
         "CREATE UNIQUE INDEX IF NOT EXISTS idx_mint_events_order_id ON mint_events(order_id)"
     )
+    connection.execute(
+        "CREATE INDEX IF NOT EXISTS idx_mint_events_registry_components ON mint_events(node_id, region_code, registrant_code, identifier_year, identifier_sequence)"
+    )
 
 
 def init_db() -> None:
@@ -274,6 +326,12 @@ def init_db() -> None:
                 id TEXT PRIMARY KEY,
                 serial TEXT NOT NULL UNIQUE,
                 nft_identifier TEXT UNIQUE,
+                type_code TEXT,
+                node_id TEXT,
+                region_code TEXT,
+                registrant_code TEXT,
+                identifier_year INTEGER,
+                identifier_sequence INTEGER,
                 invoice_number TEXT,
                 invoice_public_token TEXT,
                 vault_public_token TEXT,
@@ -325,6 +383,10 @@ def init_db() -> None:
                 payment_public_token TEXT NOT NULL UNIQUE,
                 receipt_number TEXT NOT NULL UNIQUE,
                 receipt_public_token TEXT NOT NULL UNIQUE,
+                type_code TEXT,
+                node_id TEXT,
+                region_code TEXT,
+                registrant_code TEXT,
                 user_id TEXT,
                 user_email TEXT NOT NULL,
                 user_name TEXT NOT NULL,
@@ -382,6 +444,12 @@ def init_db() -> None:
                 invoice_number TEXT,
                 serial TEXT NOT NULL,
                 nft_identifier TEXT NOT NULL UNIQUE,
+                type_code TEXT,
+                node_id TEXT,
+                region_code TEXT,
+                registrant_code TEXT,
+                identifier_year INTEGER,
+                identifier_sequence INTEGER,
                 prefix TEXT,
                 industry TEXT,
                 nft_type TEXT NOT NULL,
@@ -615,34 +683,36 @@ def get_next_truemark_serial() -> str:
 
 def get_next_nft_identifier(
     nft_type: str,
-    prefix: str | None,
-    industry: str | None,
+    node_id: str | None,
+    region_code: str | None,
+    registrant_code: str | None,
     minted_at: str | None = None,
-) -> str:
+) -> tuple[str, int, int, str]:
     year = parse_iso_datetime(minted_at).year if minted_at else datetime.now(timezone.utc).year
-    normalized_type = re.sub(r"[^A-Z0-9-]+", "", (nft_type or "").upper()) or "K-NFT"
-    normalized_prefix = normalize_identifier_component(prefix, "GENERAL")
-    normalized_industry = normalize_identifier_component(industry, "DIGITAL")
-    identifier_pattern = f"{normalized_type}-{normalized_prefix}-{normalized_industry}-{year}-%"
+    type_code = get_nft_type_code(nft_type)
+    normalized_node_id = normalize_identifier_component(node_id, get_mint_node_id())
+    normalized_region_code = normalize_identifier_component(region_code, get_default_region_code())
+    normalized_registrant_code = normalize_identifier_component(registrant_code, "PUBLIC")
 
     with get_connection() as connection:
         row = connection.execute(
             """
-            SELECT nft_identifier
+            SELECT identifier_sequence
             FROM mint_events
-            WHERE nft_identifier LIKE ?
-            ORDER BY nft_identifier DESC
+            WHERE node_id = ? AND region_code = ? AND registrant_code = ? AND identifier_year = ?
+            ORDER BY identifier_sequence DESC
             LIMIT 1
             """,
-            (identifier_pattern,),
+            (normalized_node_id, normalized_region_code, normalized_registrant_code, year),
         ).fetchone()
 
-    if not row or not row["nft_identifier"]:
+    if not row or row["identifier_sequence"] is None:
         next_counter = 1
     else:
-        next_counter = int(row["nft_identifier"].split("-")[-1]) + 1
+        next_counter = int(row["identifier_sequence"]) + 1
 
-    return f"{normalized_type}-{normalized_prefix}-{normalized_industry}-{year}-{next_counter:06d}"
+    identifier = f"{type_code}-{normalized_node_id}-{normalized_region_code}-{year}-{normalized_registrant_code}-{next_counter:06d}"
+    return identifier, year, next_counter, type_code
 
 
 def get_next_invoice_number() -> str:
@@ -716,6 +786,12 @@ def _order_row_from_payload(order: Dict[str, Any]) -> Dict[str, Any]:
         "id": str(uuid.uuid4()),
         "serial": order["serial"],
         "nft_identifier": order.get("nft_identifier"),
+        "type_code": order.get("type_code") or get_nft_type_code(order.get("nft_type")),
+        "node_id": normalize_identifier_component(order.get("node_id"), get_mint_node_id()),
+        "region_code": normalize_identifier_component(order.get("region_code"), get_default_region_code()),
+        "registrant_code": normalize_identifier_component(order.get("registrant_code"), "PUBLIC"),
+        "identifier_year": int(order.get("identifier_year") or 0),
+        "identifier_sequence": int(order.get("identifier_sequence") or 0),
         "invoice_number": order["invoice_number"],
         "invoice_public_token": order["invoice_public_token"],
         "vault_public_token": order["vault_public_token"],
@@ -762,8 +838,9 @@ def _order_row_from_payload(order: Dict[str, Any]) -> Dict[str, Any]:
 def _insert_order(connection: sqlite3.Connection, row: Dict[str, Any]) -> None:
     connection.execute(
         """
-        INSERT INTO orders (
-            id, serial, nft_identifier, invoice_number, invoice_public_token, vault_public_token, payment_reference,
+            INSERT INTO orders (
+            id, serial, nft_identifier, type_code, node_id, region_code, registrant_code, identifier_year, identifier_sequence,
+            invoice_number, invoice_public_token, vault_public_token, payment_reference,
             receipt_number, user_id, user_email,
             user_name, billing_address_line1, billing_address_line2, billing_city, billing_state,
             billing_postal_code, billing_phone, billing_dob, prefix, industry, nft_type, package_tier, encryption,
@@ -772,7 +849,8 @@ def _insert_order(connection: sqlite3.Connection, row: Dict[str, Any]) -> None:
             crypto_token, crypto_spot_price_usd, quote_snapshot_json, invoice_email_status,
             invoice_sent_to, invoice_emailed_at, status, created_at
         ) VALUES (
-            :id, :serial, :nft_identifier, :invoice_number, :invoice_public_token, :vault_public_token, :payment_reference,
+            :id, :serial, :nft_identifier, :type_code, :node_id, :region_code, :registrant_code, :identifier_year, :identifier_sequence,
+            :invoice_number, :invoice_public_token, :vault_public_token, :payment_reference,
             :receipt_number, :user_id, :user_email,
             :user_name, :billing_address_line1, :billing_address_line2, :billing_city, :billing_state,
             :billing_postal_code, :billing_phone, :billing_dob, :prefix, :industry, :nft_type, :package_tier, :encryption,
@@ -795,6 +873,12 @@ def _mint_event_row_from_payload(mint_event: Dict[str, Any]) -> Dict[str, Any]:
         "invoice_number": mint_event.get("invoice_number"),
         "serial": mint_event["serial"],
         "nft_identifier": mint_event["nft_identifier"],
+        "type_code": mint_event.get("type_code") or get_nft_type_code(mint_event.get("nft_type")),
+        "node_id": normalize_identifier_component(mint_event.get("node_id"), get_mint_node_id()),
+        "region_code": normalize_identifier_component(mint_event.get("region_code"), get_default_region_code()),
+        "registrant_code": normalize_identifier_component(mint_event.get("registrant_code"), "PUBLIC"),
+        "identifier_year": int(mint_event.get("identifier_year") or 0),
+        "identifier_sequence": int(mint_event.get("identifier_sequence") or 0),
         "prefix": normalize_identifier_component(mint_event.get("prefix"), "GENERAL"),
         "industry": normalize_identifier_component(mint_event.get("industry"), "DIGITAL"),
         "nft_type": mint_event["nft_type"],
@@ -820,11 +904,13 @@ def _insert_mint_event(connection: sqlite3.Connection, row: Dict[str, Any]) -> N
     connection.execute(
         """
         INSERT INTO mint_events (
-            id, order_id, payment_reference, receipt_number, invoice_number, serial, nft_identifier, prefix, industry,
+            id, order_id, payment_reference, receipt_number, invoice_number, serial, nft_identifier, type_code, node_id, region_code,
+            registrant_code, identifier_year, identifier_sequence, prefix, industry,
             nft_type, package_tier, encryption, chain, quantity, user_id, user_email, user_name, file_name,
             metadata_json, payment_method, subtotal_usd, tax_amount_usd, total_usd, minted_at, created_at
         ) VALUES (
-            :id, :order_id, :payment_reference, :receipt_number, :invoice_number, :serial, :nft_identifier, :prefix, :industry,
+            :id, :order_id, :payment_reference, :receipt_number, :invoice_number, :serial, :nft_identifier, :type_code, :node_id, :region_code,
+            :registrant_code, :identifier_year, :identifier_sequence, :prefix, :industry,
             :nft_type, :package_tier, :encryption, :chain, :quantity, :user_id, :user_email, :user_name, :file_name,
             :metadata_json, :payment_method, :subtotal_usd, :tax_amount_usd, :total_usd, :minted_at, :created_at
         )
@@ -865,6 +951,10 @@ def create_payment_session(payment_session: Dict[str, Any]) -> Dict[str, Any]:
         "payment_public_token": payment_session["payment_public_token"],
         "receipt_number": payment_session["receipt_number"],
         "receipt_public_token": payment_session["receipt_public_token"],
+        "type_code": payment_session.get("type_code") or get_nft_type_code(payment_session.get("nft_type")),
+        "node_id": normalize_identifier_component(payment_session.get("node_id"), get_mint_node_id()),
+        "region_code": normalize_identifier_component(payment_session.get("region_code"), get_default_region_code()),
+        "registrant_code": normalize_identifier_component(payment_session.get("registrant_code"), "PUBLIC"),
         "user_id": payment_session.get("user_id"),
         "user_email": payment_session["user_email"].strip().lower(),
         "user_name": payment_session["user_name"].strip(),
@@ -915,7 +1005,8 @@ def create_payment_session(payment_session: Dict[str, Any]) -> Dict[str, Any]:
         connection.execute(
             """
             INSERT INTO payment_sessions (
-                id, payment_reference, payment_public_token, receipt_number, receipt_public_token, user_id, user_email,
+                id, payment_reference, payment_public_token, receipt_number, receipt_public_token, type_code, node_id, region_code,
+                registrant_code, user_id, user_email,
                 user_name, billing_address_line1, billing_address_line2, billing_city, billing_state,
                 billing_postal_code, billing_phone, billing_dob, prefix, industry, nft_type, package_tier, encryption,
                 chain, quantity, file_name, staged_file_path, estimated_storage_gb, metadata_json,
@@ -924,7 +1015,8 @@ def create_payment_session(payment_session: Dict[str, Any]) -> Dict[str, Any]:
                 cancellation_fee_usd, refund_due_usd, minted_order_id, minted_serial, minted_nft_identifier, minted_invoice_number,
                 payment_captured_at, canceled_at, minted_at, status, created_at, updated_at
             ) VALUES (
-                :id, :payment_reference, :payment_public_token, :receipt_number, :receipt_public_token, :user_id, :user_email,
+                :id, :payment_reference, :payment_public_token, :receipt_number, :receipt_public_token, :type_code, :node_id, :region_code,
+                :registrant_code, :user_id, :user_email,
                 :user_name, :billing_address_line1, :billing_address_line2, :billing_city, :billing_state,
                 :billing_postal_code, :billing_phone, :billing_dob, :prefix, :industry, :nft_type, :package_tier, :encryption,
                 :chain, :quantity, :file_name, :staged_file_path, :estimated_storage_gb, :metadata_json,

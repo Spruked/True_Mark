@@ -39,8 +39,9 @@ export default function MintNFT() {
   const [form, setForm] = useState({
     name: "",
     email: "",
-    prefix: "",
-    industry: "",
+    node_id: "TM01",
+    region_code: "US",
+    registrant_code: "",
     nft_type: "K-NFT",
     package_tier: "starter",
     encryption: "none",
@@ -48,6 +49,12 @@ export default function MintNFT() {
     quantity: 1,
     file: null,
     metadata: "",
+  });
+  const [mintStandard, setMintStandard] = useState({
+    node_id: "TM01",
+    region_code: "US",
+    identifier_format: "TYPE-NODE-REGION-YEAR-USER-SEQ",
+    type_codes: {},
   });
   const [progress, setProgress] = useState(false);
   const [error, setError] = useState("");
@@ -72,6 +79,40 @@ export default function MintNFT() {
   }, [form.file]);
 
   useEffect(() => {
+    let active = true;
+
+    async function loadMintStandard() {
+      try {
+        const response = await axios.get(`${API_BASE}/mint-standard`);
+        if (!active) {
+          return;
+        }
+
+        setMintStandard(response.data);
+        setForm((previous) => ({
+          ...previous,
+          node_id: response.data.node_id || previous.node_id || "TM01",
+          region_code: previous.region_code === "US"
+            ? (response.data.region_code || previous.region_code || "US")
+            : (previous.region_code || response.data.region_code || "US"),
+        }));
+      } catch {
+        if (active) {
+          setMintStandard((previous) => ({
+            ...previous,
+          }));
+        }
+      }
+    }
+
+    loadMintStandard();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!checkoutDraft) {
       return;
     }
@@ -80,8 +121,9 @@ export default function MintNFT() {
       ...previous,
       name: checkoutDraft.name || previous.name,
       email: checkoutDraft.email || previous.email,
-      prefix: checkoutDraft.prefix || previous.prefix,
-      industry: checkoutDraft.industry || previous.industry,
+      node_id: checkoutDraft.node_id || previous.node_id || mintStandard.node_id,
+      region_code: checkoutDraft.region_code || checkoutDraft.industry || previous.region_code || mintStandard.region_code,
+      registrant_code: checkoutDraft.registrant_code || checkoutDraft.prefix || previous.registrant_code,
       nft_type: checkoutDraft.nft_type || previous.nft_type,
       package_tier: checkoutDraft.package_tier || previous.package_tier,
       encryption: checkoutDraft.encryption || previous.encryption,
@@ -90,7 +132,7 @@ export default function MintNFT() {
       metadata: checkoutDraft.metadata || previous.metadata,
       file: previous.file,
     }));
-  }, [checkoutDraft]);
+  }, [checkoutDraft, mintStandard.node_id, mintStandard.region_code]);
 
   useEffect(() => {
     let active = true;
@@ -121,7 +163,7 @@ export default function MintNFT() {
 
   const handleChange = (event) => {
     const { name, value, files } = event.target;
-    const normalizedValue = name === "prefix" || name === "industry"
+    const normalizedValue = name === "registrant_code" || name === "region_code"
       ? value.toUpperCase()
       : value;
     setForm((previous) => ({
@@ -144,6 +186,11 @@ export default function MintNFT() {
     setProgress(true);
     setCheckoutDraft({
       ...form,
+      node_id: form.node_id,
+      region_code: form.region_code.trim().toUpperCase(),
+      registrant_code: form.registrant_code.trim().toUpperCase(),
+      prefix: form.registrant_code.trim().toUpperCase(),
+      industry: form.region_code.trim().toUpperCase(),
       metadata: form.metadata.trim(),
     });
     updateWorkspace({
@@ -237,8 +284,9 @@ export default function MintNFT() {
             <Stack spacing={1.2}>
               <Typography><b>Payment Reference:</b> {paymentSession.payment_reference}</Typography>
               <Typography><b>Receipt Number:</b> {paymentSession.receipt_number}</Typography>
-              <Typography><b>Prefix:</b> {paymentSession.prefix || "GENERAL"}</Typography>
-              <Typography><b>Industry:</b> {paymentSession.industry || "DIGITAL"}</Typography>
+              <Typography><b>Node ID:</b> {paymentSession.node_id || mintStandard.node_id}</Typography>
+              <Typography><b>Region:</b> {paymentSession.region_code || mintStandard.region_code}</Typography>
+              <Typography><b>Registrant Code:</b> {paymentSession.registrant_code || "PUBLIC"}</Typography>
               <Typography><b>File:</b> {paymentSession.file_name}</Typography>
               <Typography><b>Estimated Total Paid:</b> ${Number(paymentSession.total_usd || 0).toFixed(2)}</Typography>
               <Typography><b>Projected Serial:</b> {paymentSession.minted_serial || "The next available True Mark serial will be assigned at mint time."}</Typography>
@@ -274,6 +322,9 @@ export default function MintNFT() {
             <Stack spacing={1.2}>
               <Typography><b>Serial:</b> {mintResult.serial}</Typography>
               <Typography><b>NFT Identifier:</b> {mintResult.nft_identifier}</Typography>
+              <Typography><b>Node ID:</b> {mintResult.node_id || mintStandard.node_id}</Typography>
+              <Typography><b>Region:</b> {mintResult.region_code || mintStandard.region_code}</Typography>
+              <Typography><b>Registrant Code:</b> {mintResult.registrant_code || form.registrant_code || "PUBLIC"}</Typography>
               <Typography><b>Invoice:</b> {mintResult.invoice_number}</Typography>
               <Typography><b>Payment Reference:</b> {mintResult.payment_reference}</Typography>
               <Typography><b>Receipt Number:</b> {mintResult.receipt_number}</Typography>
@@ -325,25 +376,33 @@ export default function MintNFT() {
                 InputProps={{ style: { color: "#F4F7F8" } }}
               />
               <TextField
-                label="Mint Prefix"
-                name="prefix"
-                value={form.prefix}
+                label="Mint Node ID"
+                name="node_id"
+                value={form.node_id}
+                fullWidth
+                InputLabelProps={{ style: { color: "#C8CCD0" } }}
+                InputProps={{ readOnly: true, style: { color: "#F4F7F8" } }}
+              />
+              <TextField
+                label="Region Code"
+                name="region_code"
+                value={form.region_code}
                 onChange={handleChange}
                 fullWidth
                 required
-                helperText="Short authority code used in the minted identifier, for example SPRUKED."
+                helperText="Geographic region for the mint record, for example US or EU."
                 InputLabelProps={{ style: { color: "#C8CCD0" } }}
                 FormHelperTextProps={{ style: { color: "#C8CCD0" } }}
                 InputProps={{ style: { color: "#F4F7F8" } }}
               />
               <TextField
-                label="Industry Code"
-                name="industry"
-                value={form.industry}
+                label="Registrant Code"
+                name="registrant_code"
+                value={form.registrant_code}
                 onChange={handleChange}
                 fullWidth
                 required
-                helperText="Short category code used in the minted identifier, for example MEDIA or FARM."
+                helperText="Short customer or entity code used in the identifier, for example SPRUKED or HARVARD."
                 InputLabelProps={{ style: { color: "#C8CCD0" } }}
                 FormHelperTextProps={{ style: { color: "#C8CCD0" } }}
                 InputProps={{ style: { color: "#F4F7F8" } }}

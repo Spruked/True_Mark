@@ -52,6 +52,12 @@ export default function Checkout() {
   const [pricing, setPricing] = useState(emptyPricing);
   const [quote, setQuote] = useState(null);
   const [nextSerial, setNextSerial] = useState("");
+  const [mintStandard, setMintStandard] = useState({
+    node_id: "TM01",
+    region_code: "US",
+    identifier_format: "TYPE-NODE-REGION-YEAR-USER-SEQ",
+    type_codes: {},
+  });
   const [paymentMethod, setPaymentMethod] = useState("fiat");
   const [agree, setAgree] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -70,9 +76,10 @@ export default function Checkout() {
 
     async function loadCheckoutMetadata() {
       try {
-        const [pricingResponse, serialResponse] = await Promise.all([
+        const [pricingResponse, serialResponse, mintStandardResponse] = await Promise.all([
           axios.get(`${API_BASE}/pricing`),
           axios.get(`${API_BASE}/serial/next`),
+          axios.get(`${API_BASE}/mint-standard`),
         ]);
 
         if (!active) {
@@ -81,6 +88,7 @@ export default function Checkout() {
 
         setPricing(pricingResponse.data);
         setNextSerial(serialResponse.data.next_serial);
+        setMintStandard(mintStandardResponse.data);
       } catch {
         if (active) {
           setError("Checkout is available, but pricing details could not be loaded from the backend.");
@@ -230,8 +238,10 @@ export default function Checkout() {
       const data = new FormData();
       data.append("name", checkoutDraft.name);
       data.append("email", checkoutDraft.email);
-      data.append("prefix", checkoutDraft.prefix || "GENERAL");
-      data.append("industry", checkoutDraft.industry || "DIGITAL");
+      data.append("registrant_code", checkoutDraft.registrant_code || checkoutDraft.prefix || "PUBLIC");
+      data.append("region_code", checkoutDraft.region_code || checkoutDraft.industry || mintStandard.region_code || "US");
+      data.append("prefix", checkoutDraft.registrant_code || checkoutDraft.prefix || "PUBLIC");
+      data.append("industry", checkoutDraft.region_code || checkoutDraft.industry || mintStandard.region_code || "US");
       data.append("nft_type", checkoutDraft.nft_type);
       data.append("file", checkoutDraft.file);
       data.append("metadata", checkoutDraft.metadata || "");
@@ -314,8 +324,9 @@ export default function Checkout() {
             <Stack spacing={1.5}>
               <Typography><b>Name:</b> {checkoutDraft?.name || paymentSession?.user_name || "Not provided yet"}</Typography>
               <Typography><b>Email:</b> {checkoutDraft?.email || paymentSession?.user_email || "Not provided yet"}</Typography>
-              <Typography><b>Prefix:</b> {checkoutDraft?.prefix || paymentSession?.prefix || "GENERAL"}</Typography>
-              <Typography><b>Industry:</b> {checkoutDraft?.industry || paymentSession?.industry || "DIGITAL"}</Typography>
+              <Typography><b>Node ID:</b> {checkoutDraft?.node_id || paymentSession?.node_id || mintStandard.node_id}</Typography>
+              <Typography><b>Region:</b> {checkoutDraft?.region_code || paymentSession?.region_code || mintStandard.region_code}</Typography>
+              <Typography><b>Registrant Code:</b> {checkoutDraft?.registrant_code || checkoutDraft?.prefix || paymentSession?.registrant_code || "PUBLIC"}</Typography>
               <Typography><b>NFT Type:</b> {checkoutDraft?.nft_type || paymentSession?.nft_type || "Not selected yet"}</Typography>
               <Typography><b>File:</b> {checkoutDraft?.file?.name || checkoutDraft?.fileName || paymentSession?.file_name || "No file attached"}</Typography>
               <Typography><b>Estimated file size:</b> {checkoutDraft ? `${(fileSizeGb * 1024).toFixed(2)} MB` : "Stored on the backend"}</Typography>

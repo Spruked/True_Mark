@@ -20,6 +20,9 @@ function buildSerializableDraft(draft) {
   return {
     name: draft.name || "",
     email: draft.email || "",
+    node_id: draft.node_id || "",
+    region_code: draft.region_code || "",
+    registrant_code: draft.registrant_code || "",
     prefix: draft.prefix || "",
     industry: draft.industry || "",
     nft_type: draft.nft_type || "",
