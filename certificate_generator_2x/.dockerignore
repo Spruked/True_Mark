@@ -1,0 +1,50 @@
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+env/
+.venv
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Documentation (build locally)
+*.md
+docs/
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated files (will be created in container)
+Vault_System_1.0/certificates/issued/*.pdf
+Vault_System_1.0/certificates/issued/*.json
+Vault_System_1.0/certificates/issued/*.png
+Vault_System_1.0/vault_logs/*.jsonl
+Vault_System_1.0/swarm_queue/*.jsonl
+Vault_System_1.0/vault_system/skg_core/skg_data/*.jsonl
+
+# Test files
+tests/
+*.test.py

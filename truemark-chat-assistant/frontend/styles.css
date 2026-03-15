@@ -1,0 +1,7 @@
+/* Josephine Chat Bubble Styles */
+.josephine-bubble {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+}

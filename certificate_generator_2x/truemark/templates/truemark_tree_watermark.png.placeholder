@@ -1,0 +1,19 @@
+# Template Asset Placeholder
+# This is a placeholder for truemark_tree_watermark.png
+#
+# For production use:
+# 1. Design TrueMark tree logo in vector format
+# 2. Export as PNG with transparency (alpha channel)
+# 3. Recommended size: 1000x1000 pixels minimum
+# 4. Use grayscale or subtle color
+#
+# Watermark design tips:
+# - Simple, recognizable silhouette
+# - Works well at low opacity (10-15%)
+# - Should not obscure certificate text
+# - Represents brand identity
+#
+# Replace this placeholder with actual watermark image
+
+PLACEHOLDER - Replace with TrueMark tree watermark PNG (with transparency)
+For testing, the system will generate a simple tree shape automatically.

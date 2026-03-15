@@ -1,0 +1,79 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# PyCharm
+.idea/
+
+# Environments
+.env
+.env.local
+.env.*.local
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+.hypothesis/
+
+# Docker
+*.log
+
+# Certificate Output (generated files)
+Vault_System_1.0/certificates/issued/*.pdf
+Vault_System_1.0/certificates/issued/*.json
+Vault_System_1.0/certificates/issued/*.png
+
+# Vault Logs (contain sensitive data)
+Vault_System_1.0/vault_logs/*.jsonl
+Vault_System_1.0/swarm_queue/*.jsonl
+
+# SKG Database (generated)
+Vault_System_1.0/vault_system/skg_core/skg_data/*.jsonl
+
+# Cryptographic Keys (NEVER commit production keys)
+*.pem
+*.key
+id_ed25519
+id_ed25519.pub
+
+# OS
+Thumbs.db
+.DS_Store

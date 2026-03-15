@@ -1,0 +1,33 @@
+# Node
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+truemark-chat-assistant/frontend/node_modules/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+truemark-chat-assistant/.venv/
+
+# Build
+frontend/dist/
+frontend/build/
+truemark-chat-assistant/frontend/dist/
+truemark-chat-assistant/frontend/build/
+
+# Logs
+*.log
+
+# Environment
+.env
+frontend/.env
+backend/.env
+truemark-chat-assistant/.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VSCode
+.vscode/

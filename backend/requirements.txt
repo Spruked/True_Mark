@@ -1,0 +1,8 @@
+# requirements.txt for FastAPI backend
+fastapi
+uvicorn
+httpx
+python-multipart
+pydantic
+pdfkit
+python-dotenv

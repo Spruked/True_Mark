@@ -1,0 +1,7 @@
+{
+  "name": "truemark-backend",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "echo 'No Node.js backend. Use FastAPI: uvicorn main:app --reload --port 8000'"
+  }
+}

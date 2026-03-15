@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  truemark-forge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: truemark-forge
+    image: truemark-forge:v2.0
+    
+    volumes:
+      # Mount output directories to persist generated certificates
+      - ./Vault_System_1.0/certificates/issued:/app/Vault_System_1.0/certificates/issued
+      - ./Vault_System_1.0/vault_logs:/app/Vault_System_1.0/vault_logs
+      - ./Vault_System_1.0/swarm_queue:/app/Vault_System_1.0/swarm_queue
+      - ./Vault_System_1.0/vault_system/skg_core/skg_data:/app/Vault_System_1.0/vault_system/skg_core/skg_data
+    
+    environment:
+      - VAULT_BASE_PATH=/app/Vault_System_1.0
+      - VAULT_MODE=mock
+      - PYTHONPATH=/app
+      - SKG_ENABLED=true
+      - SKG_DRIFT_THRESHOLD=0.7
+    
+    # Keep container running for interactive commands
+    stdin_open: true
+    tty: true
+    
+    # Optional: Expose port for future web API
+    # ports:
+    #   - "8000:8000"
+    
+    restart: unless-stopped
+    
+    command: tail -f /dev/null
+
+  # Optional: Add a web dashboard service in the future
+  # truemark-dashboard:
+  #   build:
+  #     context: ./dashboard
+  #     dockerfile: Dockerfile
+  #   container_name: truemark-dashboard
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - truemark-forge
+  #   environment:
+  #     - API_URL=http://truemark-forge:8000
+
+networks:
+  default:
+    name: truemark-network

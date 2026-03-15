@@ -1,0 +1,117 @@
+{
+  "version": "1.0",
+  "currency": "USD",
+  "settlement": {
+    "pricing_basis": "fiat_only",
+    "display_currency": "USD",
+    "crypto_quote_enabled": true,
+    "crypto_quote_note": "Crypto is shown only as an equivalent fiat conversion at the time of purchase.",
+    "customer_wallet_required": false,
+    "mint_execution": "platform_managed",
+    "mint_execution_note": "True Mark executes minting through the platform MetaMask account and Alchemy infrastructure."
+  },
+  "nft_types": {
+    "K-NFT": {
+      "name": "Knowledge NFT",
+      "price": 4.99,
+      "enabled": true
+    },
+    "H-NFT": {
+      "name": "Heirloom NFT",
+      "price": 9.99,
+      "enabled": true
+    },
+    "L-NFT": {
+      "name": "Legacy NFT",
+      "price": 19.99,
+      "enabled": true
+    },
+    "C-NFT": {
+      "name": "Custom NFT",
+      "price": 14.99,
+      "enabled": true
+    }
+  },
+  "package_tiers": {
+    "starter": {
+      "name": "Mint Only",
+      "price": 0.0,
+      "layers": 0,
+      "description": "Low-cost Polygon mint with no certificate package."
+    },
+    "essential": {
+      "name": "Basic Record",
+      "price": 12.0,
+      "layers": 3,
+      "description": "Mint plus a simple 3-layer record package."
+    },
+    "secure": {
+      "name": "Secure Record",
+      "price": 28.0,
+      "layers": 5,
+      "description": "Mint plus a stronger certificate package."
+    },
+    "professional": {
+      "name": "Professional Record",
+      "price": 45.0,
+      "layers": 7,
+      "description": "Mint plus a premium 7-layer package."
+    },
+    "forensic": {
+      "name": "Forensic Record",
+      "price": 95.0,
+      "layers": 10,
+      "description": "Full forensic package for high-assurance records."
+    }
+  },
+  "encryption_options": {
+    "none": {
+      "name": "No Encryption",
+      "price": 0.0
+    },
+    "chacha20": {
+      "name": "ChaCha20-Poly1305",
+      "price": 8.0
+    }
+  },
+  "chains": {
+    "polygon": {
+      "name": "Polygon",
+      "surcharge": 0.0
+    },
+    "ethereum": {
+      "name": "Ethereum",
+      "surcharge": 125.0
+    }
+  },
+  "storage": {
+    "included_gb": 1.0,
+    "additional_gb_price": 5.0
+  },
+  "bulk_discounts": [
+    {
+      "min_quantity": 10,
+      "discount": 0.05
+    },
+    {
+      "min_quantity": 25,
+      "discount": 0.1
+    },
+    {
+      "min_quantity": 50,
+      "discount": 0.15
+    },
+    {
+      "min_quantity": 100,
+      "discount": 0.2
+    },
+    {
+      "min_quantity": 500,
+      "discount": 0.3
+    }
+  ],
+  "processing_fee": {
+    "percentage": 0.029,
+    "fixed": 0.3
+  }
+}

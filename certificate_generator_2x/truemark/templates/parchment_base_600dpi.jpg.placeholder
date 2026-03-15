@@ -1,0 +1,18 @@
+# Template Asset Placeholder
+# This is a placeholder for parchment_base_600dpi.jpg
+# 
+# For production use:
+# 1. Scan actual security paper at 600 DPI
+# 2. Save as JPEG with slight texture visible
+# 3. Dimensions: A4 size (2480 x 3508 pixels at 300 DPI)
+# 
+# Alternative: Use stock photography of parchment/security paper
+# Recommended sources:
+# - Envato Elements (parchment textures)
+# - Shutterstock (security paper backgrounds)
+# - Custom: Print on security paper, scan with high-quality scanner
+#
+# Replace this placeholder file with actual parchment image
+
+PLACEHOLDER - Replace with real 600 DPI scanned parchment texture
+For testing, the system will generate a procedural texture automatically.
