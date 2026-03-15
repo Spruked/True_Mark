@@ -39,7 +39,7 @@ export default function MintNFT() {
   const [form, setForm] = useState({
     name: "",
     email: "",
-    node_id: "TM01",
+    node_id: "TMK",
     region_code: "US",
     registrant_code: "",
     nft_type: "K-NFT",
@@ -51,7 +51,7 @@ export default function MintNFT() {
     metadata: "",
   });
   const [mintStandard, setMintStandard] = useState({
-    node_id: "TM01",
+    node_id: "TMK",
     region_code: "US",
     identifier_format: "TYPE-NODE-REGION-YEAR-USER-SEQ",
     type_codes: {},
@@ -91,7 +91,7 @@ export default function MintNFT() {
         setMintStandard(response.data);
         setForm((previous) => ({
           ...previous,
-          node_id: response.data.node_id || previous.node_id || "TM01",
+          node_id: response.data.node_id || previous.node_id || "TMK",
           region_code: previous.region_code === "US"
             ? (response.data.region_code || previous.region_code || "US")
             : (previous.region_code || response.data.region_code || "US"),
@@ -284,7 +284,7 @@ export default function MintNFT() {
             <Stack spacing={1.2}>
               <Typography><b>Payment Reference:</b> {paymentSession.payment_reference}</Typography>
               <Typography><b>Receipt Number:</b> {paymentSession.receipt_number}</Typography>
-              <Typography><b>Node ID:</b> {paymentSession.node_id || mintStandard.node_id}</Typography>
+              <Typography><b>Node Code:</b> {paymentSession.node_id || mintStandard.node_id}</Typography>
               <Typography><b>Region:</b> {paymentSession.region_code || mintStandard.region_code}</Typography>
               <Typography><b>Registrant Code:</b> {paymentSession.registrant_code || "PUBLIC"}</Typography>
               <Typography><b>File:</b> {paymentSession.file_name}</Typography>
@@ -322,7 +322,7 @@ export default function MintNFT() {
             <Stack spacing={1.2}>
               <Typography><b>Serial:</b> {mintResult.serial}</Typography>
               <Typography><b>NFT Identifier:</b> {mintResult.nft_identifier}</Typography>
-              <Typography><b>Node ID:</b> {mintResult.node_id || mintStandard.node_id}</Typography>
+              <Typography><b>Node Code:</b> {mintResult.node_id || mintStandard.node_id}</Typography>
               <Typography><b>Region:</b> {mintResult.region_code || mintStandard.region_code}</Typography>
               <Typography><b>Registrant Code:</b> {mintResult.registrant_code || form.registrant_code || "PUBLIC"}</Typography>
               <Typography><b>Invoice:</b> {mintResult.invoice_number}</Typography>
@@ -376,7 +376,7 @@ export default function MintNFT() {
                 InputProps={{ style: { color: "#F4F7F8" } }}
               />
               <TextField
-                label="Mint Node ID"
+                label="Mint Node Code"
                 name="node_id"
                 value={form.node_id}
                 fullWidth

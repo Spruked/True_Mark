@@ -207,6 +207,31 @@ def _write_dals_export(nft_record: Dict[str, Any]) -> Path:
     return output_path
 
 
+def _build_public_registry_record(nft_record: Dict[str, Any], mint_standard: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "identifier": nft_record["nft_identifier"],
+        "nft_identifier": nft_record["nft_identifier"],
+        "identifier_format": mint_standard["identifier_format"],
+        "type_code": nft_record.get("type_code"),
+        "node_code": nft_record.get("node_id") or mint_standard["node_code"],
+        "node_id": nft_record.get("node_id") or mint_standard["node_code"],
+        "node_name": mint_standard["node_name"],
+        "region": nft_record.get("region_code") or mint_standard["region"],
+        "region_code": nft_record.get("region_code") or mint_standard["region"],
+        "year": nft_record.get("identifier_year"),
+        "identifier_year": nft_record.get("identifier_year"),
+        "registrant_code": nft_record.get("registrant_code"),
+        "user_identifier": nft_record.get("registrant_code"),
+        "sequence": nft_record.get("identifier_sequence"),
+        "identifier_sequence": nft_record.get("identifier_sequence"),
+        "mint_timestamp": nft_record.get("minted_at"),
+        "minted_at": nft_record.get("minted_at"),
+        "tm_serial": nft_record.get("serial"),
+        "certificate_hash": nft_record.get("certificate_hash"),
+        "chain": nft_record.get("chain"),
+    }
+
+
 def _invoice_file_response(order: Dict[str, Any]) -> FileResponse:
     invoice_path = invoice_path_for(order["invoice_number"])
     if not invoice_path.exists():
@@ -241,7 +266,9 @@ def _payment_session_response(payment_session: Dict[str, Any], request: Request)
         "user_name": payment_session["user_name"],
         "user_email": payment_session["user_email"],
         "type_code": payment_session.get("type_code") or "",
+        "node_code": payment_session.get("node_id") or get_mint_standard()["node_code"],
         "node_id": payment_session.get("node_id") or get_mint_standard()["node_id"],
+        "region": payment_session.get("region_code") or get_mint_standard()["region"],
         "region_code": payment_session.get("region_code") or get_mint_standard()["region_code"],
         "registrant_code": payment_session.get("registrant_code") or "",
         "prefix": payment_session.get("registrant_code") or payment_session.get("prefix") or "",
@@ -489,7 +516,9 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
             "serial": payment_session.get("minted_serial"),
             "nft_identifier": payment_session.get("minted_nft_identifier"),
             "invoice_number": payment_session.get("minted_invoice_number"),
+            "node_code": payment_session.get("node_id"),
             "node_id": payment_session.get("node_id"),
+            "region": payment_session.get("region_code"),
             "region_code": payment_session.get("region_code"),
             "registrant_code": payment_session.get("registrant_code"),
             "invoice_download_url": _public_url(request, f"/downloads/invoices/{existing_order['invoice_public_token']}"),
@@ -618,7 +647,7 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
             metadata_payload,
             nft_record,
         )
-        registry_export_path = _write_dals_export(nft_record)
+        registry_export_path = _write_dals_export(_build_public_registry_record(nft_record, mint_standard))
 
         invoice_path = generate_invoice_pdf(order_payload)
         order_row = record_order_and_mint_event(
@@ -692,7 +721,9 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
             "serial": serial,
             "nft_identifier": nft_identifier,
             "invoice_number": invoice_number,
+            "node_code": payment_session.get("node_id"),
             "node_id": payment_session.get("node_id"),
+            "region": payment_session.get("region_code"),
             "region_code": payment_session.get("region_code"),
             "registrant_code": payment_session.get("registrant_code"),
             "payment_reference": payment_session["payment_reference"],

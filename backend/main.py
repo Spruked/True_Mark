@@ -30,4 +30,7 @@ app.add_middleware(CSPMiddleware)
 def read_root():
     return {"message": "True Mark Mint Engine FastAPI backend is running."}
 
-# TODO: Add endpoints for minting, payments, certificate generation, and price quoting
+try:
+    from . import routes  # noqa: F401
+except ImportError:
+    import routes  # type: ignore # noqa: F401

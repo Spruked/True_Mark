@@ -53,7 +53,7 @@ export default function Checkout() {
   const [quote, setQuote] = useState(null);
   const [nextSerial, setNextSerial] = useState("");
   const [mintStandard, setMintStandard] = useState({
-    node_id: "TM01",
+    node_id: "TMK",
     region_code: "US",
     identifier_format: "TYPE-NODE-REGION-YEAR-USER-SEQ",
     type_codes: {},
@@ -324,7 +324,7 @@ export default function Checkout() {
             <Stack spacing={1.5}>
               <Typography><b>Name:</b> {checkoutDraft?.name || paymentSession?.user_name || "Not provided yet"}</Typography>
               <Typography><b>Email:</b> {checkoutDraft?.email || paymentSession?.user_email || "Not provided yet"}</Typography>
-              <Typography><b>Node ID:</b> {checkoutDraft?.node_id || paymentSession?.node_id || mintStandard.node_id}</Typography>
+              <Typography><b>Node Code:</b> {checkoutDraft?.node_id || paymentSession?.node_id || mintStandard.node_id}</Typography>
               <Typography><b>Region:</b> {checkoutDraft?.region_code || paymentSession?.region_code || mintStandard.region_code}</Typography>
               <Typography><b>Registrant Code:</b> {checkoutDraft?.registrant_code || checkoutDraft?.prefix || paymentSession?.registrant_code || "PUBLIC"}</Typography>
               <Typography><b>NFT Type:</b> {checkoutDraft?.nft_type || paymentSession?.nft_type || "Not selected yet"}</Typography>

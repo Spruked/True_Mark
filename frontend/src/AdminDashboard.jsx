@@ -602,7 +602,7 @@ export default function AdminDashboard() {
                       {order.user_name} | {order.nft_type} | {order.chain} | {order.payment_method}
                     </Typography>
                     <Typography variant="body2">
-                      {order.type_code || "NFT"} | Node {order.node_id || "TM01"} | Region {order.region_code || "US"} | Registrant {order.registrant_code || "PUBLIC"}
+                      {order.type_code || "NFT"} | Node Code {order.node_id || "TMK"} | Region {order.region_code || "US"} | Registrant {order.registrant_code || "PUBLIC"}
                     </Typography>
                     <Typography variant="body2">
                       Total ${Number(order.total_usd || 0).toFixed(2)} | Tax ${Number(order.tax_amount_usd || 0).toFixed(2)}
@@ -682,7 +682,7 @@ export default function AdminDashboard() {
                     {mintEvent.user_name || "Customer"} | {mintEvent.user_email || "No email"} | {mintEvent.nft_type}
                   </Typography>
                   <Typography variant="body2">
-                    {mintEvent.type_code || "NFT"} | Node {mintEvent.node_id || "TM01"} | Region {mintEvent.region_code || "US"} | Registrant {mintEvent.registrant_code || "PUBLIC"}
+                    {mintEvent.type_code || "NFT"} | Node Code {mintEvent.node_id || "TMK"} | Region {mintEvent.region_code || "US"} | Registrant {mintEvent.registrant_code || "PUBLIC"}
                   </Typography>
                   <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mt: 1.5 }}>
                     <Button

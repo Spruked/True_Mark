@@ -11,13 +11,15 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from dotenv import load_dotenv
+try:
+    from .node_config import get_mint_standard, get_nft_type_code, get_node_code, get_region_code, normalize_code
+except ImportError:
+    from node_config import get_mint_standard, get_nft_type_code, get_node_code, get_region_code, normalize_code
 
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 DB_PATH = DATA_DIR / "truemark.db"
-load_dotenv(BASE_DIR / ".env")
 
 
 USER_COLUMNS = {
@@ -189,38 +191,7 @@ def parse_iso_datetime(value: str) -> datetime:
 
 
 def normalize_identifier_component(value: str | None, fallback: str) -> str:
-    cleaned = re.sub(r"[^A-Z0-9]+", "", (value or "").upper())
-    return cleaned or fallback
-
-
-NFT_TYPE_CODE_MAP = {
-    "K-NFT": "KNFT",
-    "H-NFT": "HNFT",
-    "L-NFT": "LNFT",
-    "C-NFT": "CNFT",
-}
-
-
-def get_nft_type_code(nft_type: str | None) -> str:
-    normalized_nft_type = (nft_type or "").strip().upper()
-    return NFT_TYPE_CODE_MAP.get(normalized_nft_type, normalize_identifier_component(normalized_nft_type, "NFT"))
-
-
-def get_mint_node_id() -> str:
-    return normalize_identifier_component(os.getenv("TRUEMARK_NODE_ID", "TM01"), "TM01")
-
-
-def get_default_region_code() -> str:
-    return normalize_identifier_component(os.getenv("TRUEMARK_REGION_CODE", "US"), "US")
-
-
-def get_mint_standard() -> Dict[str, Any]:
-    return {
-        "identifier_format": "TYPE-NODE-REGION-YEAR-USER-SEQ",
-        "node_id": get_mint_node_id(),
-        "region_code": get_default_region_code(),
-        "type_codes": NFT_TYPE_CODE_MAP,
-    }
+    return normalize_code(value, fallback)
 
 
 def get_connection() -> sqlite3.Connection:
@@ -690,8 +661,8 @@ def get_next_nft_identifier(
 ) -> tuple[str, int, int, str]:
     year = parse_iso_datetime(minted_at).year if minted_at else datetime.now(timezone.utc).year
     type_code = get_nft_type_code(nft_type)
-    normalized_node_id = normalize_identifier_component(node_id, get_mint_node_id())
-    normalized_region_code = normalize_identifier_component(region_code, get_default_region_code())
+    normalized_node_id = normalize_identifier_component(node_id, get_node_code())
+    normalized_region_code = normalize_identifier_component(region_code, get_region_code())
     normalized_registrant_code = normalize_identifier_component(registrant_code, "PUBLIC")
 
     with get_connection() as connection:
@@ -787,8 +758,8 @@ def _order_row_from_payload(order: Dict[str, Any]) -> Dict[str, Any]:
         "serial": order["serial"],
         "nft_identifier": order.get("nft_identifier"),
         "type_code": order.get("type_code") or get_nft_type_code(order.get("nft_type")),
-        "node_id": normalize_identifier_component(order.get("node_id"), get_mint_node_id()),
-        "region_code": normalize_identifier_component(order.get("region_code"), get_default_region_code()),
+        "node_id": normalize_identifier_component(order.get("node_id"), get_node_code()),
+        "region_code": normalize_identifier_component(order.get("region_code"), get_region_code()),
         "registrant_code": normalize_identifier_component(order.get("registrant_code"), "PUBLIC"),
         "identifier_year": int(order.get("identifier_year") or 0),
         "identifier_sequence": int(order.get("identifier_sequence") or 0),
@@ -874,8 +845,8 @@ def _mint_event_row_from_payload(mint_event: Dict[str, Any]) -> Dict[str, Any]:
         "serial": mint_event["serial"],
         "nft_identifier": mint_event["nft_identifier"],
         "type_code": mint_event.get("type_code") or get_nft_type_code(mint_event.get("nft_type")),
-        "node_id": normalize_identifier_component(mint_event.get("node_id"), get_mint_node_id()),
-        "region_code": normalize_identifier_component(mint_event.get("region_code"), get_default_region_code()),
+        "node_id": normalize_identifier_component(mint_event.get("node_id"), get_node_code()),
+        "region_code": normalize_identifier_component(mint_event.get("region_code"), get_region_code()),
         "registrant_code": normalize_identifier_component(mint_event.get("registrant_code"), "PUBLIC"),
         "identifier_year": int(mint_event.get("identifier_year") or 0),
         "identifier_sequence": int(mint_event.get("identifier_sequence") or 0),
@@ -952,8 +923,8 @@ def create_payment_session(payment_session: Dict[str, Any]) -> Dict[str, Any]:
         "receipt_number": payment_session["receipt_number"],
         "receipt_public_token": payment_session["receipt_public_token"],
         "type_code": payment_session.get("type_code") or get_nft_type_code(payment_session.get("nft_type")),
-        "node_id": normalize_identifier_component(payment_session.get("node_id"), get_mint_node_id()),
-        "region_code": normalize_identifier_component(payment_session.get("region_code"), get_default_region_code()),
+        "node_id": normalize_identifier_component(payment_session.get("node_id"), get_node_code()),
+        "region_code": normalize_identifier_component(payment_session.get("region_code"), get_region_code()),
         "registrant_code": normalize_identifier_component(payment_session.get("registrant_code"), "PUBLIC"),
         "user_id": payment_session.get("user_id"),
         "user_email": payment_session["user_email"].strip().lower(),
