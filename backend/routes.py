@@ -33,6 +33,7 @@ try:
         create_user,
         get_analytics,
         get_next_invoice_number,
+        get_next_nft_identifier,
         get_next_payment_reference,
         get_next_receipt_number,
         get_next_truemark_serial,
@@ -42,9 +43,10 @@ try:
         get_payment_session_by_receipt_token,
         get_payment_session_by_token,
         get_user_by_email,
+        list_mint_events,
         list_orders,
         list_users,
-        record_order,
+        record_order_and_mint_event,
         update_invoice_delivery,
         update_payment_session_status,
     )
@@ -68,6 +70,7 @@ except ImportError:
         create_user,
         get_analytics,
         get_next_invoice_number,
+        get_next_nft_identifier,
         get_next_payment_reference,
         get_next_receipt_number,
         get_next_truemark_serial,
@@ -77,9 +80,10 @@ except ImportError:
         get_payment_session_by_receipt_token,
         get_payment_session_by_token,
         get_user_by_email,
+        list_mint_events,
         list_orders,
         list_users,
-        record_order,
+        record_order_and_mint_event,
         update_invoice_delivery,
         update_payment_session_status,
     )
@@ -97,7 +101,9 @@ app.add_middleware(
 
 BASE_DIR = Path(__file__).resolve().parent
 STAGED_UPLOADS_DIR = BASE_DIR / "data" / "payment_sessions"
+DALS_EXPORTS_DIR = BASE_DIR / "data" / "dals_exports"
 STAGED_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+DALS_EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 class QuoteRequest(BaseModel):
@@ -193,6 +199,12 @@ def _write_vault_package(
         archive.writestr("truemark_record.json", json.dumps(nft_record, indent=2))
 
 
+def _write_dals_export(nft_record: Dict[str, Any]) -> Path:
+    output_path = DALS_EXPORTS_DIR / f"{nft_record['nft_identifier']}.json"
+    output_path.write_text(json.dumps(nft_record, indent=2), encoding="utf-8")
+    return output_path
+
+
 def _invoice_file_response(order: Dict[str, Any]) -> FileResponse:
     invoice_path = invoice_path_for(order["invoice_number"])
     if not invoice_path.exists():
@@ -226,6 +238,8 @@ def _payment_session_response(payment_session: Dict[str, Any], request: Request)
         "status": payment_session["status"],
         "user_name": payment_session["user_name"],
         "user_email": payment_session["user_email"],
+        "prefix": payment_session.get("prefix") or "",
+        "industry": payment_session.get("industry") or "",
         "nft_type": payment_session["nft_type"],
         "package_tier": payment_session["package_tier"],
         "encryption": payment_session["encryption"],
@@ -246,6 +260,7 @@ def _payment_session_response(payment_session: Dict[str, Any], request: Request)
         "canceled_at": payment_session.get("canceled_at"),
         "minted_at": payment_session.get("minted_at"),
         "minted_serial": payment_session.get("minted_serial"),
+        "minted_nft_identifier": payment_session.get("minted_nft_identifier"),
         "minted_invoice_number": payment_session.get("minted_invoice_number"),
         "quote_snapshot": payment_session.get("quote_snapshot"),
     }
@@ -272,6 +287,8 @@ def process_payment(
     request: Request,
     name: str = Form(...),
     email: str = Form(...),
+    prefix: str = Form("GENERAL"),
+    industry: str = Form("DIGITAL"),
     nft_type: str = Form(...),
     file: UploadFile = File(...),
     metadata: str = Form(...),
@@ -335,6 +352,8 @@ def process_payment(
             "billing_postal_code": user.get("postal_code", "") if user else "",
             "billing_phone": user.get("phone", "") if user else "",
             "billing_dob": user.get("dob", "") if user else "",
+            "prefix": prefix.strip().upper(),
+            "industry": industry.strip().upper(),
             "nft_type": nft_type,
             "package_tier": package_tier,
             "encryption": encryption,
@@ -452,6 +471,7 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
             )
         return {
             "serial": payment_session.get("minted_serial"),
+            "nft_identifier": payment_session.get("minted_nft_identifier"),
             "invoice_number": payment_session.get("minted_invoice_number"),
             "invoice_download_url": _public_url(request, f"/downloads/invoices/{existing_order['invoice_public_token']}"),
             "vault_download_url": _public_url(request, f"/downloads/vault/{existing_order['vault_public_token']}"),
@@ -471,15 +491,23 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
     invoice_public_token = uuid.uuid4().hex
     vault_public_token = uuid.uuid4().hex
     minted_at = datetime.now(timezone.utc).isoformat()
+    nft_identifier = get_next_nft_identifier(
+        payment_session["nft_type"],
+        payment_session.get("prefix"),
+        payment_session.get("industry"),
+        minted_at,
+    )
     invoice_download_url = _public_url(request, f"/downloads/invoices/{invoice_public_token}")
     vault_download_url = _public_url(request, f"/downloads/vault/{vault_public_token}")
     receipt_download_url = _public_url(request, f"/downloads/receipts/{payment_session['receipt_public_token']}")
     invoice_path = None
     vault_path = None
+    registry_export_path = None
 
     try:
         order_payload = {
             "serial": serial,
+            "nft_identifier": nft_identifier,
             "invoice_number": invoice_number,
             "invoice_public_token": invoice_public_token,
             "vault_public_token": vault_public_token,
@@ -495,6 +523,8 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
             "billing_postal_code": payment_session.get("billing_postal_code", ""),
             "billing_phone": payment_session.get("billing_phone", ""),
             "billing_dob": payment_session.get("billing_dob", ""),
+            "prefix": payment_session.get("prefix", ""),
+            "industry": payment_session.get("industry", ""),
             "nft_type": payment_session["nft_type"],
             "package_tier": payment_session["package_tier"],
             "encryption": payment_session["encryption"],
@@ -521,6 +551,7 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
         metadata_payload = payment_session.get("metadata", {})
         nft_record = {
             "serial": serial,
+            "nft_identifier": nft_identifier,
             "invoice_number": invoice_number,
             "payment_reference": payment_session["payment_reference"],
             "receipt_number": payment_session["receipt_number"],
@@ -529,6 +560,8 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
             "receipt_download_url": receipt_download_url,
             "customer_name": payment_session["user_name"],
             "customer_email": payment_session["user_email"],
+            "prefix": payment_session.get("prefix", ""),
+            "industry": payment_session.get("industry", ""),
             "nft_type": payment_session["nft_type"],
             "package_tier": payment_session["package_tier"],
             "encryption": payment_session["encryption"],
@@ -551,9 +584,37 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
             metadata_payload,
             nft_record,
         )
+        registry_export_path = _write_dals_export(nft_record)
 
         invoice_path = generate_invoice_pdf(order_payload)
-        order_row = record_order(order_payload)
+        order_row = record_order_and_mint_event(
+            order_payload,
+            {
+                "payment_reference": payment_session["payment_reference"],
+                "receipt_number": payment_session["receipt_number"],
+                "invoice_number": invoice_number,
+                "serial": serial,
+                "nft_identifier": nft_identifier,
+                "prefix": payment_session.get("prefix", ""),
+                "industry": payment_session.get("industry", ""),
+                "nft_type": payment_session["nft_type"],
+                "package_tier": payment_session["package_tier"],
+                "encryption": payment_session["encryption"],
+                "chain": payment_session["chain"],
+                "quantity": payment_session["quantity"],
+                "user_id": payment_session.get("user_id"),
+                "user_email": payment_session["user_email"],
+                "user_name": payment_session["user_name"],
+                "file_name": payment_session.get("file_name"),
+                "metadata": metadata_payload,
+                "payment_method": payment_session["payment_method"],
+                "subtotal_usd": payment_session["subtotal_usd"],
+                "tax_amount_usd": payment_session["tax_amount_usd"],
+                "total_usd": payment_session["total_usd"],
+                "minted_at": minted_at,
+                "created_at": minted_at,
+            },
+        )
 
         email_result = {
             "status": "pending",
@@ -581,6 +642,7 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
             status="minted",
             minted_order_id=order_row["id"],
             minted_serial=serial,
+            minted_nft_identifier=nft_identifier,
             minted_invoice_number=invoice_number,
             minted_at=minted_at,
         )
@@ -588,6 +650,7 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
 
         return {
             "serial": serial,
+            "nft_identifier": nft_identifier,
             "invoice_number": invoice_number,
             "payment_reference": payment_session["payment_reference"],
             "receipt_number": payment_session["receipt_number"],
@@ -596,6 +659,7 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
             "receipt_download_url": receipt_download_url,
             "invoice_email_status": email_result["status"],
             "invoice_email_detail": email_result["detail"],
+            "dals_export_file": registry_export_path.name if registry_export_path else None,
             "grand_total": payment_session["total_usd"],
             "message": "Mint completed. Your invoice, receipt, and vault package are ready.",
         }
@@ -604,6 +668,8 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
             invoice_path.unlink()
         if vault_path and vault_path.exists():
             vault_path.unlink()
+        if registry_export_path and registry_export_path.exists():
+            registry_export_path.unlink()
         raise
 
 
@@ -674,7 +740,7 @@ def get_admin_orders(session: Dict[str, Any] = Depends(require_admin_session)):
 
 @app.get("/admin/nfts")
 def get_nft_log(session: Dict[str, Any] = Depends(require_admin_session)):
-    return JSONResponse(content=list_orders())
+    return JSONResponse(content=list_mint_events())
 
 
 @app.get("/admin/users")

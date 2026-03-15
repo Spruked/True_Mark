@@ -230,6 +230,8 @@ export default function Checkout() {
       const data = new FormData();
       data.append("name", checkoutDraft.name);
       data.append("email", checkoutDraft.email);
+      data.append("prefix", checkoutDraft.prefix || "GENERAL");
+      data.append("industry", checkoutDraft.industry || "DIGITAL");
       data.append("nft_type", checkoutDraft.nft_type);
       data.append("file", checkoutDraft.file);
       data.append("metadata", checkoutDraft.metadata || "");
@@ -312,10 +314,13 @@ export default function Checkout() {
             <Stack spacing={1.5}>
               <Typography><b>Name:</b> {checkoutDraft?.name || paymentSession?.user_name || "Not provided yet"}</Typography>
               <Typography><b>Email:</b> {checkoutDraft?.email || paymentSession?.user_email || "Not provided yet"}</Typography>
+              <Typography><b>Prefix:</b> {checkoutDraft?.prefix || paymentSession?.prefix || "GENERAL"}</Typography>
+              <Typography><b>Industry:</b> {checkoutDraft?.industry || paymentSession?.industry || "DIGITAL"}</Typography>
               <Typography><b>NFT Type:</b> {checkoutDraft?.nft_type || paymentSession?.nft_type || "Not selected yet"}</Typography>
               <Typography><b>File:</b> {checkoutDraft?.file?.name || checkoutDraft?.fileName || paymentSession?.file_name || "No file attached"}</Typography>
               <Typography><b>Estimated file size:</b> {checkoutDraft ? `${(fileSizeGb * 1024).toFixed(2)} MB` : "Stored on the backend"}</Typography>
               <Typography><b>Projected serial:</b> {nextSerial || paymentSession?.minted_serial || "Loading..."}</Typography>
+              <Typography><b>Minted identifier:</b> {paymentSession?.minted_nft_identifier || "Assigned after payment clears and mint is finalized."}</Typography>
               <Typography><b>Metadata:</b> {checkoutDraft?.metadata || "Metadata is staged with the uploaded file."}</Typography>
               {!checkoutDraft?.file && checkoutDraft?.fileName && !paymentSession && (
                 <Alert severity="warning">

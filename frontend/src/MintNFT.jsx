@@ -39,6 +39,8 @@ export default function MintNFT() {
   const [form, setForm] = useState({
     name: "",
     email: "",
+    prefix: "",
+    industry: "",
     nft_type: "K-NFT",
     package_tier: "starter",
     encryption: "none",
@@ -78,6 +80,8 @@ export default function MintNFT() {
       ...previous,
       name: checkoutDraft.name || previous.name,
       email: checkoutDraft.email || previous.email,
+      prefix: checkoutDraft.prefix || previous.prefix,
+      industry: checkoutDraft.industry || previous.industry,
       nft_type: checkoutDraft.nft_type || previous.nft_type,
       package_tier: checkoutDraft.package_tier || previous.package_tier,
       encryption: checkoutDraft.encryption || previous.encryption,
@@ -117,9 +121,12 @@ export default function MintNFT() {
 
   const handleChange = (event) => {
     const { name, value, files } = event.target;
+    const normalizedValue = name === "prefix" || name === "industry"
+      ? value.toUpperCase()
+      : value;
     setForm((previous) => ({
       ...previous,
-      [name]: files ? files[0] : value,
+      [name]: files ? files[0] : normalizedValue,
     }));
   };
 
@@ -166,7 +173,7 @@ export default function MintNFT() {
         payment_token: paymentSession.payment_token,
       });
       setMintResult(response.data);
-      setSuccess(`Mint completed. Serial ${response.data.serial} is now recorded and invoice ${response.data.invoice_number} is ready.`);
+      setSuccess(`Mint completed. ${response.data.nft_identifier} is now recorded and invoice ${response.data.invoice_number} is ready.`);
       clearPaymentSession();
     } catch (requestError) {
       setError(requestError.response?.data?.detail || "The NFT could not be minted right now.");
@@ -230,9 +237,12 @@ export default function MintNFT() {
             <Stack spacing={1.2}>
               <Typography><b>Payment Reference:</b> {paymentSession.payment_reference}</Typography>
               <Typography><b>Receipt Number:</b> {paymentSession.receipt_number}</Typography>
+              <Typography><b>Prefix:</b> {paymentSession.prefix || "GENERAL"}</Typography>
+              <Typography><b>Industry:</b> {paymentSession.industry || "DIGITAL"}</Typography>
               <Typography><b>File:</b> {paymentSession.file_name}</Typography>
               <Typography><b>Estimated Total Paid:</b> ${Number(paymentSession.total_usd || 0).toFixed(2)}</Typography>
               <Typography><b>Projected Serial:</b> {paymentSession.minted_serial || "The next available True Mark serial will be assigned at mint time."}</Typography>
+              <Typography><b>Minted Identifier:</b> {paymentSession.minted_nft_identifier || "The canonical identifier will be assigned at mint time."}</Typography>
             </Stack>
             <Stack spacing={2} sx={{ mt: 2 }}>
               <Button onClick={handleFinalizeMint} variant="contained" sx={styles.primaryButton}>
@@ -263,6 +273,7 @@ export default function MintNFT() {
             </Typography>
             <Stack spacing={1.2}>
               <Typography><b>Serial:</b> {mintResult.serial}</Typography>
+              <Typography><b>NFT Identifier:</b> {mintResult.nft_identifier}</Typography>
               <Typography><b>Invoice:</b> {mintResult.invoice_number}</Typography>
               <Typography><b>Payment Reference:</b> {mintResult.payment_reference}</Typography>
               <Typography><b>Receipt Number:</b> {mintResult.receipt_number}</Typography>
@@ -311,6 +322,30 @@ export default function MintNFT() {
                 fullWidth
                 required
                 InputLabelProps={{ style: { color: "#C8CCD0" } }}
+                InputProps={{ style: { color: "#F4F7F8" } }}
+              />
+              <TextField
+                label="Mint Prefix"
+                name="prefix"
+                value={form.prefix}
+                onChange={handleChange}
+                fullWidth
+                required
+                helperText="Short authority code used in the minted identifier, for example SPRUKED."
+                InputLabelProps={{ style: { color: "#C8CCD0" } }}
+                FormHelperTextProps={{ style: { color: "#C8CCD0" } }}
+                InputProps={{ style: { color: "#F4F7F8" } }}
+              />
+              <TextField
+                label="Industry Code"
+                name="industry"
+                value={form.industry}
+                onChange={handleChange}
+                fullWidth
+                required
+                helperText="Short category code used in the minted identifier, for example MEDIA or FARM."
+                InputLabelProps={{ style: { color: "#C8CCD0" } }}
+                FormHelperTextProps={{ style: { color: "#C8CCD0" } }}
                 InputProps={{ style: { color: "#F4F7F8" } }}
               />
               <TextField

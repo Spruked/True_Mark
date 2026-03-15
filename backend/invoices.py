@@ -106,13 +106,14 @@ def generate_invoice_pdf(order: Dict[str, Any]) -> Path:
         story.append(Image(str(logo_path), width=1.4 * inch, height=1.4 * inch))
         story.append(Spacer(1, 0.15 * inch))
 
-    story.append(Paragraph("True Mark Mint Engine", styles["InvoiceTitle"]))
+    story.append(Paragraph("True Mark Mint", styles["InvoiceTitle"]))
     story.append(Paragraph("Sales Invoice", styles["SectionTitle"]))
     story.append(Spacer(1, 0.12 * inch))
 
     header_rows = [
         ["Invoice Number", order["invoice_number"]],
         ["Mint Serial", order["serial"]],
+        ["NFT Identifier", order.get("nft_identifier") or "Assigned at mint"],
         ["Payment Reference", order.get("payment_reference") or "Not recorded"],
         ["Receipt Number", order.get("receipt_number") or "Not recorded"],
         ["Issued", order["created_at"]],
@@ -209,6 +210,8 @@ def generate_invoice_pdf(order: Dict[str, Any]) -> Path:
         Paragraph(
             (
                 f"NFT Type: {order.get('nft_type')}<br/>"
+                f"Prefix: {order.get('prefix') or 'GENERAL'}<br/>"
+                f"Industry: {order.get('industry') or 'DIGITAL'}<br/>"
                 f"Package: {order.get('package_tier')}<br/>"
                 f"Encryption: {order.get('encryption')}<br/>"
                 f"Chain: {order.get('chain')}<br/>"
@@ -253,7 +256,7 @@ def generate_receipt_pdf(payment_session: Dict[str, Any]) -> Path:
         story.append(Image(str(logo_path), width=1.4 * inch, height=1.4 * inch))
         story.append(Spacer(1, 0.15 * inch))
 
-    story.append(Paragraph("True Mark Mint Engine", styles["ReceiptTitle"]))
+    story.append(Paragraph("True Mark Mint", styles["ReceiptTitle"]))
     story.append(Paragraph("Payment Receipt", styles["ReceiptSection"]))
     story.append(Spacer(1, 0.12 * inch))
 

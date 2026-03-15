@@ -4,6 +4,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import sqlite3
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -36,6 +37,7 @@ USER_COLUMNS = {
 ORDER_COLUMNS = {
     "id": "TEXT",
     "serial": "TEXT",
+    "nft_identifier": "TEXT",
     "invoice_number": "TEXT",
     "invoice_public_token": "TEXT",
     "vault_public_token": "TEXT",
@@ -51,6 +53,8 @@ ORDER_COLUMNS = {
     "billing_postal_code": "TEXT",
     "billing_phone": "TEXT",
     "billing_dob": "TEXT",
+    "prefix": "TEXT",
+    "industry": "TEXT",
     "nft_type": "TEXT",
     "package_tier": "TEXT",
     "encryption": "TEXT",
@@ -92,6 +96,8 @@ PAYMENT_SESSION_COLUMNS = {
     "billing_postal_code": "TEXT",
     "billing_phone": "TEXT",
     "billing_dob": "TEXT",
+    "prefix": "TEXT",
+    "industry": "TEXT",
     "nft_type": "TEXT",
     "package_tier": "TEXT",
     "encryption": "TEXT",
@@ -116,6 +122,7 @@ PAYMENT_SESSION_COLUMNS = {
     "refund_due_usd": "REAL",
     "minted_order_id": "TEXT",
     "minted_serial": "TEXT",
+    "minted_nft_identifier": "TEXT",
     "minted_invoice_number": "TEXT",
     "payment_captured_at": "TEXT",
     "canceled_at": "TEXT",
@@ -125,6 +132,34 @@ PAYMENT_SESSION_COLUMNS = {
     "updated_at": "TEXT",
 }
 
+MINT_EVENT_COLUMNS = {
+    "id": "TEXT",
+    "order_id": "TEXT",
+    "payment_reference": "TEXT",
+    "receipt_number": "TEXT",
+    "invoice_number": "TEXT",
+    "serial": "TEXT",
+    "nft_identifier": "TEXT",
+    "prefix": "TEXT",
+    "industry": "TEXT",
+    "nft_type": "TEXT",
+    "package_tier": "TEXT",
+    "encryption": "TEXT",
+    "chain": "TEXT",
+    "quantity": "INTEGER NOT NULL DEFAULT 1",
+    "user_id": "TEXT",
+    "user_email": "TEXT",
+    "user_name": "TEXT",
+    "file_name": "TEXT",
+    "metadata_json": "TEXT",
+    "payment_method": "TEXT",
+    "subtotal_usd": "REAL NOT NULL DEFAULT 0",
+    "tax_amount_usd": "REAL NOT NULL DEFAULT 0",
+    "total_usd": "REAL NOT NULL DEFAULT 0",
+    "minted_at": "TEXT",
+    "created_at": "TEXT",
+}
+
 
 def utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -132,6 +167,11 @@ def utc_now_iso() -> str:
 
 def parse_iso_datetime(value: str) -> datetime:
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
+def normalize_identifier_component(value: str | None, fallback: str) -> str:
+    cleaned = re.sub(r"[^A-Z0-9]+", "", (value or "").upper())
+    return cleaned or fallback
 
 
 def get_connection() -> sqlite3.Connection:
@@ -166,6 +206,9 @@ def _ensure_indexes(connection: sqlite3.Connection) -> None:
         "CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_serial ON orders(serial)"
     )
     connection.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_nft_identifier ON orders(nft_identifier)"
+    )
+    connection.execute(
         "CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_invoice_number ON orders(invoice_number)"
     )
     connection.execute(
@@ -191,6 +234,15 @@ def _ensure_indexes(connection: sqlite3.Connection) -> None:
     )
     connection.execute(
         "CREATE UNIQUE INDEX IF NOT EXISTS idx_payment_sessions_receipt_public_token ON payment_sessions(receipt_public_token)"
+    )
+    connection.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_payment_sessions_minted_nft_identifier ON payment_sessions(minted_nft_identifier)"
+    )
+    connection.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_mint_events_nft_identifier ON mint_events(nft_identifier)"
+    )
+    connection.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_mint_events_order_id ON mint_events(order_id)"
     )
 
 
@@ -221,6 +273,7 @@ def init_db() -> None:
             CREATE TABLE IF NOT EXISTS orders (
                 id TEXT PRIMARY KEY,
                 serial TEXT NOT NULL UNIQUE,
+                nft_identifier TEXT UNIQUE,
                 invoice_number TEXT,
                 invoice_public_token TEXT,
                 vault_public_token TEXT,
@@ -236,6 +289,8 @@ def init_db() -> None:
                 billing_postal_code TEXT,
                 billing_phone TEXT,
                 billing_dob TEXT,
+                prefix TEXT,
+                industry TEXT,
                 nft_type TEXT NOT NULL,
                 package_tier TEXT NOT NULL,
                 encryption TEXT NOT NULL,
@@ -280,6 +335,8 @@ def init_db() -> None:
                 billing_postal_code TEXT,
                 billing_phone TEXT,
                 billing_dob TEXT,
+                prefix TEXT,
+                industry TEXT,
                 nft_type TEXT NOT NULL,
                 package_tier TEXT NOT NULL,
                 encryption TEXT NOT NULL,
@@ -304,6 +361,7 @@ def init_db() -> None:
                 refund_due_usd REAL,
                 minted_order_id TEXT,
                 minted_serial TEXT,
+                minted_nft_identifier TEXT,
                 minted_invoice_number TEXT,
                 payment_captured_at TEXT,
                 canceled_at TEXT,
@@ -314,9 +372,41 @@ def init_db() -> None:
             )
             """
         )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS mint_events (
+                id TEXT PRIMARY KEY,
+                order_id TEXT NOT NULL UNIQUE,
+                payment_reference TEXT,
+                receipt_number TEXT,
+                invoice_number TEXT,
+                serial TEXT NOT NULL,
+                nft_identifier TEXT NOT NULL UNIQUE,
+                prefix TEXT,
+                industry TEXT,
+                nft_type TEXT NOT NULL,
+                package_tier TEXT,
+                encryption TEXT,
+                chain TEXT,
+                quantity INTEGER NOT NULL DEFAULT 1,
+                user_id TEXT,
+                user_email TEXT,
+                user_name TEXT,
+                file_name TEXT,
+                metadata_json TEXT,
+                payment_method TEXT,
+                subtotal_usd REAL NOT NULL DEFAULT 0,
+                tax_amount_usd REAL NOT NULL DEFAULT 0,
+                total_usd REAL NOT NULL DEFAULT 0,
+                minted_at TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
         _ensure_columns(connection, "users", USER_COLUMNS)
         _ensure_columns(connection, "orders", ORDER_COLUMNS)
         _ensure_columns(connection, "payment_sessions", PAYMENT_SESSION_COLUMNS)
+        _ensure_columns(connection, "mint_events", MINT_EVENT_COLUMNS)
         _ensure_indexes(connection)
 
 
@@ -374,6 +464,21 @@ def _public_payment_session(row: sqlite3.Row) -> Dict[str, Any]:
 
     session.pop("quote_snapshot_json", None)
     return session
+
+
+def _public_mint_event(row: sqlite3.Row) -> Dict[str, Any]:
+    mint_event = dict(row)
+
+    if mint_event.get("metadata_json"):
+        try:
+            mint_event["metadata"] = json.loads(mint_event["metadata_json"])
+        except json.JSONDecodeError:
+            mint_event["metadata"] = mint_event["metadata_json"]
+    else:
+        mint_event["metadata"] = {}
+
+    mint_event.pop("metadata_json", None)
+    return mint_event
 
 
 def hash_password(password: str, salt: str | None = None) -> str:
@@ -508,6 +613,38 @@ def get_next_truemark_serial() -> str:
     return f"TM-{last_value + 1:05d}"
 
 
+def get_next_nft_identifier(
+    nft_type: str,
+    prefix: str | None,
+    industry: str | None,
+    minted_at: str | None = None,
+) -> str:
+    year = parse_iso_datetime(minted_at).year if minted_at else datetime.now(timezone.utc).year
+    normalized_type = re.sub(r"[^A-Z0-9-]+", "", (nft_type or "").upper()) or "K-NFT"
+    normalized_prefix = normalize_identifier_component(prefix, "GENERAL")
+    normalized_industry = normalize_identifier_component(industry, "DIGITAL")
+    identifier_pattern = f"{normalized_type}-{normalized_prefix}-{normalized_industry}-{year}-%"
+
+    with get_connection() as connection:
+        row = connection.execute(
+            """
+            SELECT nft_identifier
+            FROM mint_events
+            WHERE nft_identifier LIKE ?
+            ORDER BY nft_identifier DESC
+            LIMIT 1
+            """,
+            (identifier_pattern,),
+        ).fetchone()
+
+    if not row or not row["nft_identifier"]:
+        next_counter = 1
+    else:
+        next_counter = int(row["nft_identifier"].split("-")[-1]) + 1
+
+    return f"{normalized_type}-{normalized_prefix}-{normalized_industry}-{year}-{next_counter:06d}"
+
+
 def get_next_invoice_number() -> str:
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d")
 
@@ -574,10 +711,11 @@ def get_next_receipt_number() -> str:
     return f"TMR-{stamp}-{last_counter + 1:05d}"
 
 
-def record_order(order: Dict[str, Any]) -> Dict[str, Any]:
-    row = {
+def _order_row_from_payload(order: Dict[str, Any]) -> Dict[str, Any]:
+    return {
         "id": str(uuid.uuid4()),
         "serial": order["serial"],
+        "nft_identifier": order.get("nft_identifier"),
         "invoice_number": order["invoice_number"],
         "invoice_public_token": order["invoice_public_token"],
         "vault_public_token": order["vault_public_token"],
@@ -593,6 +731,8 @@ def record_order(order: Dict[str, Any]) -> Dict[str, Any]:
         "billing_postal_code": order.get("billing_postal_code", "").strip(),
         "billing_phone": order.get("billing_phone", "").strip(),
         "billing_dob": order.get("billing_dob", "").strip(),
+        "prefix": normalize_identifier_component(order.get("prefix"), "GENERAL"),
+        "industry": normalize_identifier_component(order.get("industry"), "DIGITAL"),
         "nft_type": order["nft_type"],
         "package_tier": order.get("package_tier", "starter"),
         "encryption": order.get("encryption", "none"),
@@ -618,33 +758,103 @@ def record_order(order: Dict[str, Any]) -> Dict[str, Any]:
         "created_at": order.get("created_at", utc_now_iso()),
     }
 
-    with get_connection() as connection:
-        connection.execute(
-            """
-            INSERT INTO orders (
-                id, serial, invoice_number, invoice_public_token, vault_public_token, payment_reference,
-                receipt_number, user_id, user_email,
-                user_name, billing_address_line1, billing_address_line2, billing_city, billing_state,
-                billing_postal_code, billing_phone, billing_dob, nft_type, package_tier, encryption,
-                chain, quantity, file_name, estimated_storage_gb, subtotal_usd, tax_rate, tax_state,
-                tax_amount_usd, processing_fee_usd, discount_amount_usd, total_usd, payment_method,
-                crypto_token, crypto_spot_price_usd, quote_snapshot_json, invoice_email_status,
-                invoice_sent_to, invoice_emailed_at, status, created_at
-            ) VALUES (
-                :id, :serial, :invoice_number, :invoice_public_token, :vault_public_token, :payment_reference,
-                :receipt_number, :user_id, :user_email,
-                :user_name, :billing_address_line1, :billing_address_line2, :billing_city, :billing_state,
-                :billing_postal_code, :billing_phone, :billing_dob, :nft_type, :package_tier, :encryption,
-                :chain, :quantity, :file_name, :estimated_storage_gb, :subtotal_usd, :tax_rate, :tax_state,
-                :tax_amount_usd, :processing_fee_usd, :discount_amount_usd, :total_usd, :payment_method,
-                :crypto_token, :crypto_spot_price_usd, :quote_snapshot_json, :invoice_email_status,
-                :invoice_sent_to, :invoice_emailed_at, :status, :created_at
-            )
-            """,
-            row,
+
+def _insert_order(connection: sqlite3.Connection, row: Dict[str, Any]) -> None:
+    connection.execute(
+        """
+        INSERT INTO orders (
+            id, serial, nft_identifier, invoice_number, invoice_public_token, vault_public_token, payment_reference,
+            receipt_number, user_id, user_email,
+            user_name, billing_address_line1, billing_address_line2, billing_city, billing_state,
+            billing_postal_code, billing_phone, billing_dob, prefix, industry, nft_type, package_tier, encryption,
+            chain, quantity, file_name, estimated_storage_gb, subtotal_usd, tax_rate, tax_state,
+            tax_amount_usd, processing_fee_usd, discount_amount_usd, total_usd, payment_method,
+            crypto_token, crypto_spot_price_usd, quote_snapshot_json, invoice_email_status,
+            invoice_sent_to, invoice_emailed_at, status, created_at
+        ) VALUES (
+            :id, :serial, :nft_identifier, :invoice_number, :invoice_public_token, :vault_public_token, :payment_reference,
+            :receipt_number, :user_id, :user_email,
+            :user_name, :billing_address_line1, :billing_address_line2, :billing_city, :billing_state,
+            :billing_postal_code, :billing_phone, :billing_dob, :prefix, :industry, :nft_type, :package_tier, :encryption,
+            :chain, :quantity, :file_name, :estimated_storage_gb, :subtotal_usd, :tax_rate, :tax_state,
+            :tax_amount_usd, :processing_fee_usd, :discount_amount_usd, :total_usd, :payment_method,
+            :crypto_token, :crypto_spot_price_usd, :quote_snapshot_json, :invoice_email_status,
+            :invoice_sent_to, :invoice_emailed_at, :status, :created_at
         )
+        """,
+        row,
+    )
+
+
+def _mint_event_row_from_payload(mint_event: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "id": str(uuid.uuid4()),
+        "order_id": mint_event["order_id"],
+        "payment_reference": mint_event.get("payment_reference"),
+        "receipt_number": mint_event.get("receipt_number"),
+        "invoice_number": mint_event.get("invoice_number"),
+        "serial": mint_event["serial"],
+        "nft_identifier": mint_event["nft_identifier"],
+        "prefix": normalize_identifier_component(mint_event.get("prefix"), "GENERAL"),
+        "industry": normalize_identifier_component(mint_event.get("industry"), "DIGITAL"),
+        "nft_type": mint_event["nft_type"],
+        "package_tier": mint_event.get("package_tier"),
+        "encryption": mint_event.get("encryption"),
+        "chain": mint_event.get("chain"),
+        "quantity": int(mint_event.get("quantity", 1) or 1),
+        "user_id": mint_event.get("user_id"),
+        "user_email": mint_event.get("user_email"),
+        "user_name": mint_event.get("user_name"),
+        "file_name": mint_event.get("file_name"),
+        "metadata_json": json.dumps(mint_event.get("metadata", {})),
+        "payment_method": mint_event.get("payment_method"),
+        "subtotal_usd": float(mint_event.get("subtotal_usd", 0.0) or 0.0),
+        "tax_amount_usd": float(mint_event.get("tax_amount_usd", 0.0) or 0.0),
+        "total_usd": float(mint_event.get("total_usd", 0.0) or 0.0),
+        "minted_at": mint_event.get("minted_at", utc_now_iso()),
+        "created_at": mint_event.get("created_at", utc_now_iso()),
+    }
+
+
+def _insert_mint_event(connection: sqlite3.Connection, row: Dict[str, Any]) -> None:
+    connection.execute(
+        """
+        INSERT INTO mint_events (
+            id, order_id, payment_reference, receipt_number, invoice_number, serial, nft_identifier, prefix, industry,
+            nft_type, package_tier, encryption, chain, quantity, user_id, user_email, user_name, file_name,
+            metadata_json, payment_method, subtotal_usd, tax_amount_usd, total_usd, minted_at, created_at
+        ) VALUES (
+            :id, :order_id, :payment_reference, :receipt_number, :invoice_number, :serial, :nft_identifier, :prefix, :industry,
+            :nft_type, :package_tier, :encryption, :chain, :quantity, :user_id, :user_email, :user_name, :file_name,
+            :metadata_json, :payment_method, :subtotal_usd, :tax_amount_usd, :total_usd, :minted_at, :created_at
+        )
+        """,
+        row,
+    )
+
+
+def record_order(order: Dict[str, Any]) -> Dict[str, Any]:
+    row = _order_row_from_payload(order)
+
+    with get_connection() as connection:
+        _insert_order(connection, row)
 
     return row
+
+
+def record_order_and_mint_event(order: Dict[str, Any], mint_event: Dict[str, Any]) -> Dict[str, Any]:
+    order_row = _order_row_from_payload(order)
+    mint_event_row = _mint_event_row_from_payload({
+        **mint_event,
+        "order_id": order_row["id"],
+        "created_at": mint_event.get("created_at", order_row["created_at"]),
+    })
+
+    with get_connection() as connection:
+        _insert_order(connection, order_row)
+        _insert_mint_event(connection, mint_event_row)
+
+    return order_row
 
 
 def create_payment_session(payment_session: Dict[str, Any]) -> Dict[str, Any]:
@@ -665,6 +875,8 @@ def create_payment_session(payment_session: Dict[str, Any]) -> Dict[str, Any]:
         "billing_postal_code": payment_session.get("billing_postal_code", "").strip(),
         "billing_phone": payment_session.get("billing_phone", "").strip(),
         "billing_dob": payment_session.get("billing_dob", "").strip(),
+        "prefix": normalize_identifier_component(payment_session.get("prefix"), "GENERAL"),
+        "industry": normalize_identifier_component(payment_session.get("industry"), "DIGITAL"),
         "nft_type": payment_session["nft_type"],
         "package_tier": payment_session.get("package_tier", "starter"),
         "encryption": payment_session.get("encryption", "none"),
@@ -689,6 +901,7 @@ def create_payment_session(payment_session: Dict[str, Any]) -> Dict[str, Any]:
         "refund_due_usd": payment_session.get("refund_due_usd"),
         "minted_order_id": payment_session.get("minted_order_id"),
         "minted_serial": payment_session.get("minted_serial"),
+        "minted_nft_identifier": payment_session.get("minted_nft_identifier"),
         "minted_invoice_number": payment_session.get("minted_invoice_number"),
         "payment_captured_at": payment_session.get("payment_captured_at", now),
         "canceled_at": payment_session.get("canceled_at"),
@@ -704,20 +917,20 @@ def create_payment_session(payment_session: Dict[str, Any]) -> Dict[str, Any]:
             INSERT INTO payment_sessions (
                 id, payment_reference, payment_public_token, receipt_number, receipt_public_token, user_id, user_email,
                 user_name, billing_address_line1, billing_address_line2, billing_city, billing_state,
-                billing_postal_code, billing_phone, billing_dob, nft_type, package_tier, encryption,
+                billing_postal_code, billing_phone, billing_dob, prefix, industry, nft_type, package_tier, encryption,
                 chain, quantity, file_name, staged_file_path, estimated_storage_gb, metadata_json,
                 subtotal_usd, tax_rate, tax_state, tax_amount_usd, processing_fee_usd, discount_amount_usd,
                 total_usd, payment_method, crypto_token, crypto_spot_price_usd, quote_snapshot_json,
-                cancellation_fee_usd, refund_due_usd, minted_order_id, minted_serial, minted_invoice_number,
+                cancellation_fee_usd, refund_due_usd, minted_order_id, minted_serial, minted_nft_identifier, minted_invoice_number,
                 payment_captured_at, canceled_at, minted_at, status, created_at, updated_at
             ) VALUES (
                 :id, :payment_reference, :payment_public_token, :receipt_number, :receipt_public_token, :user_id, :user_email,
                 :user_name, :billing_address_line1, :billing_address_line2, :billing_city, :billing_state,
-                :billing_postal_code, :billing_phone, :billing_dob, :nft_type, :package_tier, :encryption,
+                :billing_postal_code, :billing_phone, :billing_dob, :prefix, :industry, :nft_type, :package_tier, :encryption,
                 :chain, :quantity, :file_name, :staged_file_path, :estimated_storage_gb, :metadata_json,
                 :subtotal_usd, :tax_rate, :tax_state, :tax_amount_usd, :processing_fee_usd, :discount_amount_usd,
                 :total_usd, :payment_method, :crypto_token, :crypto_spot_price_usd, :quote_snapshot_json,
-                :cancellation_fee_usd, :refund_due_usd, :minted_order_id, :minted_serial, :minted_invoice_number,
+                :cancellation_fee_usd, :refund_due_usd, :minted_order_id, :minted_serial, :minted_nft_identifier, :minted_invoice_number,
                 :payment_captured_at, :canceled_at, :minted_at, :status, :created_at, :updated_at
             )
             """,
@@ -755,6 +968,7 @@ def update_payment_session_status(
     canceled_at: str | None = None,
     minted_order_id: str | None = None,
     minted_serial: str | None = None,
+    minted_nft_identifier: str | None = None,
     minted_invoice_number: str | None = None,
     minted_at: str | None = None,
 ) -> None:
@@ -771,7 +985,7 @@ def update_payment_session_status(
             """
             UPDATE payment_sessions
             SET status = ?, refund_due_usd = ?, canceled_at = ?, minted_order_id = ?,
-                minted_serial = ?, minted_invoice_number = ?, minted_at = ?, updated_at = ?
+                minted_serial = ?, minted_nft_identifier = ?, minted_invoice_number = ?, minted_at = ?, updated_at = ?
             WHERE payment_public_token = ?
             """,
             (
@@ -780,6 +994,7 @@ def update_payment_session_status(
                 canceled_at if canceled_at is not None else current["canceled_at"],
                 minted_order_id if minted_order_id is not None else current["minted_order_id"],
                 minted_serial if minted_serial is not None else current["minted_serial"],
+                minted_nft_identifier if minted_nft_identifier is not None else current["minted_nft_identifier"],
                 minted_invoice_number if minted_invoice_number is not None else current["minted_invoice_number"],
                 minted_at if minted_at is not None else current["minted_at"],
                 utc_now_iso(),
@@ -848,6 +1063,20 @@ def list_orders(limit: Optional[int] = None) -> List[Dict[str, Any]]:
         rows = connection.execute(query, parameters).fetchall()
 
     return [_public_order(row) for row in rows]
+
+
+def list_mint_events(limit: Optional[int] = None) -> List[Dict[str, Any]]:
+    query = "SELECT * FROM mint_events ORDER BY datetime(minted_at) DESC"
+    parameters: tuple[Any, ...] = ()
+
+    if limit:
+        query += " LIMIT ?"
+        parameters = (limit,)
+
+    with get_connection() as connection:
+        rows = connection.execute(query, parameters).fetchall()
+
+    return [_public_mint_event(row) for row in rows]
 
 
 def summarize_orders(orders: List[Dict[str, Any]]) -> Dict[str, Any]:

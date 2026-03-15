@@ -45,6 +45,7 @@ export default function AdminDashboard() {
   const [saveMessage, setSaveMessage] = useState("");
   const [records, setRecords] = useState({
     orders: [],
+    mints: [],
     accounts: [],
     pricing: null,
     serial: null,
@@ -69,8 +70,9 @@ export default function AdminDashboard() {
           headers: getAdminAuthHeaders(),
         };
 
-        const [orders, accounts, pricing, serial, analytics, taxTable, market] = await Promise.all([
+        const [orders, mints, accounts, pricing, serial, analytics, taxTable, market] = await Promise.all([
           axios.get(`${API_BASE}/admin/orders`, adminRequestConfig),
+          axios.get(`${API_BASE}/admin/nfts`, adminRequestConfig),
           axios.get(`${API_BASE}/admin/accounts`, adminRequestConfig),
           axios.get(`${API_BASE}/admin/pricing`, adminRequestConfig),
           axios.get(`${API_BASE}/admin/serial`, adminRequestConfig),
@@ -85,6 +87,7 @@ export default function AdminDashboard() {
 
         setRecords({
           orders: orders.data,
+          mints: mints.data,
           accounts: accounts.data,
           pricing: pricing.data,
           serial: serial.data,
@@ -301,7 +304,7 @@ export default function AdminDashboard() {
               Admin Dashboard
             </Typography>
             <Typography variant="body1" sx={{ opacity: 0.84 }}>
-              Pricing, revenue, tax, crypto monitoring, order history, and persistent user account management.
+              Pricing, revenue, tax, crypto monitoring, order history, mint registry, and persistent user account management.
             </Typography>
           </Box>
           <Button component={RouterLink} to="/mint" variant="outlined" sx={{ alignSelf: "flex-start", ...styles.secondaryButton }}>
@@ -592,8 +595,14 @@ export default function AdminDashboard() {
                 {records.orders.map((order) => (
                   <Box key={order.id} sx={{ p: 2, borderRadius: 2, background: "rgba(10, 15, 31, 0.55)" }}>
                     <Typography fontWeight={700}>{order.serial}</Typography>
+                    <Typography variant="body2" sx={{ color: colors.gold }}>
+                      {order.nft_identifier || "Identifier pending"}
+                    </Typography>
                     <Typography variant="body2">
                       {order.user_name} | {order.nft_type} | {order.chain} | {order.payment_method}
+                    </Typography>
+                    <Typography variant="body2">
+                      Prefix {order.prefix || "GENERAL"} | Industry {order.industry || "DIGITAL"}
                     </Typography>
                     <Typography variant="body2">
                       Total ${Number(order.total_usd || 0).toFixed(2)} | Tax ${Number(order.tax_amount_usd || 0).toFixed(2)}
@@ -652,6 +661,47 @@ export default function AdminDashboard() {
             )}
           </Box>
         </Stack>
+
+        <Box sx={{ mt: 3, p: 3, borderRadius: 3, background: "rgba(255,255,255,0.05)" }}>
+          <Typography variant="h6" fontWeight={700} gutterBottom sx={{ color: colors.gold }}>
+            Mint Registry
+          </Typography>
+          {records.mints.length === 0 ? (
+            <Typography variant="body2" sx={{ opacity: 0.84 }}>
+              No mint events recorded yet.
+            </Typography>
+          ) : (
+            <Stack spacing={2}>
+              {records.mints.map((mintEvent) => (
+                <Box key={mintEvent.id} sx={{ p: 2, borderRadius: 2, background: "rgba(10, 15, 31, 0.55)" }}>
+                  <Typography fontWeight={700}>{mintEvent.nft_identifier}</Typography>
+                  <Typography variant="body2">
+                    Serial {mintEvent.serial} | Invoice {mintEvent.invoice_number || "Pending"} | Payment {mintEvent.payment_reference || "N/A"}
+                  </Typography>
+                  <Typography variant="body2">
+                    {mintEvent.user_name || "Customer"} | {mintEvent.user_email || "No email"} | {mintEvent.nft_type}
+                  </Typography>
+                  <Typography variant="body2">
+                    Prefix {mintEvent.prefix || "GENERAL"} | Industry {mintEvent.industry || "DIGITAL"} | {mintEvent.chain || "polygon"}
+                  </Typography>
+                  <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mt: 1.5 }}>
+                    <Button
+                      variant="outlined"
+                      onClick={() => handleInvoiceDownload(mintEvent.invoice_number)}
+                      disabled={!mintEvent.invoice_number || downloadingInvoice === mintEvent.invoice_number}
+                      sx={styles.secondaryButton}
+                    >
+                      {downloadingInvoice === mintEvent.invoice_number ? "Preparing Invoice..." : "Download Invoice"}
+                    </Button>
+                  </Stack>
+                  <Typography variant="caption" sx={{ color: "#C8CCD0" }}>
+                    {new Date(mintEvent.minted_at).toLocaleString()}
+                  </Typography>
+                </Box>
+              ))}
+            </Stack>
+          )}
+        </Box>
       </Container>
     </Box>
   );
