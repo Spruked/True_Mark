@@ -133,6 +133,7 @@ export default function Checkout() {
           chain: selections.chain,
           quantity: Number(selections.quantity) || 1,
           estimated_storage_gb: fileSizeGb,
+          email: checkoutDraft.email,
         });
 
         if (!active) {
@@ -202,6 +203,7 @@ export default function Checkout() {
       data.append("encryption", selections.encryption);
       data.append("chain", selections.chain);
       data.append("quantity", String(selections.quantity));
+      data.append("payment_method", paymentMethod);
 
       const response = await axios.post(`${API_BASE}/mint`, data, {
         responseType: "blob",
@@ -355,12 +357,18 @@ export default function Checkout() {
                   </Typography>
                 )}
                 <Typography><b>Processing Fee:</b> ${quote.processing_fee.toFixed(2)}</Typography>
+                <Typography><b>Estimated Tax:</b> ${Number(quote.estimated_tax || 0).toFixed(2)}</Typography>
                 <Typography variant="h5" sx={{ color: colors.gold, pt: 1 }}>
-                  Total: ${quote.total.toFixed(2)}
+                  Grand Total: ${Number(quote.grand_total ?? quote.total).toFixed(2)}
                 </Typography>
                 <Typography variant="body2" sx={{ opacity: 0.84 }}>
                   Per unit: ${quote.per_unit_total.toFixed(2)} {quote.currency}
                 </Typography>
+                {quote.tax_state && (
+                  <Typography variant="body2" sx={{ opacity: 0.84 }}>
+                    Tax basis: {quote.tax_state}
+                  </Typography>
+                )}
               </Stack>
             ) : (
               <Typography variant="body2" sx={{ opacity: 0.84 }}>

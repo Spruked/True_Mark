@@ -8,9 +8,13 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import axios from "axios";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
-import { getStoredAccount, startUserSession } from "./authStorage";
+import { saveStoredAccount, startUserSession } from "./authStorage";
+import { getBackendApiBase } from "./apiBase";
 import { colors, styles } from "./designTokens";
+
+const API_BASE = getBackendApiBase();
 
 export default function Login() {
   const navigate = useNavigate();
@@ -21,6 +25,7 @@ export default function Login() {
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -30,7 +35,7 @@ export default function Login() {
     }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
     setSuccess("");
@@ -41,28 +46,22 @@ export default function Login() {
       return;
     }
 
-    const storedAccount = getStoredAccount();
+    try {
+      setSubmitting(true);
+      const response = await axios.post(`${API_BASE}/accounts/login`, {
+        email: form.email.trim().toLowerCase(),
+        password: form.password,
+      });
 
-    if (storedAccount) {
-      const normalizedEmail = form.email.trim().toLowerCase();
-
-      if (storedAccount.email !== normalizedEmail || storedAccount.password !== form.password) {
-        setError("That email and password do not match the account created in this browser.");
-        return;
-      }
-
-      startUserSession(storedAccount);
-      setSuccess(`Welcome back, ${storedAccount.name}. Your account has been restored for this session.`);
+      saveStoredAccount(response.data);
+      startUserSession(response.data);
+      setSuccess(`Welcome back, ${response.data.name}. Your account has been restored for this session.`);
       navigate(redirectTarget);
-      return;
+    } catch (requestError) {
+      setError(requestError.response?.data?.detail || "That email and password do not match a saved account.");
+    } finally {
+      setSubmitting(false);
     }
-
-    window.sessionStorage.setItem("tm-user-session", JSON.stringify({
-      email: form.email.trim().toLowerCase(),
-      startedAt: new Date().toISOString(),
-    }));
-    setSuccess("Signed in for this session. No saved local account was found, so this access is temporary.");
-    navigate(redirectTarget);
   };
 
   return (
@@ -105,8 +104,8 @@ export default function Login() {
               InputLabelProps={{ style: { color: "#C8CCD0" } }}
               InputProps={{ style: { color: "#F4F7F8" } }}
             />
-            <Button type="submit" variant="contained" sx={styles.primaryButton}>
-              Sign In
+            <Button type="submit" variant="contained" sx={styles.primaryButton} disabled={submitting}>
+              {submitting ? "Signing In..." : "Sign In"}
             </Button>
             <Button component={RouterLink} to="/mint" variant="outlined" sx={styles.secondaryButton}>
               Go to Mint

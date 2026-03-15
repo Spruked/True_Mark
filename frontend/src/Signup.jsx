@@ -11,9 +11,13 @@ import {
   Alert,
   Stack
 } from "@mui/material";
+import axios from "axios";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { saveStoredAccount, startUserSession } from "./authStorage";
+import { getBackendApiBase } from "./apiBase";
 import { colors, styles } from "./designTokens";
+
+const API_BASE = getBackendApiBase();
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -21,12 +25,20 @@ export default function Signup() {
     name: "",
     email: "",
     password: "",
+    address_line1: "",
+    address_line2: "",
+    city: "",
+    state: "",
+    postal_code: "",
+    phone: "",
+    dob: "",
     agree: false,
     marketing: false
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [createdAccount, setCreatedAccount] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -36,12 +48,12 @@ export default function Signup() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
-    if (!form.name || !form.email || !form.password) {
-      setError("All fields are required.");
+    if (!form.name || !form.email || !form.password || !form.address_line1 || !form.city || !form.state || !form.postal_code || !form.phone || !form.dob) {
+      setError("Name, email, password, address, phone, and date of birth are required.");
       return;
     }
     if (!form.agree) {
@@ -49,18 +61,31 @@ export default function Signup() {
       return;
     }
 
-    const account = {
-      name: form.name.trim(),
-      email: form.email.trim().toLowerCase(),
-      password: form.password,
-      marketing: form.marketing,
-      createdAt: new Date().toISOString(),
-    };
+    try {
+      setSubmitting(true);
+      const response = await axios.post(`${API_BASE}/accounts/signup`, {
+        name: form.name.trim(),
+        email: form.email.trim().toLowerCase(),
+        password: form.password,
+        address_line1: form.address_line1.trim(),
+        address_line2: form.address_line2.trim(),
+        city: form.city.trim(),
+        state: form.state.trim().toUpperCase(),
+        postal_code: form.postal_code.trim(),
+        phone: form.phone.trim(),
+        dob: form.dob,
+        marketing: form.marketing,
+      });
 
-    saveStoredAccount(account);
-    startUserSession(account);
-    setCreatedAccount(account);
-    setSuccess(`Account created for ${account.email}. You are now recognized by the local app flow and can continue into minting or log in again later on this browser.`);
+      saveStoredAccount(response.data);
+      startUserSession(response.data);
+      setCreatedAccount(response.data);
+      setSuccess(`Account created for ${response.data.email}. Your onboarding details are now stored in the True Mark backend.`);
+    } catch (requestError) {
+      setError(requestError.response?.data?.detail || "Account creation failed.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -137,6 +162,76 @@ export default function Signup() {
                 InputLabelProps={{ style: { color: "#C8CCD0" } }}
                 InputProps={{ style: { color: "#F4F7F8" } }}
               />
+              <TextField
+                label="Address Line 1"
+                name="address_line1"
+                value={form.address_line1}
+                onChange={handleChange}
+                fullWidth
+                required
+                InputLabelProps={{ style: { color: "#C8CCD0" } }}
+                InputProps={{ style: { color: "#F4F7F8" } }}
+              />
+              <TextField
+                label="Address Line 2"
+                name="address_line2"
+                value={form.address_line2}
+                onChange={handleChange}
+                fullWidth
+                InputLabelProps={{ style: { color: "#C8CCD0" } }}
+                InputProps={{ style: { color: "#F4F7F8" } }}
+              />
+              <TextField
+                label="City"
+                name="city"
+                value={form.city}
+                onChange={handleChange}
+                fullWidth
+                required
+                InputLabelProps={{ style: { color: "#C8CCD0" } }}
+                InputProps={{ style: { color: "#F4F7F8" } }}
+              />
+              <TextField
+                label="State"
+                name="state"
+                value={form.state}
+                onChange={handleChange}
+                fullWidth
+                required
+                InputLabelProps={{ style: { color: "#C8CCD0" } }}
+                InputProps={{ style: { color: "#F4F7F8" } }}
+              />
+              <TextField
+                label="Postal Code"
+                name="postal_code"
+                value={form.postal_code}
+                onChange={handleChange}
+                fullWidth
+                required
+                InputLabelProps={{ style: { color: "#C8CCD0" } }}
+                InputProps={{ style: { color: "#F4F7F8" } }}
+              />
+              <TextField
+                label="Telephone"
+                name="phone"
+                value={form.phone}
+                onChange={handleChange}
+                fullWidth
+                required
+                InputLabelProps={{ style: { color: "#C8CCD0" } }}
+                InputProps={{ style: { color: "#F4F7F8" } }}
+              />
+              <TextField
+                label="Date of Birth"
+                name="dob"
+                type="date"
+                value={form.dob}
+                onChange={handleChange}
+                fullWidth
+                required
+                InputLabelProps={{ shrink: true, style: { color: "#C8CCD0" } }}
+                InputProps={{ style: { color: "#F4F7F8" } }}
+              />
               <FormControlLabel
                 control={<Checkbox name="marketing" checked={form.marketing} onChange={handleChange} sx={{ color: colors.gold }} />}
                 label={<Typography variant="body2">I agree to receive updates and marketing emails (never sold or shared).</Typography>}
@@ -145,8 +240,8 @@ export default function Signup() {
                 control={<Checkbox name="agree" checked={form.agree} onChange={handleChange} sx={{ color: colors.gold }} required />}
                 label={<Typography variant="body2">I agree to the <Link href="/user-agreement" target="_blank" sx={{ color: colors.gold }}>User Agreement</Link> and <Link href="/privacy-policy" target="_blank" sx={{ color: colors.gold }}>Privacy Policy</Link>.</Typography>}
               />
-              <Button type="submit" variant="contained" fullWidth sx={styles.primaryButton}>
-                Sign Up
+              <Button type="submit" variant="contained" fullWidth sx={styles.primaryButton} disabled={submitting}>
+                {submitting ? "Creating Account..." : "Sign Up"}
               </Button>
               {createdAccount && (
                 <>

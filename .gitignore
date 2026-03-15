@@ -24,6 +24,8 @@ truemark-chat-assistant/frontend/build/
 frontend/.env
 backend/.env
 truemark-chat-assistant/.env
+backend/data/
+*.db
 
 # OS
 .DS_Store

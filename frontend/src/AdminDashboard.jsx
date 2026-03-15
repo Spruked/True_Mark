@@ -22,6 +22,20 @@ function numberValue(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function MetricCard({ label, value, note }) {
+  return (
+    <Box sx={{ p: 3, borderRadius: 3, background: "rgba(255,255,255,0.05)" }}>
+      <Typography variant="overline" sx={{ color: "#C8CCD0" }}>{label}</Typography>
+      <Typography variant="h4" fontWeight={700}>{value}</Typography>
+      {note && (
+        <Typography variant="body2" sx={{ opacity: 0.84, mt: 0.75 }}>
+          {note}
+        </Typography>
+      )}
+    </Box>
+  );
+}
+
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -29,12 +43,18 @@ export default function AdminDashboard() {
   const [error, setError] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
   const [records, setRecords] = useState({
-    nfts: [],
-    users: [],
+    orders: [],
+    accounts: [],
     pricing: null,
     serial: null,
+    analytics: null,
+    taxTable: null,
+    market: null,
   });
   const [editablePricing, setEditablePricing] = useState(null);
+  const [editableTaxTable, setEditableTaxTable] = useState(null);
+  const [newTaxState, setNewTaxState] = useState("");
+  const [newTaxRate, setNewTaxRate] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -47,11 +67,15 @@ export default function AdminDashboard() {
         const adminRequestConfig = {
           headers: getAdminAuthHeaders(),
         };
-        const [nfts, users, pricing, serial] = await Promise.all([
-          axios.get(`${API_BASE}/admin/nfts`, adminRequestConfig),
-          axios.get(`${API_BASE}/admin/users`, adminRequestConfig),
+
+        const [orders, accounts, pricing, serial, analytics, taxTable, market] = await Promise.all([
+          axios.get(`${API_BASE}/admin/orders`, adminRequestConfig),
+          axios.get(`${API_BASE}/admin/accounts`, adminRequestConfig),
           axios.get(`${API_BASE}/admin/pricing`, adminRequestConfig),
           axios.get(`${API_BASE}/admin/serial`, adminRequestConfig),
+          axios.get(`${API_BASE}/admin/analytics`, adminRequestConfig),
+          axios.get(`${API_BASE}/admin/tax-table`, adminRequestConfig),
+          axios.get(`${API_BASE}/admin/market`, adminRequestConfig),
         ]);
 
         if (!active) {
@@ -59,12 +83,16 @@ export default function AdminDashboard() {
         }
 
         setRecords({
-          nfts: nfts.data,
-          users: users.data,
+          orders: orders.data,
+          accounts: accounts.data,
           pricing: pricing.data,
           serial: serial.data,
+          analytics: analytics.data,
+          taxTable: taxTable.data,
+          market: market.data,
         });
         setEditablePricing(pricing.data);
+        setEditableTaxTable(taxTable.data);
       } catch (requestError) {
         if (active) {
           if (requestError.response?.status === 401) {
@@ -112,6 +140,52 @@ export default function AdminDashboard() {
     }));
   };
 
+  const updateTaxDefaultRate = (value) => {
+    setEditableTaxTable((current) => ({
+      ...current,
+      default_rate: numberValue(value),
+    }));
+  };
+
+  const updateTaxNote = (value) => {
+    setEditableTaxTable((current) => ({
+      ...current,
+      notes: value,
+    }));
+  };
+
+  const updateStateRate = (stateCode, value) => {
+    const normalizedState = stateCode.trim().toUpperCase();
+    setEditableTaxTable((current) => ({
+      ...current,
+      state_rates: {
+        ...current.state_rates,
+        [normalizedState]: numberValue(value),
+      },
+    }));
+  };
+
+  const removeStateRate = (stateCode) => {
+    setEditableTaxTable((current) => {
+      const nextStateRates = { ...current.state_rates };
+      delete nextStateRates[stateCode];
+      return {
+        ...current,
+        state_rates: nextStateRates,
+      };
+    });
+  };
+
+  const addStateRate = () => {
+    if (!newTaxState.trim()) {
+      return;
+    }
+
+    updateStateRate(newTaxState, newTaxRate);
+    setNewTaxState("");
+    setNewTaxRate("");
+  };
+
   const handleSavePricing = async () => {
     if (!editablePricing) {
       return;
@@ -130,7 +204,7 @@ export default function AdminDashboard() {
         ...current,
         pricing: response.data,
       }));
-      setSaveMessage("Pricing was saved to the backend configuration and can be changed again anytime.");
+      setSaveMessage("Pricing was saved to the backend configuration.");
     } catch (requestError) {
       if (requestError.response?.status === 401) {
         clearAdminSession();
@@ -144,16 +218,55 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleSaveTaxTable = async () => {
+    if (!editableTaxTable) {
+      return;
+    }
+
+    setSaving(true);
+    setSaveMessage("");
+    setError("");
+
+    try {
+      const response = await axios.put(`${API_BASE}/admin/tax-table`, editableTaxTable, {
+        headers: getAdminAuthHeaders(),
+      });
+      setEditableTaxTable(response.data);
+      setRecords((current) => ({
+        ...current,
+        taxTable: response.data,
+      }));
+      setSaveMessage("Tax table saved successfully.");
+    } catch (requestError) {
+      if (requestError.response?.status === 401) {
+        clearAdminSession();
+        navigate("/admin/login", { replace: true, state: { from: "/admin/dashboard" } });
+        return;
+      }
+
+      setError("Tax table changes could not be saved.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const analytics = records.analytics || {};
+  const lifetime = analytics.lifetime || {};
+  const daily = analytics.daily || {};
+  const weekly = analytics.weekly || {};
+  const monthly = analytics.monthly || {};
+  const marketAssets = records.market?.assets || {};
+
   return (
     <Box sx={{ minHeight: "100vh", background: colors.background, color: colors.text, py: 8 }}>
-      <Container maxWidth="lg">
+      <Container maxWidth="xl">
         <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" spacing={2} sx={{ mb: 3 }}>
           <Box>
             <Typography variant="h4" fontWeight={700} sx={styles.title}>
               Admin Dashboard
             </Typography>
             <Typography variant="body1" sx={{ opacity: 0.84 }}>
-              Live overview of minted objects, user submissions, serial progression, and editable pricing.
+              Pricing, revenue, tax, crypto monitoring, order history, and persistent user account management.
             </Typography>
           </Box>
           <Button component={RouterLink} to="/mint" variant="outlined" sx={{ alignSelf: "flex-start", ...styles.secondaryButton }}>
@@ -168,45 +281,52 @@ export default function AdminDashboard() {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
+            gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)", xl: "repeat(6, 1fr)" },
             gap: 2,
             mb: 4,
           }}
         >
-          <Box sx={{ p: 3, borderRadius: 3, background: "rgba(255,255,255,0.05)" }}>
-            <Typography variant="overline" sx={{ color: "#C8CCD0" }}>Minted Records</Typography>
-            <Typography variant="h4" fontWeight={700}>{records.nfts.length}</Typography>
-          </Box>
-          <Box sx={{ p: 3, borderRadius: 3, background: "rgba(255,255,255,0.05)" }}>
-            <Typography variant="overline" sx={{ color: "#C8CCD0" }}>Users Logged</Typography>
-            <Typography variant="h4" fontWeight={700}>{records.users.length}</Typography>
-          </Box>
-          <Box sx={{ p: 3, borderRadius: 3, background: "rgba(255,255,255,0.05)" }}>
-            <Typography variant="overline" sx={{ color: "#C8CCD0" }}>Next Serial</Typography>
-            <Typography variant="h5" fontWeight={700}>{records.serial?.next_serial || "Loading..."}</Typography>
-          </Box>
-          <Box sx={{ p: 3, borderRadius: 3, background: "rgba(255,255,255,0.05)" }}>
-            <Typography variant="overline" sx={{ color: "#C8CCD0" }}>Current Starter Price</Typography>
-            <Typography variant="body1" fontWeight={700}>
-              ${(records.pricing?.package_tiers?.starter?.price ?? 0).toFixed ? records.pricing?.package_tiers?.starter?.price.toFixed(2) : records.pricing?.package_tiers?.starter?.price ?? 0}
-            </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.84 }}>
-              {records.pricing?.settlement?.display_currency ?? "USD"} pricing only
-            </Typography>
-          </Box>
+          <MetricCard label="Lifetime Revenue" value={`$${Number(lifetime.gross_revenue_usd || 0).toFixed(2)}`} note={`${lifetime.orders_count || 0} total orders`} />
+          <MetricCard label="Daily Revenue" value={`$${Number(daily.gross_revenue_usd || 0).toFixed(2)}`} note={`${daily.orders_count || 0} orders in 24h`} />
+          <MetricCard label="Weekly Revenue" value={`$${Number(weekly.gross_revenue_usd || 0).toFixed(2)}`} note={`${weekly.orders_count || 0} orders in 7d`} />
+          <MetricCard label="Monthly Revenue" value={`$${Number(monthly.gross_revenue_usd || 0).toFixed(2)}`} note={`${monthly.orders_count || 0} orders in 30d`} />
+          <MetricCard label="Taxes Collected" value={`$${Number(lifetime.taxes_collected_usd || 0).toFixed(2)}`} note="Lifetime tax estimate" />
+          <MetricCard label="Net Revenue" value={`$${Number(lifetime.net_revenue_usd || 0).toFixed(2)}`} note={`Avg order $${Number(lifetime.average_order_usd || 0).toFixed(2)}`} />
         </Box>
 
-        <Stack direction={{ xs: "column", xl: "row" }} spacing={3} alignItems="stretch">
+        <Stack direction={{ xs: "column", xl: "row" }} spacing={3} alignItems="stretch" sx={{ mb: 4 }}>
           <Box sx={{ flex: 1, p: 3, borderRadius: 3, background: "rgba(255,255,255,0.05)" }}>
+            <Typography variant="h6" fontWeight={700} gutterBottom sx={{ color: colors.gold }}>
+              Live Crypto Monitor
+            </Typography>
+            <Stack spacing={2}>
+              <Box sx={{ p: 2, borderRadius: 2, background: "rgba(10, 15, 31, 0.55)" }}>
+                <Typography fontWeight={700}>Polygon</Typography>
+                <Typography variant="h5">${Number(marketAssets.polygon?.usd || 0).toFixed(4)}</Typography>
+                <Typography variant="body2" sx={{ color: Number(marketAssets.polygon?.usd_24h_change || 0) >= 0 ? "#7DD3FC" : "#FCA5A5" }}>
+                  24h: {Number(marketAssets.polygon?.usd_24h_change || 0).toFixed(2)}%
+                </Typography>
+              </Box>
+              <Box sx={{ p: 2, borderRadius: 2, background: "rgba(10, 15, 31, 0.55)" }}>
+                <Typography fontWeight={700}>Ethereum</Typography>
+                <Typography variant="h5">${Number(marketAssets.ethereum?.usd || 0).toFixed(2)}</Typography>
+                <Typography variant="body2" sx={{ color: Number(marketAssets.ethereum?.usd_24h_change || 0) >= 0 ? "#7DD3FC" : "#FCA5A5" }}>
+                  24h: {Number(marketAssets.ethereum?.usd_24h_change || 0).toFixed(2)}%
+                </Typography>
+              </Box>
+              <Typography variant="body2" sx={{ opacity: 0.84 }}>
+                Updated: {records.market?.updated_at ? new Date(records.market.updated_at).toLocaleString() : "Not available"}
+              </Typography>
+            </Stack>
+          </Box>
+
+          <Box sx={{ flex: 2, p: 3, borderRadius: 3, background: "rgba(255,255,255,0.05)" }}>
             <Typography variant="h6" fontWeight={700} gutterBottom sx={{ color: colors.gold }}>
               Pricing Controls
             </Typography>
             <Typography variant="body2" sx={{ opacity: 0.84, mb: 2 }}>
-              These values are stored in the backend pricing config, so you can change them later without rewriting code.
+              Adjust mint pricing, package tiers, storage, and chain surcharges without rewriting code.
             </Typography>
-            <Alert severity="info" sx={{ mb: 2 }}>
-              Customer pricing is fiat-only. Crypto is treated as a live equivalent of the fiat quote, and mint execution is handled through the platform MetaMask account and Alchemy.
-            </Alert>
 
             {editablePricing && (
               <Stack spacing={3}>
@@ -327,46 +447,153 @@ export default function AdminDashboard() {
               </Stack>
             )}
           </Box>
+        </Stack>
 
+        <Stack direction={{ xs: "column", xl: "row" }} spacing={3} alignItems="stretch" sx={{ mb: 4 }}>
           <Box sx={{ flex: 1, p: 3, borderRadius: 3, background: "rgba(255,255,255,0.05)" }}>
             <Typography variant="h6" fontWeight={700} gutterBottom sx={{ color: colors.gold }}>
-              Mint Log
+              Tax Table
             </Typography>
-            {records.nfts.length === 0 ? (
+            {editableTaxTable && (
+              <Stack spacing={2}>
+                <TextField
+                  label="Default Tax Rate"
+                  type="number"
+                  value={editableTaxTable.default_rate}
+                  onChange={(event) => updateTaxDefaultRate(event.target.value)}
+                  fullWidth
+                  InputLabelProps={{ style: { color: "#C8CCD0" } }}
+                  InputProps={{ style: { color: "#F4F7F8" } }}
+                />
+                <TextField
+                  label="Tax Notes"
+                  multiline
+                  minRows={3}
+                  value={editableTaxTable.notes || ""}
+                  onChange={(event) => updateTaxNote(event.target.value)}
+                  fullWidth
+                  InputLabelProps={{ style: { color: "#C8CCD0" } }}
+                  InputProps={{ style: { color: "#F4F7F8" } }}
+                />
+                {Object.entries(editableTaxTable.state_rates || {}).map(([stateCode, rate]) => (
+                  <Stack key={stateCode} direction={{ xs: "column", sm: "row" }} spacing={2}>
+                    <TextField
+                      label="State"
+                      value={stateCode}
+                      fullWidth
+                      InputLabelProps={{ style: { color: "#C8CCD0" } }}
+                      InputProps={{ readOnly: true, style: { color: "#F4F7F8" } }}
+                    />
+                    <TextField
+                      label="Rate"
+                      type="number"
+                      value={rate}
+                      onChange={(event) => updateStateRate(stateCode, event.target.value)}
+                      fullWidth
+                      InputLabelProps={{ style: { color: "#C8CCD0" } }}
+                      InputProps={{ style: { color: "#F4F7F8" } }}
+                    />
+                    <Button variant="outlined" onClick={() => removeStateRate(stateCode)} sx={styles.secondaryButton}>
+                      Remove
+                    </Button>
+                  </Stack>
+                ))}
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                  <TextField
+                    label="New State"
+                    value={newTaxState}
+                    onChange={(event) => setNewTaxState(event.target.value.toUpperCase())}
+                    fullWidth
+                    InputLabelProps={{ style: { color: "#C8CCD0" } }}
+                    InputProps={{ style: { color: "#F4F7F8" } }}
+                  />
+                  <TextField
+                    label="New Rate"
+                    type="number"
+                    value={newTaxRate}
+                    onChange={(event) => setNewTaxRate(event.target.value)}
+                    fullWidth
+                    InputLabelProps={{ style: { color: "#C8CCD0" } }}
+                    InputProps={{ style: { color: "#F4F7F8" } }}
+                  />
+                  <Button variant="outlined" onClick={addStateRate} sx={styles.secondaryButton}>
+                    Add State
+                  </Button>
+                </Stack>
+                <Button onClick={handleSaveTaxTable} variant="contained" sx={styles.primaryButton}>
+                  Save Tax Table
+                </Button>
+              </Stack>
+            )}
+          </Box>
+
+          <Box sx={{ flex: 1.4, p: 3, borderRadius: 3, background: "rgba(255,255,255,0.05)" }}>
+            <Typography variant="h6" fontWeight={700} gutterBottom sx={{ color: colors.gold }}>
+              Cost Analysis
+            </Typography>
+            <Stack spacing={1.5}>
+              <Typography><b>Gross Revenue:</b> ${Number(lifetime.gross_revenue_usd || 0).toFixed(2)}</Typography>
+              <Typography><b>Taxes Collected:</b> ${Number(lifetime.taxes_collected_usd || 0).toFixed(2)}</Typography>
+              <Typography><b>Processing Fees:</b> ${Number(lifetime.processing_fees_usd || 0).toFixed(2)}</Typography>
+              <Typography><b>Discounts Issued:</b> ${Number(lifetime.discounts_usd || 0).toFixed(2)}</Typography>
+              <Typography><b>Net Revenue:</b> ${Number(lifetime.net_revenue_usd || 0).toFixed(2)}</Typography>
+              <Typography><b>Average Order Value:</b> ${Number(lifetime.average_order_usd || 0).toFixed(2)}</Typography>
+              <Typography><b>Next Serial:</b> {records.serial?.next_serial || "Loading..."}</Typography>
+            </Stack>
+          </Box>
+        </Stack>
+
+        <Stack direction={{ xs: "column", xl: "row" }} spacing={3} alignItems="stretch">
+          <Box sx={{ flex: 1.1, p: 3, borderRadius: 3, background: "rgba(255,255,255,0.05)" }}>
+            <Typography variant="h6" fontWeight={700} gutterBottom sx={{ color: colors.gold }}>
+              Recent Orders
+            </Typography>
+            {records.orders.length === 0 ? (
               <Typography variant="body2" sx={{ opacity: 0.84 }}>
-                No minted records yet. Submit a mint request to populate this dashboard.
+                No recorded orders yet.
               </Typography>
             ) : (
               <Stack spacing={2}>
-                {records.nfts.map((record) => (
-                  <Box key={record.serial} sx={{ p: 2, borderRadius: 2, background: "rgba(10, 15, 31, 0.55)" }}>
-                    <Typography fontWeight={700}>{record.serial}</Typography>
+                {records.orders.map((order) => (
+                  <Box key={order.id} sx={{ p: 2, borderRadius: 2, background: "rgba(10, 15, 31, 0.55)" }}>
+                    <Typography fontWeight={700}>{order.serial}</Typography>
                     <Typography variant="body2">
-                      {record.nft_type} | {record.package_tier} | {record.chain}
+                      {order.user_name} | {order.nft_type} | {order.chain} | {order.payment_method}
+                    </Typography>
+                    <Typography variant="body2">
+                      Total ${Number(order.total_usd || 0).toFixed(2)} | Tax ${Number(order.tax_amount_usd || 0).toFixed(2)}
                     </Typography>
                     <Typography variant="caption" sx={{ color: "#C8CCD0" }}>
-                      Glyph: {record.glyph}
+                      {new Date(order.created_at).toLocaleString()}
                     </Typography>
                   </Box>
                 ))}
               </Stack>
             )}
+          </Box>
 
-            <Typography variant="h6" fontWeight={700} gutterBottom sx={{ color: colors.gold, mt: 4 }}>
-              User Activity
+          <Box sx={{ flex: 1, p: 3, borderRadius: 3, background: "rgba(255,255,255,0.05)" }}>
+            <Typography variant="h6" fontWeight={700} gutterBottom sx={{ color: colors.gold }}>
+              Persistent User Accounts
             </Typography>
-            {records.users.length === 0 ? (
+            {records.accounts.length === 0 ? (
               <Typography variant="body2" sx={{ opacity: 0.84 }}>
-                No user submissions logged yet.
+                No user accounts saved yet.
               </Typography>
             ) : (
               <Stack spacing={2}>
-                {records.users.map((user, index) => (
-                  <Box key={`${user.email}-${index}`} sx={{ p: 2, borderRadius: 2, background: "rgba(10, 15, 31, 0.55)" }}>
-                    <Typography fontWeight={700}>{user.name}</Typography>
-                    <Typography variant="body2">{user.email}</Typography>
-                    <Typography variant="caption" sx={{ color: "#C8CCD0" }}>
-                      Linked serial: {user.serial}
+                {records.accounts.map((account) => (
+                  <Box key={account.id} sx={{ p: 2, borderRadius: 2, background: "rgba(10, 15, 31, 0.55)" }}>
+                    <Typography fontWeight={700}>{account.name}</Typography>
+                    <Typography variant="body2">{account.email}</Typography>
+                    <Typography variant="body2">
+                      {account.address_line1 || "No address on file"}
+                      {account.city || account.state || account.postal_code
+                        ? ` | ${[account.city, account.state, account.postal_code].filter(Boolean).join(", ")}`
+                        : ""}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "#C8CCD0", display: "block" }}>
+                      Phone: {account.phone || "Not provided"} | DOB: {account.dob || "Not provided"}
                     </Typography>
                   </Box>
                 ))}
