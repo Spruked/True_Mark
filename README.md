@@ -61,12 +61,17 @@
 - Josephine chat assistant default port: `3301`
 - Local frontend API fallback: `http://localhost:13000`
 - Local Josephine API fallback: `http://localhost:3301/chat`
-- Recommended public frontend hostname: `true-mark.spruked.com`
-- Recommended public API hostname: `api.true-mark.spruked.com`
-- Recommended public Josephine hostname: `chat.true-mark.spruked.com`
+- Active public frontend hostname: `true_mark.spruked.com`
+- Recommended public API hostname: `truemark-api.spruked.com`
+- Active public Josephine hostname: `truemark-chat-assistant.spruked.com`
 
-For a Cloudflare Tunnel deployment, point the frontend hostname to `http://localhost:3300`, the API hostname to `http://localhost:13000`, and the Josephine hostname to `http://localhost:3301`.
-Using hyphens in the hostname is recommended over underscores for compatibility.
+For the current Cloudflare Tunnel deployment, use these mappings:
+- `true_mark.spruked.com` -> `http://localhost:3300`
+- `truemark-api.spruked.com` -> `http://localhost:13000`
+- `truemark-chat-assistant.spruked.com` -> `http://localhost:3301`
+
+Do not use `http://3300` or `http://3301` by themselves in Cloudflare. Those service URLs need the `localhost` host included.
+Hyphenated hostnames are still preferred for long-term compatibility, but the app now supports the underscore hostname you are using.
 
 ## Procedures Overview
 See [ProceduresOverview.md](ProceduresOverview.md) for a summary of user/admin procedures, security, and compliance.

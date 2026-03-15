@@ -20,6 +20,7 @@ origins = [
     "https://www.truemark.spruked.com",
     "https://true_mark.spruked.com",
     "https://www.true_mark.spruked.com",
+    "https://truemark-chat-assistant.spruked.com",
 ]
 
 app.add_middleware(
