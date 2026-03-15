@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import json
 import os
 import sqlite3
 import uuid
@@ -13,6 +14,65 @@ from typing import Any, Dict, List, Optional
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 DB_PATH = DATA_DIR / "truemark.db"
+
+
+USER_COLUMNS = {
+    "id": "TEXT",
+    "name": "TEXT",
+    "email": "TEXT",
+    "password_hash": "TEXT",
+    "address_line1": "TEXT",
+    "address_line2": "TEXT",
+    "city": "TEXT",
+    "state": "TEXT",
+    "postal_code": "TEXT",
+    "phone": "TEXT",
+    "dob": "TEXT",
+    "marketing": "INTEGER NOT NULL DEFAULT 0",
+    "created_at": "TEXT",
+    "updated_at": "TEXT",
+}
+
+ORDER_COLUMNS = {
+    "id": "TEXT",
+    "serial": "TEXT",
+    "invoice_number": "TEXT",
+    "invoice_public_token": "TEXT",
+    "vault_public_token": "TEXT",
+    "user_id": "TEXT",
+    "user_email": "TEXT",
+    "user_name": "TEXT",
+    "billing_address_line1": "TEXT",
+    "billing_address_line2": "TEXT",
+    "billing_city": "TEXT",
+    "billing_state": "TEXT",
+    "billing_postal_code": "TEXT",
+    "billing_phone": "TEXT",
+    "billing_dob": "TEXT",
+    "nft_type": "TEXT",
+    "package_tier": "TEXT",
+    "encryption": "TEXT",
+    "chain": "TEXT",
+    "quantity": "INTEGER NOT NULL DEFAULT 1",
+    "file_name": "TEXT",
+    "estimated_storage_gb": "REAL NOT NULL DEFAULT 0",
+    "subtotal_usd": "REAL NOT NULL DEFAULT 0",
+    "tax_rate": "REAL NOT NULL DEFAULT 0",
+    "tax_state": "TEXT",
+    "tax_amount_usd": "REAL NOT NULL DEFAULT 0",
+    "processing_fee_usd": "REAL NOT NULL DEFAULT 0",
+    "discount_amount_usd": "REAL NOT NULL DEFAULT 0",
+    "total_usd": "REAL NOT NULL DEFAULT 0",
+    "payment_method": "TEXT NOT NULL DEFAULT 'fiat'",
+    "crypto_token": "TEXT",
+    "crypto_spot_price_usd": "REAL",
+    "quote_snapshot_json": "TEXT",
+    "invoice_email_status": "TEXT NOT NULL DEFAULT 'pending'",
+    "invoice_sent_to": "TEXT",
+    "invoice_emailed_at": "TEXT",
+    "status": "TEXT NOT NULL DEFAULT 'completed'",
+    "created_at": "TEXT",
+}
 
 
 def utc_now_iso() -> str:
@@ -28,6 +88,41 @@ def get_connection() -> sqlite3.Connection:
     connection = sqlite3.connect(DB_PATH)
     connection.row_factory = sqlite3.Row
     return connection
+
+
+def _table_columns(connection: sqlite3.Connection, table_name: str) -> set[str]:
+    rows = connection.execute(f"PRAGMA table_info({table_name})").fetchall()
+    return {row["name"] for row in rows}
+
+
+def _ensure_columns(connection: sqlite3.Connection, table_name: str, columns: Dict[str, str]) -> None:
+    existing_columns = _table_columns(connection, table_name)
+
+    for column_name, column_definition in columns.items():
+        if column_name in existing_columns:
+            continue
+
+        connection.execute(
+            f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_definition}"
+        )
+
+
+def _ensure_indexes(connection: sqlite3.Connection) -> None:
+    connection.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)"
+    )
+    connection.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_serial ON orders(serial)"
+    )
+    connection.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_invoice_number ON orders(invoice_number)"
+    )
+    connection.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_invoice_public_token ON orders(invoice_public_token)"
+    )
+    connection.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_vault_public_token ON orders(vault_public_token)"
+    )
 
 
 def init_db() -> None:
@@ -57,9 +152,19 @@ def init_db() -> None:
             CREATE TABLE IF NOT EXISTS orders (
                 id TEXT PRIMARY KEY,
                 serial TEXT NOT NULL UNIQUE,
+                invoice_number TEXT,
+                invoice_public_token TEXT,
+                vault_public_token TEXT,
                 user_id TEXT,
                 user_email TEXT NOT NULL,
                 user_name TEXT NOT NULL,
+                billing_address_line1 TEXT,
+                billing_address_line2 TEXT,
+                billing_city TEXT,
+                billing_state TEXT,
+                billing_postal_code TEXT,
+                billing_phone TEXT,
+                billing_dob TEXT,
                 nft_type TEXT NOT NULL,
                 package_tier TEXT NOT NULL,
                 encryption TEXT NOT NULL,
@@ -68,6 +173,8 @@ def init_db() -> None:
                 file_name TEXT,
                 estimated_storage_gb REAL NOT NULL DEFAULT 0,
                 subtotal_usd REAL NOT NULL DEFAULT 0,
+                tax_rate REAL NOT NULL DEFAULT 0,
+                tax_state TEXT,
                 tax_amount_usd REAL NOT NULL DEFAULT 0,
                 processing_fee_usd REAL NOT NULL DEFAULT 0,
                 discount_amount_usd REAL NOT NULL DEFAULT 0,
@@ -75,11 +182,18 @@ def init_db() -> None:
                 payment_method TEXT NOT NULL DEFAULT 'fiat',
                 crypto_token TEXT,
                 crypto_spot_price_usd REAL,
+                quote_snapshot_json TEXT,
+                invoice_email_status TEXT NOT NULL DEFAULT 'pending',
+                invoice_sent_to TEXT,
+                invoice_emailed_at TEXT,
                 status TEXT NOT NULL DEFAULT 'completed',
                 created_at TEXT NOT NULL
             )
             """
         )
+        _ensure_columns(connection, "users", USER_COLUMNS)
+        _ensure_columns(connection, "orders", ORDER_COLUMNS)
+        _ensure_indexes(connection)
 
 
 def _public_user(row: sqlite3.Row) -> Dict[str, Any]:
@@ -98,6 +212,21 @@ def _public_user(row: sqlite3.Row) -> Dict[str, Any]:
         "created_at": row["created_at"],
         "updated_at": row["updated_at"],
     }
+
+
+def _public_order(row: sqlite3.Row) -> Dict[str, Any]:
+    order = dict(row)
+
+    if order.get("quote_snapshot_json"):
+        try:
+            order["quote_snapshot"] = json.loads(order["quote_snapshot_json"])
+        except json.JSONDecodeError:
+            order["quote_snapshot"] = None
+    else:
+        order["quote_snapshot"] = None
+
+    order.pop("quote_snapshot_json", None)
+    return order
 
 
 def hash_password(password: str, salt: str | None = None) -> str:
@@ -232,13 +361,45 @@ def get_next_truemark_serial() -> str:
     return f"TM-{last_value + 1:05d}"
 
 
+def get_next_invoice_number() -> str:
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d")
+
+    with get_connection() as connection:
+        row = connection.execute(
+            """
+            SELECT invoice_number
+            FROM orders
+            WHERE invoice_number LIKE ?
+            ORDER BY invoice_number DESC
+            LIMIT 1
+            """,
+            (f"TMI-{stamp}-%",),
+        ).fetchone()
+
+    if not row or not row["invoice_number"]:
+        return f"TMI-{stamp}-00001"
+
+    last_counter = int(row["invoice_number"].split("-")[-1])
+    return f"TMI-{stamp}-{last_counter + 1:05d}"
+
+
 def record_order(order: Dict[str, Any]) -> Dict[str, Any]:
     row = {
         "id": str(uuid.uuid4()),
         "serial": order["serial"],
+        "invoice_number": order["invoice_number"],
+        "invoice_public_token": order["invoice_public_token"],
+        "vault_public_token": order["vault_public_token"],
         "user_id": order.get("user_id"),
         "user_email": order["user_email"].strip().lower(),
         "user_name": order["user_name"].strip(),
+        "billing_address_line1": order.get("billing_address_line1", "").strip(),
+        "billing_address_line2": order.get("billing_address_line2", "").strip(),
+        "billing_city": order.get("billing_city", "").strip(),
+        "billing_state": order.get("billing_state", "").strip().upper(),
+        "billing_postal_code": order.get("billing_postal_code", "").strip(),
+        "billing_phone": order.get("billing_phone", "").strip(),
+        "billing_dob": order.get("billing_dob", "").strip(),
         "nft_type": order["nft_type"],
         "package_tier": order.get("package_tier", "starter"),
         "encryption": order.get("encryption", "none"),
@@ -247,6 +408,8 @@ def record_order(order: Dict[str, Any]) -> Dict[str, Any]:
         "file_name": order.get("file_name"),
         "estimated_storage_gb": float(order.get("estimated_storage_gb", 0.0) or 0.0),
         "subtotal_usd": float(order.get("subtotal_usd", 0.0) or 0.0),
+        "tax_rate": float(order.get("tax_rate", 0.0) or 0.0),
+        "tax_state": order.get("tax_state", "").strip().upper(),
         "tax_amount_usd": float(order.get("tax_amount_usd", 0.0) or 0.0),
         "processing_fee_usd": float(order.get("processing_fee_usd", 0.0) or 0.0),
         "discount_amount_usd": float(order.get("discount_amount_usd", 0.0) or 0.0),
@@ -254,6 +417,10 @@ def record_order(order: Dict[str, Any]) -> Dict[str, Any]:
         "payment_method": order.get("payment_method", "fiat"),
         "crypto_token": order.get("crypto_token"),
         "crypto_spot_price_usd": order.get("crypto_spot_price_usd"),
+        "quote_snapshot_json": json.dumps(order.get("quote_snapshot", {})),
+        "invoice_email_status": order.get("invoice_email_status", "pending"),
+        "invoice_sent_to": order.get("invoice_sent_to"),
+        "invoice_emailed_at": order.get("invoice_emailed_at"),
         "status": order.get("status", "completed"),
         "created_at": order.get("created_at", utc_now_iso()),
     }
@@ -262,21 +429,75 @@ def record_order(order: Dict[str, Any]) -> Dict[str, Any]:
         connection.execute(
             """
             INSERT INTO orders (
-                id, serial, user_id, user_email, user_name, nft_type, package_tier, encryption,
-                chain, quantity, file_name, estimated_storage_gb, subtotal_usd, tax_amount_usd,
-                processing_fee_usd, discount_amount_usd, total_usd, payment_method, crypto_token,
-                crypto_spot_price_usd, status, created_at
+                id, serial, invoice_number, invoice_public_token, vault_public_token, user_id, user_email,
+                user_name, billing_address_line1, billing_address_line2, billing_city, billing_state,
+                billing_postal_code, billing_phone, billing_dob, nft_type, package_tier, encryption,
+                chain, quantity, file_name, estimated_storage_gb, subtotal_usd, tax_rate, tax_state,
+                tax_amount_usd, processing_fee_usd, discount_amount_usd, total_usd, payment_method,
+                crypto_token, crypto_spot_price_usd, quote_snapshot_json, invoice_email_status,
+                invoice_sent_to, invoice_emailed_at, status, created_at
             ) VALUES (
-                :id, :serial, :user_id, :user_email, :user_name, :nft_type, :package_tier, :encryption,
-                :chain, :quantity, :file_name, :estimated_storage_gb, :subtotal_usd, :tax_amount_usd,
-                :processing_fee_usd, :discount_amount_usd, :total_usd, :payment_method, :crypto_token,
-                :crypto_spot_price_usd, :status, :created_at
+                :id, :serial, :invoice_number, :invoice_public_token, :vault_public_token, :user_id, :user_email,
+                :user_name, :billing_address_line1, :billing_address_line2, :billing_city, :billing_state,
+                :billing_postal_code, :billing_phone, :billing_dob, :nft_type, :package_tier, :encryption,
+                :chain, :quantity, :file_name, :estimated_storage_gb, :subtotal_usd, :tax_rate, :tax_state,
+                :tax_amount_usd, :processing_fee_usd, :discount_amount_usd, :total_usd, :payment_method,
+                :crypto_token, :crypto_spot_price_usd, :quote_snapshot_json, :invoice_email_status,
+                :invoice_sent_to, :invoice_emailed_at, :status, :created_at
             )
             """,
             row,
         )
 
     return row
+
+
+def update_invoice_delivery(
+    invoice_number: str,
+    *,
+    email_status: str,
+    sent_to: str | None = None,
+    emailed_at: str | None = None,
+) -> None:
+    with get_connection() as connection:
+        connection.execute(
+            """
+            UPDATE orders
+            SET invoice_email_status = ?, invoice_sent_to = ?, invoice_emailed_at = ?
+            WHERE invoice_number = ?
+            """,
+            (email_status, sent_to, emailed_at, invoice_number),
+        )
+
+
+def get_order_by_invoice_number(invoice_number: str) -> Optional[Dict[str, Any]]:
+    with get_connection() as connection:
+        row = connection.execute(
+            "SELECT * FROM orders WHERE invoice_number = ?",
+            (invoice_number,),
+        ).fetchone()
+
+    return _public_order(row) if row else None
+
+
+def get_order_by_invoice_token(invoice_public_token: str) -> Optional[Dict[str, Any]]:
+    with get_connection() as connection:
+        row = connection.execute(
+            "SELECT * FROM orders WHERE invoice_public_token = ?",
+            (invoice_public_token,),
+        ).fetchone()
+
+    return _public_order(row) if row else None
+
+
+def get_order_by_vault_token(vault_public_token: str) -> Optional[Dict[str, Any]]:
+    with get_connection() as connection:
+        row = connection.execute(
+            "SELECT * FROM orders WHERE vault_public_token = ?",
+            (vault_public_token,),
+        ).fetchone()
+
+    return _public_order(row) if row else None
 
 
 def list_orders(limit: Optional[int] = None) -> List[Dict[str, Any]]:
@@ -290,7 +511,7 @@ def list_orders(limit: Optional[int] = None) -> List[Dict[str, Any]]:
     with get_connection() as connection:
         rows = connection.execute(query, parameters).fetchall()
 
-    return [dict(row) for row in rows]
+    return [_public_order(row) for row in rows]
 
 
 def summarize_orders(orders: List[Dict[str, Any]]) -> Dict[str, Any]:

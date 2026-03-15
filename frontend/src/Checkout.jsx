@@ -51,7 +51,7 @@ export default function Checkout() {
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [downloadUrl, setDownloadUrl] = useState("");
+  const [completedOrder, setCompletedOrder] = useState(null);
   const [selections, setSelections] = useState({
     package_tier: "starter",
     encryption: "none",
@@ -190,7 +190,7 @@ export default function Checkout() {
     setProcessing(true);
     setError("");
     setSuccess("");
-    setDownloadUrl("");
+    setCompletedOrder(null);
 
     try {
       const data = new FormData();
@@ -205,18 +205,14 @@ export default function Checkout() {
       data.append("quantity", String(selections.quantity));
       data.append("payment_method", paymentMethod);
 
-      const response = await axios.post(`${API_BASE}/mint`, data, {
-        responseType: "blob",
-      });
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      setDownloadUrl(url);
+      const response = await axios.post(`${API_BASE}/mint`, data);
+      setCompletedOrder(response.data);
       setSuccess(
-        `Checkout complete. ${nextSerial ? `Vault request ${nextSerial} has been processed.` : "Your vault request has been processed."}`,
+        `Checkout complete. Invoice ${response.data.invoice_number} and mint serial ${response.data.serial} are now recorded.`,
       );
       clearCheckoutDraft();
     } catch (requestError) {
-      setError("Checkout could not complete the mint request. Please try again.");
+      setError(requestError.response?.data?.detail || "Checkout could not complete the mint request. Please try again.");
     } finally {
       setProcessing(false);
     }
@@ -248,6 +244,13 @@ export default function Checkout() {
         {(processing || quoteLoading) && <LinearProgress sx={{ mb: 3 }} />}
         {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
         {success && <Alert severity="success" sx={{ mb: 3 }}>{success}</Alert>}
+        {completedOrder && (
+          <Alert severity="info" sx={{ mb: 3 }}>
+            Invoice delivery: {completedOrder.invoice_email_status}.
+            {` `}
+            {completedOrder.invoice_email_detail}
+          </Alert>
+        )}
 
         <Stack direction={{ xs: "column", xl: "row" }} spacing={3}>
           <Box sx={{ flex: 1, p: 3, borderRadius: 3, background: "rgba(255,255,255,0.05)" }}>
@@ -412,9 +415,14 @@ export default function Checkout() {
               <Button component={RouterLink} to="/cart" variant="outlined" sx={{ borderColor: colors.neutral, color: colors.neutral, fontWeight: 700 }}>
                 Open Cart Workspace
               </Button>
-              {downloadUrl && (
-                <Button href={downloadUrl} download="truemark_nft_data.zip" variant="outlined" sx={styles.secondaryButton}>
+              {completedOrder?.vault_download_url && (
+                <Button href={completedOrder.vault_download_url} variant="outlined" sx={styles.secondaryButton}>
                   Download Vault Package
+                </Button>
+              )}
+              {completedOrder?.invoice_download_url && (
+                <Button href={completedOrder.invoice_download_url} variant="outlined" sx={styles.secondaryButton}>
+                  Download Invoice PDF
                 </Button>
               )}
             </Stack>

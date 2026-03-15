@@ -40,6 +40,7 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [downloadingInvoice, setDownloadingInvoice] = useState("");
   const [error, setError] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
   const [records, setRecords] = useState({
@@ -247,6 +248,40 @@ export default function AdminDashboard() {
       setError("Tax table changes could not be saved.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleInvoiceDownload = async (invoiceNumber) => {
+    if (!invoiceNumber) {
+      return;
+    }
+
+    setDownloadingInvoice(invoiceNumber);
+    setError("");
+
+    try {
+      const response = await axios.get(`${API_BASE}/admin/invoices/${invoiceNumber}/download`, {
+        headers: getAdminAuthHeaders(),
+        responseType: "blob",
+      });
+      const blobUrl = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `${invoiceNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (requestError) {
+      if (requestError.response?.status === 401) {
+        clearAdminSession();
+        navigate("/admin/login", { replace: true, state: { from: "/admin/dashboard" } });
+        return;
+      }
+
+      setError(`Invoice ${invoiceNumber} could not be downloaded right now.`);
+    } finally {
+      setDownloadingInvoice("");
     }
   };
 
@@ -563,6 +598,19 @@ export default function AdminDashboard() {
                     <Typography variant="body2">
                       Total ${Number(order.total_usd || 0).toFixed(2)} | Tax ${Number(order.tax_amount_usd || 0).toFixed(2)}
                     </Typography>
+                    <Typography variant="body2">
+                      Invoice {order.invoice_number || "Pending"} | Delivery {order.invoice_email_status || "pending"}
+                    </Typography>
+                    <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mt: 1.5 }}>
+                      <Button
+                        variant="outlined"
+                        onClick={() => handleInvoiceDownload(order.invoice_number)}
+                        disabled={!order.invoice_number || downloadingInvoice === order.invoice_number}
+                        sx={styles.secondaryButton}
+                      >
+                        {downloadingInvoice === order.invoice_number ? "Preparing Invoice..." : "Download Invoice"}
+                      </Button>
+                    </Stack>
                     <Typography variant="caption" sx={{ color: "#C8CCD0" }}>
                       {new Date(order.created_at).toLocaleString()}
                     </Typography>
