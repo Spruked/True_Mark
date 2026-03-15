@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { colors } from "./designTokens";
+import { getAssistantApiUrl } from "./assistantApi";
 
-const API_URL = import.meta.env.VITE_JOSEPHINE_API || "http://localhost:8001/chat";
+const API_URL = getAssistantApiUrl();
 
 export default function ChatBubble() {
   const [open, setOpen] = useState(false);

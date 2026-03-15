@@ -57,12 +57,15 @@
 
 ## WSL And Tunnel Ports
 - Frontend default port: `3300`
-- Backend default port: `3301`
-- Local frontend API fallback: `http://localhost:3301`
+- Backend default port: `13000`
+- Josephine chat assistant default port: `3301`
+- Local frontend API fallback: `http://localhost:13000`
+- Local Josephine API fallback: `http://localhost:3301/chat`
 - Recommended public frontend hostname: `true-mark.spruked.com`
 - Recommended public API hostname: `api.true-mark.spruked.com`
+- Recommended public Josephine hostname: `chat.true-mark.spruked.com`
 
-For a Cloudflare Tunnel deployment, point the frontend hostname to `http://localhost:3300` and the API hostname to `http://localhost:3301`.
+For a Cloudflare Tunnel deployment, point the frontend hostname to `http://localhost:3300`, the API hostname to `http://localhost:13000`, and the Josephine hostname to `http://localhost:3301`.
 Using hyphens in the hostname is recommended over underscores for compatibility.
 
 ## Procedures Overview
@@ -75,9 +78,10 @@ See [ProceduresOverview.md](ProceduresOverview.md) for a summary of user/admin p
 ## Getting Started
 1. Install frontend dependencies in `frontend` with `npm install`
 2. Install backend dependencies with `pip install -r backend/requirements.txt`
-3. Run the FastAPI backend on port `3301`
-4. Run the Vite frontend on port `3300`
-5. Access the website for user-facing minting and checkout
+3. Run the FastAPI backend on port `13000`
+4. Run the Josephine assistant API on port `3301`
+5. Run the Vite frontend on port `3300`
+6. Access the website for user-facing minting and checkout
 
 ---
 

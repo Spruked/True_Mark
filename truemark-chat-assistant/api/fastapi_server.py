@@ -12,9 +12,14 @@ from improvement_loop import ImprovementLoop
 app = FastAPI()
 
 origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    # Add your deployed frontend URL here
+    "http://localhost:3300",
+    "http://127.0.0.1:3300",
+    "https://true-mark.spruked.com",
+    "https://www.true-mark.spruked.com",
+    "https://truemark.spruked.com",
+    "https://www.truemark.spruked.com",
+    "https://true_mark.spruked.com",
+    "https://www.true_mark.spruked.com",
 ]
 
 app.add_middleware(

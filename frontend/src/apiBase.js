@@ -1,4 +1,4 @@
-const LOCAL_BACKEND_API = "http://localhost:3301";
+const LOCAL_BACKEND_API = "http://localhost:13000";
 
 // DNS hostnames should ideally use hyphens, but we accept both here so the
 // frontend still resolves the backend if either naming style is used.
