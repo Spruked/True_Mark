@@ -65,8 +65,8 @@ export default function Checkout() {
     async function loadCheckoutMetadata() {
       try {
         const [pricingResponse, serialResponse] = await Promise.all([
-          axios.get(`${API_BASE}/admin/pricing`),
-          axios.get(`${API_BASE}/admin/serial`),
+          axios.get(`${API_BASE}/pricing`),
+          axios.get(`${API_BASE}/serial/next`),
         ]);
 
         if (!active) {

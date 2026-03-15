@@ -58,8 +58,12 @@ export function clearUserSession() {
 }
 
 export function startAdminSession(account) {
+  const expiresAt = Number(account.expires_at ?? account.expiresAt ?? 0) || null;
+
   window.sessionStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify({
-    email: account.email,
+    email: account.email?.trim().toLowerCase(),
+    token: account.token,
+    expiresAt,
     startedAt: new Date().toISOString(),
   }));
   window.dispatchEvent(new Event("tm-auth-changed"));
@@ -80,12 +84,35 @@ export function getAdminSession() {
 }
 
 export function isAdminAuthenticated() {
-  return Boolean(getAdminSession());
+  const adminSession = getAdminSession();
+
+  if (!adminSession?.token) {
+    return false;
+  }
+
+  if (adminSession.expiresAt && Date.now() >= adminSession.expiresAt * 1000) {
+    clearAdminSession();
+    return false;
+  }
+
+  return true;
 }
 
 export function clearAdminSession() {
   window.sessionStorage.removeItem(ADMIN_SESSION_KEY);
   window.dispatchEvent(new Event("tm-auth-changed"));
+}
+
+export function getAdminAuthHeaders() {
+  const adminSession = getAdminSession();
+
+  if (!adminSession?.token) {
+    return {};
+  }
+
+  return {
+    Authorization: `Bearer ${adminSession.token}`,
+  };
 }
 
 function getWorkspaceKey(email) {

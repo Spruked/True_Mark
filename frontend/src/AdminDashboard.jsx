@@ -10,7 +10,8 @@ import {
   Typography,
 } from "@mui/material";
 import axios from "axios";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { clearAdminSession, getAdminAuthHeaders } from "./authStorage";
 import { colors, styles } from "./designTokens";
 import { getBackendApiBase } from "./apiBase";
 
@@ -22,6 +23,7 @@ function numberValue(value) {
 }
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -42,11 +44,14 @@ export default function AdminDashboard() {
       setError("");
 
       try {
+        const adminRequestConfig = {
+          headers: getAdminAuthHeaders(),
+        };
         const [nfts, users, pricing, serial] = await Promise.all([
-          axios.get(`${API_BASE}/admin/nfts`),
-          axios.get(`${API_BASE}/admin/users`),
-          axios.get(`${API_BASE}/admin/pricing`),
-          axios.get(`${API_BASE}/admin/serial`),
+          axios.get(`${API_BASE}/admin/nfts`, adminRequestConfig),
+          axios.get(`${API_BASE}/admin/users`, adminRequestConfig),
+          axios.get(`${API_BASE}/admin/pricing`, adminRequestConfig),
+          axios.get(`${API_BASE}/admin/serial`, adminRequestConfig),
         ]);
 
         if (!active) {
@@ -62,6 +67,12 @@ export default function AdminDashboard() {
         setEditablePricing(pricing.data);
       } catch (requestError) {
         if (active) {
+          if (requestError.response?.status === 401) {
+            clearAdminSession();
+            navigate("/admin/login", { replace: true, state: { from: "/admin/dashboard" } });
+            return;
+          }
+
           setError("The admin dashboard could not reach the backend right now.");
         }
       } finally {
@@ -76,7 +87,7 @@ export default function AdminDashboard() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [navigate]);
 
   const updatePriceField = (section, key, field, value) => {
     setEditablePricing((current) => ({
@@ -111,7 +122,9 @@ export default function AdminDashboard() {
     setError("");
 
     try {
-      const response = await axios.put(`${API_BASE}/admin/pricing`, editablePricing);
+      const response = await axios.put(`${API_BASE}/admin/pricing`, editablePricing, {
+        headers: getAdminAuthHeaders(),
+      });
       setEditablePricing(response.data);
       setRecords((current) => ({
         ...current,
@@ -119,6 +132,12 @@ export default function AdminDashboard() {
       }));
       setSaveMessage("Pricing was saved to the backend configuration and can be changed again anytime.");
     } catch (requestError) {
+      if (requestError.response?.status === 401) {
+        clearAdminSession();
+        navigate("/admin/login", { replace: true, state: { from: "/admin/dashboard" } });
+        return;
+      }
+
       setError("Pricing changes could not be saved.");
     } finally {
       setSaving(false);

@@ -83,10 +83,11 @@ See [ProceduresOverview.md](ProceduresOverview.md) for a summary of user/admin p
 ## Getting Started
 1. Install frontend dependencies in `frontend` with `npm install`
 2. Install backend dependencies with `pip install -r backend/requirements.txt`
-3. Run the FastAPI backend on port `13000`
-4. Run the Josephine assistant API on port `3301`
-5. Run the Vite frontend on port `3300`
-6. Access the website for user-facing minting and checkout
+3. Create `backend/.env` from `backend/.env.example` and set the admin email, admin password, and session secret
+4. Run the FastAPI backend on port `13000`
+5. Run the Josephine assistant API on port `3301`
+6. Run the Vite frontend on port `3300`
+7. Access the website for user-facing minting and checkout
 
 ---
 

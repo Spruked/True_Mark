@@ -8,9 +8,13 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import { startAdminSession } from "./authStorage";
+import { getBackendApiBase } from "./apiBase";
 import { colors, styles } from "./designTokens";
+
+const API_BASE = getBackendApiBase();
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -20,6 +24,7 @@ export default function AdminLogin() {
     password: "",
   });
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -29,7 +34,7 @@ export default function AdminLogin() {
     }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
 
@@ -38,8 +43,20 @@ export default function AdminLogin() {
       return;
     }
 
-    startAdminSession({ email: form.email.trim().toLowerCase() });
-    navigate(location.state?.from || "/admin/dashboard");
+    try {
+      setSubmitting(true);
+      const response = await axios.post(`${API_BASE}/admin/login`, {
+        email: form.email.trim().toLowerCase(),
+        password: form.password,
+      });
+
+      startAdminSession(response.data);
+      navigate(location.state?.from || "/admin/dashboard");
+    } catch (requestError) {
+      setError(requestError.response?.data?.detail || "Admin sign-in failed. Please verify your credentials.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -84,8 +101,8 @@ export default function AdminLogin() {
               InputLabelProps={{ style: { color: "#C8CCD0" } }}
               InputProps={{ style: { color: "#F4F7F8" } }}
             />
-            <Button type="submit" variant="contained" sx={styles.primaryButton}>
-              Enter Admin Dashboard
+            <Button type="submit" variant="contained" sx={styles.primaryButton} disabled={submitting}>
+              {submitting ? "Signing In..." : "Enter Admin Dashboard"}
             </Button>
           </Stack>
         </form>
