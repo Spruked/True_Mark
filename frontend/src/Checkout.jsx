@@ -19,8 +19,9 @@ import axios from "axios";
 import { Link as RouterLink } from "react-router-dom";
 import { useMintFlow } from "./context/MintFlowContext";
 import { colors, styles } from "./designTokens";
+import { getBackendApiBase } from "./apiBase";
 
-const API_BASE = import.meta.env.VITE_BACKEND_API || "http://localhost:8000";
+const API_BASE = getBackendApiBase();
 
 const emptyPricing = {
   nft_types: {},

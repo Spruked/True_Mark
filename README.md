@@ -13,7 +13,7 @@
 - **Purpose:** Forensic-grade, institutional digital object minting and certification (not a public NFT marketplace).
 - **Core Components:**
   - Smart contracts (ERC-721/ERC-1155, EIP-2981)
-  - Node.js/Express backend
+  - Python/FastAPI backend
   - React frontend (with Josephine, the branded chat bubble assistant)
   - Admin dashboard & persistent NFT vault
   - Off-chain storage (IPFS/Arweave/local)
@@ -49,11 +49,21 @@
 
 ## Tech Stack
 - Solidity (ERC-721/ERC-1155, EIP-2981)
-- Node.js/Express backend
+- Python/FastAPI backend
 - React frontend
 - Stripe & Coinbase Commerce for payments
 - CoinGecko/CoinMarketCap API for rates
 - PDF generation for certificates
+
+## WSL And Tunnel Ports
+- Frontend default port: `3300`
+- Backend default port: `3301`
+- Local frontend API fallback: `http://localhost:3301`
+- Recommended public frontend hostname: `true-mark.spruked.com`
+- Recommended public API hostname: `api.true-mark.spruked.com`
+
+For a Cloudflare Tunnel deployment, point the frontend hostname to `http://localhost:3300` and the API hostname to `http://localhost:3301`.
+Using hyphens in the hostname is recommended over underscores for compatibility.
 
 ## Procedures Overview
 See [ProceduresOverview.md](ProceduresOverview.md) for a summary of user/admin procedures, security, and compliance.
@@ -63,10 +73,11 @@ See [ProceduresOverview.md](ProceduresOverview.md) for a summary of user/admin p
 - Downloadable PDF versions coming soon
 
 ## Getting Started
-1. Install dependencies: `npm install` in each subproject (backend, frontend, contracts)
-2. Configure environment variables for payments, storage, and blockchain
-3. Run backend and frontend servers
-4. Access the website for user-facing minting and checkout
+1. Install frontend dependencies in `frontend` with `npm install`
+2. Install backend dependencies with `pip install -r backend/requirements.txt`
+3. Run the FastAPI backend on port `3301`
+4. Run the Vite frontend on port `3300`
+5. Access the website for user-facing minting and checkout
 
 ---
 
