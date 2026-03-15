@@ -60,10 +60,10 @@ const InvestorInquiry = () => {
             Strategic Investment in Sovereign Digital Object Infrastructure
           </Typography>
           <Typography paragraph>
-            True Mark Mint Engine operates within the <b>Alpha CertSig ecosystem</b>, a forensic-grade digital object infrastructure designed for long-term knowledge certification, immutable archival records, and institutional digital sovereignty.
+            True Mark Mint Engine is a standalone forensic-grade digital object infrastructure platform designed for long-term knowledge certification, immutable archival records, and institutional digital sovereignty.
           </Typography>
           <Typography paragraph>
-            As the global market transitions from speculative NFTs to <b>Digital Object Infrastructure</b>, Alpha CertSig and True Mark Mint are positioned to serve organizations requiring permanent, verifiable records for research, intellectual property, and generational knowledge.
+            As the global market transitions from speculative NFTs to <b>Digital Object Infrastructure</b>, True Mark Mint is positioned to serve organizations requiring permanent, verifiable records for research, intellectual property, and generational knowledge.
           </Typography>
           <Typography paragraph>
             We welcome discussions with investors who understand the emerging demand for <b>secure, sovereign digital record systems</b>.
@@ -81,7 +81,7 @@ const InvestorInquiry = () => {
             Organizations should own the infrastructure that certifies their knowledge.
           </Typography>
           <Typography paragraph>
-            Traditional cloud platforms impose ongoing fees, custody risk, and data exposure. The Alpha CertSig architecture replaces this with <b>licensed sovereign mint infrastructure</b> that institutions deploy within their own environments.
+            Traditional cloud platforms impose ongoing fees, custody risk, and data exposure. True Mark replaces this with <b>sovereign mint infrastructure</b> focused on controlled issuance, payment-cleared workflow, and durable verification records.
           </Typography>
           <Typography paragraph>
             This model creates predictable revenue while maintaining strict data sovereignty for clients.
@@ -121,7 +121,7 @@ const InvestorInquiry = () => {
             Institutions increasingly require systems capable of producing <b>tamper-proof, court-defensible records</b>.
           </Typography>
           <Typography paragraph>
-            The Alpha CertSig platform addresses this need.
+            The True Mark platform addresses this need.
           </Typography>
 
           <Divider sx={{ my: 4 }} />
@@ -130,19 +130,19 @@ const InvestorInquiry = () => {
             Revenue Model
           </Typography>
           <Typography paragraph>
-            The ecosystem follows a <b>license-based infrastructure model</b>.
+            The platform follows a <b>transactional minting and certification model</b>.
           </Typography>
           <Typography paragraph>
-            Organizations purchase a perpetual license to deploy the mint engine within their own environment.
+            Customers pay to stage records, clear payment, mint NFTs, and receive invoices, receipts, and vault packages through the hosted True Mark workflow.
           </Typography>
           <Typography paragraph>
             Typical revenue streams include:
           </Typography>
           <ul>
-            <li><b>Perpetual Infrastructure Licenses</b>: Organizations acquire the mint engine to run internally.</li>
-            <li><b>Deployment and Configuration Services</b>: Optional enterprise deployment, security hardening, and compliance setup.</li>
-            <li><b>Affiliate Network Expansion Rights</b>: Institutions may extend certified minting to partner organizations under controlled prefixes.</li>
-            <li><b>Maintenance and Security Updates</b>: Optional annual renewal for updates and forensic layer improvements.</li>
+            <li><b>Mint and Certification Fees</b>: Each payment-cleared issuance generates platform revenue.</li>
+            <li><b>Enterprise Configuration Services</b>: Optional workflow setup, security hardening, and compliance tuning.</li>
+            <li><b>Archival and Governance Services</b>: Premium support for long-term record custody and operational controls.</li>
+            <li><b>Policy and Customization Work</b>: Custom pricing, tax, and reporting features for larger clients.</li>
           </ul>
           <Typography paragraph>
             This structure avoids SaaS dependency while creating scalable enterprise revenue.
@@ -154,7 +154,7 @@ const InvestorInquiry = () => {
             Market Position
           </Typography>
           <Typography paragraph>
-            Alpha CertSig and True Mark Mint are positioned as <b>Digital Object Infrastructure providers</b>, not marketplaces.
+            True Mark Mint is positioned as a <b>Digital Object Infrastructure provider</b>, not a marketplace.
           </Typography>
           <Typography paragraph>
             The ecosystem supports use cases such as:
@@ -189,14 +189,7 @@ const InvestorInquiry = () => {
             Founder Structure
           </Typography>
           <Typography paragraph>
-            The ecosystem consists of two distinct systems:
-          </Typography>
-          <ul>
-            <li><b>Alpha CertSig Elite Mint Engine</b>: Licensed infrastructure deployed by organizations.</li>
-            <li><b>True Mark Mint Engine</b>: Founder-controlled mint authority and curated vault used for canonical certification and archival authority.</li>
-          </ul>
-          <Typography paragraph>
-            Maintaining this separation preserves the integrity of the ecosystem while enabling scalable enterprise deployment.
+            True Mark Mint Engine stands alone as the operating platform, the public website, and the mint workflow users interact with directly.
           </Typography>
 
           <Divider sx={{ my: 4 }} />
@@ -238,7 +231,7 @@ const InvestorInquiry = () => {
           </Typography>
 
           <Typography variant="subtitle1" fontWeight={700}>
-            Investor Relations<br />True Mark Mint Engine / Alpha CertSig<br />
+            Investor Relations<br />True Mark Mint Engine<br />
             <span style={{ fontWeight: 400 }}>Contact: <a href="mailto:bryan@spruked.com">bryan@spruked.com</a></span>
           </Typography>
 

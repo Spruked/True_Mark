@@ -98,7 +98,7 @@ export default function About() {
         <Typography variant="body1" sx={{ mt: 3, mb: 2, fontSize: 18, opacity: 0.95 }}>
           True Mark Mint Engine is a founder-controlled forensic minting vault designed for the permanent certification of high-value digital objects, intellectual property, research breakthroughs, and generational knowledge.<br /><br />
           Unlike marketplace-driven NFT platforms, True Mark Mint is not built for speculation or trading. It exists for a different purpose entirely: verifiable permanence, forensic traceability, and legacy preservation.<br /><br />
-          True Mark serves as the curated authority layer within the broader Alpha CertSig ecosystem. Where the Alpha CertSig Elite Mint Engine functions as the licensed infrastructure that organizations deploy, True Mark operates as the founder’s private vault and canonical mint authority.
+          True Mark is a standalone mint system and website. Its records, invoices, vault workflow, and public-facing identity belong to True Mark alone.
         </Typography>
         <Typography variant="h6" fontWeight={600} sx={{ mt: 4, color: colors.gold }}>
           Purpose
@@ -119,7 +119,7 @@ export default function About() {
           Architecture Overview
         </Typography>
         <Typography variant="body1" sx={{ mt: 1, fontSize: 17 }}>
-          The True Mark Mint Engine is built using the same core architecture as the Alpha CertSig system while operating under a founder-exclusive governance layer.<br /><br />
+          The True Mark Mint Engine is built as a self-contained issuance workflow with pricing, payment clearance, mint finalization, certificate rendering, and long-term record custody inside one platform.<br /><br />
           <b>Key architectural elements include:</b>
           <ul>
             <li>License-First Smart Contracts</li>
@@ -136,7 +136,7 @@ export default function About() {
           Every object minted within the system follows a structured forensic identifier format:<br />
           <b>[TYPE]-NFT-[PREFIX]-[INDUSTRY]-[YEAR]-[SEQUENCE]</b><br />
           Example: <b>E-NFT-MAYO-MED-2026-000002</b><br /><br />
-          This format ensures that every record remains human readable, machine searchable, institutionally branded, and permanently mappable across systems. The identifier schema is enforced across both Alpha CertSig and True Mark Mint deployments.
+          This format ensures that every record remains human readable, machine searchable, institutionally branded, and permanently mappable across the True Mark system.
         </Typography>
         <Typography variant="h6" fontWeight={600} sx={{ mt: 4, color: colors.gold }}>
           What True Mark Is — and What It Is Not

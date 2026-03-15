@@ -9,22 +9,33 @@ import {
   LinearProgress,
   Alert,
   Stack,
-  Divider
+  Divider,
 } from "@mui/material";
+import axios from "axios";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { useMintFlow } from "./context/MintFlowContext";
 import { colors, styles } from "./designTokens";
+import { getBackendApiBase } from "./apiBase";
+
+const API_BASE = getBackendApiBase();
 
 const NFT_TYPES = [
   { value: "K-NFT", label: "Knowledge NFT" },
   { value: "H-NFT", label: "Heirloom NFT" },
   { value: "L-NFT", label: "Legacy NFT" },
-  { value: "C-NFT", label: "Custom NFT" }
+  { value: "C-NFT", label: "Custom NFT" },
 ];
 
 export default function MintNFT() {
   const navigate = useNavigate();
-  const { checkoutDraft, setCheckoutDraft, updateWorkspace } = useMintFlow();
+  const {
+    checkoutDraft,
+    setCheckoutDraft,
+    paymentSession,
+    setPaymentSession,
+    clearPaymentSession,
+    updateWorkspace,
+  } = useMintFlow();
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -34,11 +45,12 @@ export default function MintNFT() {
     chain: "polygon",
     quantity: 1,
     file: null,
-    metadata: ""
+    metadata: "",
   });
   const [progress, setProgress] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [mintResult, setMintResult] = useState(null);
 
   const fileSummary = useMemo(() => {
     if (!form.file) {
@@ -76,18 +88,46 @@ export default function MintNFT() {
     }));
   }, [checkoutDraft]);
 
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: files ? files[0] : value
+  useEffect(() => {
+    let active = true;
+
+    async function refreshPaymentSession() {
+      if (!paymentSession?.payment_token) {
+        return;
+      }
+
+      try {
+        const response = await axios.get(`${API_BASE}/payments/${paymentSession.payment_token}`);
+        if (active) {
+          setPaymentSession(response.data);
+        }
+      } catch {
+        if (active) {
+          clearPaymentSession();
+        }
+      }
+    }
+
+    refreshPaymentSession();
+
+    return () => {
+      active = false;
+    };
+  }, [paymentSession?.payment_token, setPaymentSession, clearPaymentSession]);
+
+  const handleChange = (event) => {
+    const { name, value, files } = event.target;
+    setForm((previous) => ({
+      ...previous,
+      [name]: files ? files[0] : value,
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handlePrepareForCheckout = async (event) => {
+    event.preventDefault();
     setError("");
     setSuccess("");
+    setMintResult(null);
 
     if (!form.file) {
       setError("Upload the file you want to mint before continuing.");
@@ -104,12 +144,39 @@ export default function MintNFT() {
       links: "",
       checklist: "",
     });
-    setSuccess("File confirmed. Continue to checkout to review and submit the mint request.");
+    setSuccess("File confirmed. Continue to checkout for the estimate and payment step.");
     setTimeout(() => {
       setProgress(false);
       navigate("/checkout");
     }, 500);
   };
+
+  const handleFinalizeMint = async () => {
+    if (!paymentSession?.payment_token) {
+      return;
+    }
+
+    setProgress(true);
+    setError("");
+    setSuccess("");
+    setMintResult(null);
+
+    try {
+      const response = await axios.post(`${API_BASE}/mint/complete`, {
+        payment_token: paymentSession.payment_token,
+      });
+      setMintResult(response.data);
+      setSuccess(`Mint completed. Serial ${response.data.serial} is now recorded and invoice ${response.data.invoice_number} is ready.`);
+      clearPaymentSession();
+    } catch (requestError) {
+      setError(requestError.response?.data?.detail || "The NFT could not be minted right now.");
+    } finally {
+      setProgress(false);
+    }
+  };
+
+  const hasPaidSession = paymentSession?.status === "payment_cleared";
+  const wasCanceledAfterPayment = paymentSession?.status === "canceled_after_payment";
 
   return (
     <Box sx={{ minHeight: "100vh", background: colors.background, color: colors.text, py: 8 }}>
@@ -118,22 +185,29 @@ export default function MintNFT() {
           Mint Your NFT
         </Typography>
         <Typography variant="body2" sx={{ mb: 2, opacity: 0.8 }}>
-          Upload your knowledge, legacy, or custom asset. <b>All uploaded data is purged after you download your zip file. No personal data is retained except your account info, which is used only for platform communications and marketing. All NFT records are permanently logged with a glyph trace and stored in a secure vault system.</b>
+          Upload your knowledge, legacy, or custom asset. Your file is staged for pricing first, payment is processed second, and the actual NFT mint happens only after you return here to finalize it.
         </Typography>
         <Alert severity="info" sx={{ mb: 2 }}>
-          Customer onboarding now follows a clearer path: create or access your account, prepare the asset record, confirm the upload, then continue into checkout for final review.
+          True Mark is a standalone mint platform. Upload and prepare your record here, process payment in checkout, then return to this page to complete the NFT mint and receive the final invoice.
         </Alert>
         {progress && <LinearProgress sx={{ mb: 2 }} />}
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+        {mintResult && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Invoice delivery: {mintResult.invoice_email_status}. {mintResult.invoice_email_detail}
+          </Alert>
+        )}
+
         <Box sx={{ mb: 3, p: 3, borderRadius: 3, background: "rgba(255,255,255,0.05)" }}>
-            <Typography variant="h6" fontWeight={700} sx={{ color: colors.gold, mb: 1 }}>
-            Customer Onboarding
+          <Typography variant="h6" fontWeight={700} sx={{ color: colors.gold, mb: 1 }}>
+            Customer Workflow
           </Typography>
           <Stack spacing={1.2}>
-            <Typography variant="body2">1. Sign in or create your account before minting so your vault record can be tied to the correct user.</Typography>
-            <Typography variant="body2">2. Choose the NFT type and upload the source file you want certified.</Typography>
-            <Typography variant="body2">3. Review the checkout summary, confirm submission, and download the generated vault package.</Typography>
+            <Typography variant="body2">1. Sign in or create your account before preparing the mint request.</Typography>
+            <Typography variant="body2">2. Upload the source file and save the request for checkout.</Typography>
+            <Typography variant="body2">3. In Checkout, review the estimate and process payment.</Typography>
+            <Typography variant="body2">4. Return here to mint the NFT only after payment clears.</Typography>
           </Stack>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ mt: 2 }}>
             <Button component={RouterLink} to="/login" variant="outlined" sx={styles.secondaryButton}>
@@ -147,92 +221,157 @@ export default function MintNFT() {
             </Button>
           </Stack>
         </Box>
+
+        {hasPaidSession && (
+          <Box sx={{ mb: 3, p: 3, borderRadius: 3, background: "rgba(255,255,255,0.05)" }}>
+            <Typography variant="h6" fontWeight={700} sx={{ color: colors.gold, mb: 1 }}>
+              Payment Cleared, Ready to Mint
+            </Typography>
+            <Stack spacing={1.2}>
+              <Typography><b>Payment Reference:</b> {paymentSession.payment_reference}</Typography>
+              <Typography><b>Receipt Number:</b> {paymentSession.receipt_number}</Typography>
+              <Typography><b>File:</b> {paymentSession.file_name}</Typography>
+              <Typography><b>Estimated Total Paid:</b> ${Number(paymentSession.total_usd || 0).toFixed(2)}</Typography>
+              <Typography><b>Projected Serial:</b> {paymentSession.minted_serial || "The next available True Mark serial will be assigned at mint time."}</Typography>
+            </Stack>
+            <Stack spacing={2} sx={{ mt: 2 }}>
+              <Button onClick={handleFinalizeMint} variant="contained" sx={styles.primaryButton}>
+                Mint NFT Now
+              </Button>
+              {paymentSession.receipt_download_url && (
+                <Button href={paymentSession.receipt_download_url} variant="outlined" sx={styles.secondaryButton}>
+                  Download Payment Receipt
+                </Button>
+              )}
+              <Button component={RouterLink} to="/checkout" variant="outlined" sx={{ borderColor: colors.neutral, color: colors.neutral, fontWeight: 700 }}>
+                Back to Checkout
+              </Button>
+            </Stack>
+          </Box>
+        )}
+
+        {wasCanceledAfterPayment && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            This payment was canceled after processing began. The request must be started again from a new upload if you still want to mint.
+          </Alert>
+        )}
+
+        {mintResult && (
+          <Box sx={{ mb: 3, p: 3, borderRadius: 3, background: "rgba(255,255,255,0.05)" }}>
+            <Typography variant="h6" fontWeight={700} sx={{ color: colors.gold, mb: 1 }}>
+              Mint Complete
+            </Typography>
+            <Stack spacing={1.2}>
+              <Typography><b>Serial:</b> {mintResult.serial}</Typography>
+              <Typography><b>Invoice:</b> {mintResult.invoice_number}</Typography>
+              <Typography><b>Payment Reference:</b> {mintResult.payment_reference}</Typography>
+              <Typography><b>Receipt Number:</b> {mintResult.receipt_number}</Typography>
+            </Stack>
+            <Stack spacing={2} sx={{ mt: 2 }}>
+              {mintResult.invoice_download_url && (
+                <Button href={mintResult.invoice_download_url} variant="outlined" sx={styles.secondaryButton}>
+                  Download Final Invoice
+                </Button>
+              )}
+              {mintResult.receipt_download_url && (
+                <Button href={mintResult.receipt_download_url} variant="outlined" sx={styles.secondaryButton}>
+                  Download Payment Receipt
+                </Button>
+              )}
+              {mintResult.vault_download_url && (
+                <Button href={mintResult.vault_download_url} variant="outlined" sx={styles.secondaryButton}>
+                  Download Vault Package
+                </Button>
+              )}
+            </Stack>
+          </Box>
+        )}
+
         <Divider sx={{ borderColor: "rgba(255,255,255,0.12)", mb: 3 }} />
-        <form onSubmit={handleSubmit}>
-          <Stack spacing={2}>
-            <TextField
-              label="Full Name"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              fullWidth
-              required
-              InputLabelProps={{ style: { color: "#C8CCD0" } }}
-              InputProps={{ style: { color: "#F4F7F8" } }}
-            />
-            <TextField
-              label="Email Address"
-              name="email"
-              type="email"
-              value={form.email}
-              onChange={handleChange}
-              fullWidth
-              required
-              InputLabelProps={{ style: { color: "#C8CCD0" } }}
-              InputProps={{ style: { color: "#F4F7F8" } }}
-            />
-            <TextField
-              select
-              label="NFT Type"
-              name="nft_type"
-              value={form.nft_type}
-              onChange={handleChange}
-              fullWidth
-              required
-              InputLabelProps={{ style: { color: "#C8CCD0" } }}
-              InputProps={{ style: { color: "#F4F7F8" } }}
-            >
-              {NFT_TYPES.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              label="Metadata (optional)"
-              name="metadata"
-              value={form.metadata}
-              onChange={handleChange}
-              fullWidth
-              multiline
-              minRows={2}
-              InputLabelProps={{ style: { color: "#C8CCD0" } }}
-              InputProps={{ style: { color: "#F4F7F8" } }}
-            />
-            <Button
-              variant="contained"
-              component="label"
-              sx={styles.primaryButton}
-            >
-              Upload File
-              <input
-                type="file"
-                name="file"
-                hidden
-                required
+
+        {!hasPaidSession && (
+          <form onSubmit={handlePrepareForCheckout}>
+            <Stack spacing={2}>
+              <TextField
+                label="Full Name"
+                name="name"
+                value={form.name}
                 onChange={handleChange}
+                fullWidth
+                required
+                InputLabelProps={{ style: { color: "#C8CCD0" } }}
+                InputProps={{ style: { color: "#F4F7F8" } }}
               />
-            </Button>
-            {fileSummary && (
-              <Alert severity="success">
-                File uploaded: <b>{fileSummary.name}</b> | {fileSummary.size} | {fileSummary.type}
-              </Alert>
-            )}
-            <Button type="submit" variant="contained" fullWidth sx={styles.primaryButton}>
-              Continue to Checkout
-            </Button>
-            <Button
-              type="button"
-              component={RouterLink}
-              to="/cart"
-              variant="outlined"
-              fullWidth
-              sx={{ borderColor: colors.neutral, color: colors.neutral, fontWeight: 700 }}
-            >
-              Save and Return Later
-            </Button>
-          </Stack>
-        </form>
+              <TextField
+                label="Email Address"
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={handleChange}
+                fullWidth
+                required
+                InputLabelProps={{ style: { color: "#C8CCD0" } }}
+                InputProps={{ style: { color: "#F4F7F8" } }}
+              />
+              <TextField
+                select
+                label="NFT Type"
+                name="nft_type"
+                value={form.nft_type}
+                onChange={handleChange}
+                fullWidth
+                required
+                InputLabelProps={{ style: { color: "#C8CCD0" } }}
+                InputProps={{ style: { color: "#F4F7F8" } }}
+              >
+                {NFT_TYPES.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                label="Metadata (optional)"
+                name="metadata"
+                value={form.metadata}
+                onChange={handleChange}
+                fullWidth
+                multiline
+                minRows={2}
+                InputLabelProps={{ style: { color: "#C8CCD0" } }}
+                InputProps={{ style: { color: "#F4F7F8" } }}
+              />
+              <Button variant="contained" component="label" sx={styles.primaryButton}>
+                Upload File
+                <input
+                  type="file"
+                  name="file"
+                  hidden
+                  required
+                  onChange={handleChange}
+                />
+              </Button>
+              {fileSummary && (
+                <Alert severity="success">
+                  File uploaded: <b>{fileSummary.name}</b> | {fileSummary.size} | {fileSummary.type}
+                </Alert>
+              )}
+              <Button type="submit" variant="contained" fullWidth sx={styles.primaryButton}>
+                Continue to Checkout
+              </Button>
+              <Button
+                type="button"
+                component={RouterLink}
+                to="/cart"
+                variant="outlined"
+                fullWidth
+                sx={{ borderColor: colors.neutral, color: colors.neutral, fontWeight: 700 }}
+              >
+                Save and Return Later
+              </Button>
+            </Stack>
+          </form>
+        )}
       </Container>
     </Box>
   );

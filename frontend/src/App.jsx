@@ -158,15 +158,6 @@ function App() {
           >
             Mint NFT
           </Button>
-          <Button
-            variant="outlined"
-            size="large"
-            sx={styles.secondaryButton}
-            component={RouterLink}
-            to="/alpha-certsig"
-          >
-            Alpha CertSig
-          </Button>
         </Stack>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="center" sx={{ mt: 2 }}>
           <Button
@@ -246,29 +237,28 @@ function App() {
           }}
         >
           <Typography variant="overline" sx={{ color: colors.mutedText, letterSpacing: 1.2 }}>
-            Infrastructure Offer
+            Platform Direction
           </Typography>
           <Typography variant="h5" fontWeight={700} sx={{ color: colors.gold, mt: 1, mb: 1.5 }}>
-            Alpha CertSig is the licensed engine. True Mark is the curated vault.
+            True Mark stands on its own as a mint and certification platform.
           </Typography>
           <Typography variant="body1" sx={{ color: colors.neutral, lineHeight: 1.8, mb: 2 }}>
-            For institutions and sovereign creators who need self-hosted digital object infrastructure, Alpha CertSig
-            provides the deployable mint engine. It supports forensic-grade issuance, sovereign control, and long-term
-            evidentiary recordkeeping without marketplace dependency.
+            True Mark Mint Engine is a standalone website and mint workflow focused on payment-cleared issuance,
+            forensic recordkeeping, and long-term evidentiary continuity without marketplace dependency.
           </Typography>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-            <Button component={RouterLink} to="/alpha-certsig" variant="contained" sx={styles.primaryButton}>
-              Explore Alpha CertSig
+            <Button component={RouterLink} to="/about" variant="contained" sx={styles.primaryButton}>
+              Explore True Mark
             </Button>
             <Button
               component="a"
-              href="https://spruked.com/products/alpha-certsig"
+              href="https://spruked.com"
               target="_blank"
               rel="noreferrer"
               variant="outlined"
               sx={styles.secondaryButton}
             >
-              Open Spruked Product Page
+              Open Spruked
             </Button>
           </Stack>
         </Box>

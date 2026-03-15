@@ -39,6 +39,8 @@ ORDER_COLUMNS = {
     "invoice_number": "TEXT",
     "invoice_public_token": "TEXT",
     "vault_public_token": "TEXT",
+    "payment_reference": "TEXT",
+    "receipt_number": "TEXT",
     "user_id": "TEXT",
     "user_email": "TEXT",
     "user_name": "TEXT",
@@ -72,6 +74,55 @@ ORDER_COLUMNS = {
     "invoice_emailed_at": "TEXT",
     "status": "TEXT NOT NULL DEFAULT 'completed'",
     "created_at": "TEXT",
+}
+
+PAYMENT_SESSION_COLUMNS = {
+    "id": "TEXT",
+    "payment_reference": "TEXT",
+    "payment_public_token": "TEXT",
+    "receipt_number": "TEXT",
+    "receipt_public_token": "TEXT",
+    "user_id": "TEXT",
+    "user_email": "TEXT",
+    "user_name": "TEXT",
+    "billing_address_line1": "TEXT",
+    "billing_address_line2": "TEXT",
+    "billing_city": "TEXT",
+    "billing_state": "TEXT",
+    "billing_postal_code": "TEXT",
+    "billing_phone": "TEXT",
+    "billing_dob": "TEXT",
+    "nft_type": "TEXT",
+    "package_tier": "TEXT",
+    "encryption": "TEXT",
+    "chain": "TEXT",
+    "quantity": "INTEGER NOT NULL DEFAULT 1",
+    "file_name": "TEXT",
+    "staged_file_path": "TEXT",
+    "estimated_storage_gb": "REAL NOT NULL DEFAULT 0",
+    "metadata_json": "TEXT",
+    "subtotal_usd": "REAL NOT NULL DEFAULT 0",
+    "tax_rate": "REAL NOT NULL DEFAULT 0",
+    "tax_state": "TEXT",
+    "tax_amount_usd": "REAL NOT NULL DEFAULT 0",
+    "processing_fee_usd": "REAL NOT NULL DEFAULT 0",
+    "discount_amount_usd": "REAL NOT NULL DEFAULT 0",
+    "total_usd": "REAL NOT NULL DEFAULT 0",
+    "payment_method": "TEXT NOT NULL DEFAULT 'fiat'",
+    "crypto_token": "TEXT",
+    "crypto_spot_price_usd": "REAL",
+    "quote_snapshot_json": "TEXT",
+    "cancellation_fee_usd": "REAL NOT NULL DEFAULT 5.0",
+    "refund_due_usd": "REAL",
+    "minted_order_id": "TEXT",
+    "minted_serial": "TEXT",
+    "minted_invoice_number": "TEXT",
+    "payment_captured_at": "TEXT",
+    "canceled_at": "TEXT",
+    "minted_at": "TEXT",
+    "status": "TEXT NOT NULL DEFAULT 'payment_cleared'",
+    "created_at": "TEXT",
+    "updated_at": "TEXT",
 }
 
 
@@ -123,6 +174,24 @@ def _ensure_indexes(connection: sqlite3.Connection) -> None:
     connection.execute(
         "CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_vault_public_token ON orders(vault_public_token)"
     )
+    connection.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_payment_reference ON orders(payment_reference)"
+    )
+    connection.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_receipt_number ON orders(receipt_number)"
+    )
+    connection.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_payment_sessions_reference ON payment_sessions(payment_reference)"
+    )
+    connection.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_payment_sessions_public_token ON payment_sessions(payment_public_token)"
+    )
+    connection.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_payment_sessions_receipt_number ON payment_sessions(receipt_number)"
+    )
+    connection.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_payment_sessions_receipt_public_token ON payment_sessions(receipt_public_token)"
+    )
 
 
 def init_db() -> None:
@@ -155,6 +224,8 @@ def init_db() -> None:
                 invoice_number TEXT,
                 invoice_public_token TEXT,
                 vault_public_token TEXT,
+                payment_reference TEXT,
+                receipt_number TEXT,
                 user_id TEXT,
                 user_email TEXT NOT NULL,
                 user_name TEXT NOT NULL,
@@ -191,8 +262,61 @@ def init_db() -> None:
             )
             """
         )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS payment_sessions (
+                id TEXT PRIMARY KEY,
+                payment_reference TEXT NOT NULL UNIQUE,
+                payment_public_token TEXT NOT NULL UNIQUE,
+                receipt_number TEXT NOT NULL UNIQUE,
+                receipt_public_token TEXT NOT NULL UNIQUE,
+                user_id TEXT,
+                user_email TEXT NOT NULL,
+                user_name TEXT NOT NULL,
+                billing_address_line1 TEXT,
+                billing_address_line2 TEXT,
+                billing_city TEXT,
+                billing_state TEXT,
+                billing_postal_code TEXT,
+                billing_phone TEXT,
+                billing_dob TEXT,
+                nft_type TEXT NOT NULL,
+                package_tier TEXT NOT NULL,
+                encryption TEXT NOT NULL,
+                chain TEXT NOT NULL,
+                quantity INTEGER NOT NULL,
+                file_name TEXT,
+                staged_file_path TEXT,
+                estimated_storage_gb REAL NOT NULL DEFAULT 0,
+                metadata_json TEXT,
+                subtotal_usd REAL NOT NULL DEFAULT 0,
+                tax_rate REAL NOT NULL DEFAULT 0,
+                tax_state TEXT,
+                tax_amount_usd REAL NOT NULL DEFAULT 0,
+                processing_fee_usd REAL NOT NULL DEFAULT 0,
+                discount_amount_usd REAL NOT NULL DEFAULT 0,
+                total_usd REAL NOT NULL DEFAULT 0,
+                payment_method TEXT NOT NULL DEFAULT 'fiat',
+                crypto_token TEXT,
+                crypto_spot_price_usd REAL,
+                quote_snapshot_json TEXT,
+                cancellation_fee_usd REAL NOT NULL DEFAULT 5.0,
+                refund_due_usd REAL,
+                minted_order_id TEXT,
+                minted_serial TEXT,
+                minted_invoice_number TEXT,
+                payment_captured_at TEXT,
+                canceled_at TEXT,
+                minted_at TEXT,
+                status TEXT NOT NULL DEFAULT 'payment_cleared',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
         _ensure_columns(connection, "users", USER_COLUMNS)
         _ensure_columns(connection, "orders", ORDER_COLUMNS)
+        _ensure_columns(connection, "payment_sessions", PAYMENT_SESSION_COLUMNS)
         _ensure_indexes(connection)
 
 
@@ -227,6 +351,29 @@ def _public_order(row: sqlite3.Row) -> Dict[str, Any]:
 
     order.pop("quote_snapshot_json", None)
     return order
+
+
+def _public_payment_session(row: sqlite3.Row) -> Dict[str, Any]:
+    session = dict(row)
+
+    if session.get("quote_snapshot_json"):
+        try:
+            session["quote_snapshot"] = json.loads(session["quote_snapshot_json"])
+        except json.JSONDecodeError:
+            session["quote_snapshot"] = None
+    else:
+        session["quote_snapshot"] = None
+
+    if session.get("metadata_json"):
+        try:
+            session["metadata"] = json.loads(session["metadata_json"])
+        except json.JSONDecodeError:
+            session["metadata"] = session["metadata_json"]
+    else:
+        session["metadata"] = {}
+
+    session.pop("quote_snapshot_json", None)
+    return session
 
 
 def hash_password(password: str, salt: str | None = None) -> str:
@@ -383,6 +530,50 @@ def get_next_invoice_number() -> str:
     return f"TMI-{stamp}-{last_counter + 1:05d}"
 
 
+def get_next_payment_reference() -> str:
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d")
+
+    with get_connection() as connection:
+        row = connection.execute(
+            """
+            SELECT payment_reference
+            FROM payment_sessions
+            WHERE payment_reference LIKE ?
+            ORDER BY payment_reference DESC
+            LIMIT 1
+            """,
+            (f"TMP-{stamp}-%",),
+        ).fetchone()
+
+    if not row or not row["payment_reference"]:
+        return f"TMP-{stamp}-00001"
+
+    last_counter = int(row["payment_reference"].split("-")[-1])
+    return f"TMP-{stamp}-{last_counter + 1:05d}"
+
+
+def get_next_receipt_number() -> str:
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d")
+
+    with get_connection() as connection:
+        row = connection.execute(
+            """
+            SELECT receipt_number
+            FROM payment_sessions
+            WHERE receipt_number LIKE ?
+            ORDER BY receipt_number DESC
+            LIMIT 1
+            """,
+            (f"TMR-{stamp}-%",),
+        ).fetchone()
+
+    if not row or not row["receipt_number"]:
+        return f"TMR-{stamp}-00001"
+
+    last_counter = int(row["receipt_number"].split("-")[-1])
+    return f"TMR-{stamp}-{last_counter + 1:05d}"
+
+
 def record_order(order: Dict[str, Any]) -> Dict[str, Any]:
     row = {
         "id": str(uuid.uuid4()),
@@ -390,6 +581,8 @@ def record_order(order: Dict[str, Any]) -> Dict[str, Any]:
         "invoice_number": order["invoice_number"],
         "invoice_public_token": order["invoice_public_token"],
         "vault_public_token": order["vault_public_token"],
+        "payment_reference": order.get("payment_reference"),
+        "receipt_number": order.get("receipt_number"),
         "user_id": order.get("user_id"),
         "user_email": order["user_email"].strip().lower(),
         "user_name": order["user_name"].strip(),
@@ -429,7 +622,8 @@ def record_order(order: Dict[str, Any]) -> Dict[str, Any]:
         connection.execute(
             """
             INSERT INTO orders (
-                id, serial, invoice_number, invoice_public_token, vault_public_token, user_id, user_email,
+                id, serial, invoice_number, invoice_public_token, vault_public_token, payment_reference,
+                receipt_number, user_id, user_email,
                 user_name, billing_address_line1, billing_address_line2, billing_city, billing_state,
                 billing_postal_code, billing_phone, billing_dob, nft_type, package_tier, encryption,
                 chain, quantity, file_name, estimated_storage_gb, subtotal_usd, tax_rate, tax_state,
@@ -437,7 +631,8 @@ def record_order(order: Dict[str, Any]) -> Dict[str, Any]:
                 crypto_token, crypto_spot_price_usd, quote_snapshot_json, invoice_email_status,
                 invoice_sent_to, invoice_emailed_at, status, created_at
             ) VALUES (
-                :id, :serial, :invoice_number, :invoice_public_token, :vault_public_token, :user_id, :user_email,
+                :id, :serial, :invoice_number, :invoice_public_token, :vault_public_token, :payment_reference,
+                :receipt_number, :user_id, :user_email,
                 :user_name, :billing_address_line1, :billing_address_line2, :billing_city, :billing_state,
                 :billing_postal_code, :billing_phone, :billing_dob, :nft_type, :package_tier, :encryption,
                 :chain, :quantity, :file_name, :estimated_storage_gb, :subtotal_usd, :tax_rate, :tax_state,
@@ -450,6 +645,147 @@ def record_order(order: Dict[str, Any]) -> Dict[str, Any]:
         )
 
     return row
+
+
+def create_payment_session(payment_session: Dict[str, Any]) -> Dict[str, Any]:
+    now = payment_session.get("created_at", utc_now_iso())
+    row = {
+        "id": str(uuid.uuid4()),
+        "payment_reference": payment_session["payment_reference"],
+        "payment_public_token": payment_session["payment_public_token"],
+        "receipt_number": payment_session["receipt_number"],
+        "receipt_public_token": payment_session["receipt_public_token"],
+        "user_id": payment_session.get("user_id"),
+        "user_email": payment_session["user_email"].strip().lower(),
+        "user_name": payment_session["user_name"].strip(),
+        "billing_address_line1": payment_session.get("billing_address_line1", "").strip(),
+        "billing_address_line2": payment_session.get("billing_address_line2", "").strip(),
+        "billing_city": payment_session.get("billing_city", "").strip(),
+        "billing_state": payment_session.get("billing_state", "").strip().upper(),
+        "billing_postal_code": payment_session.get("billing_postal_code", "").strip(),
+        "billing_phone": payment_session.get("billing_phone", "").strip(),
+        "billing_dob": payment_session.get("billing_dob", "").strip(),
+        "nft_type": payment_session["nft_type"],
+        "package_tier": payment_session.get("package_tier", "starter"),
+        "encryption": payment_session.get("encryption", "none"),
+        "chain": payment_session.get("chain", "polygon"),
+        "quantity": int(payment_session.get("quantity", 1) or 1),
+        "file_name": payment_session.get("file_name"),
+        "staged_file_path": payment_session.get("staged_file_path"),
+        "estimated_storage_gb": float(payment_session.get("estimated_storage_gb", 0.0) or 0.0),
+        "metadata_json": json.dumps(payment_session.get("metadata", {})),
+        "subtotal_usd": float(payment_session.get("subtotal_usd", 0.0) or 0.0),
+        "tax_rate": float(payment_session.get("tax_rate", 0.0) or 0.0),
+        "tax_state": payment_session.get("tax_state", "").strip().upper(),
+        "tax_amount_usd": float(payment_session.get("tax_amount_usd", 0.0) or 0.0),
+        "processing_fee_usd": float(payment_session.get("processing_fee_usd", 0.0) or 0.0),
+        "discount_amount_usd": float(payment_session.get("discount_amount_usd", 0.0) or 0.0),
+        "total_usd": float(payment_session.get("total_usd", 0.0) or 0.0),
+        "payment_method": payment_session.get("payment_method", "fiat"),
+        "crypto_token": payment_session.get("crypto_token"),
+        "crypto_spot_price_usd": payment_session.get("crypto_spot_price_usd"),
+        "quote_snapshot_json": json.dumps(payment_session.get("quote_snapshot", {})),
+        "cancellation_fee_usd": float(payment_session.get("cancellation_fee_usd", 5.0) or 5.0),
+        "refund_due_usd": payment_session.get("refund_due_usd"),
+        "minted_order_id": payment_session.get("minted_order_id"),
+        "minted_serial": payment_session.get("minted_serial"),
+        "minted_invoice_number": payment_session.get("minted_invoice_number"),
+        "payment_captured_at": payment_session.get("payment_captured_at", now),
+        "canceled_at": payment_session.get("canceled_at"),
+        "minted_at": payment_session.get("minted_at"),
+        "status": payment_session.get("status", "payment_cleared"),
+        "created_at": now,
+        "updated_at": payment_session.get("updated_at", now),
+    }
+
+    with get_connection() as connection:
+        connection.execute(
+            """
+            INSERT INTO payment_sessions (
+                id, payment_reference, payment_public_token, receipt_number, receipt_public_token, user_id, user_email,
+                user_name, billing_address_line1, billing_address_line2, billing_city, billing_state,
+                billing_postal_code, billing_phone, billing_dob, nft_type, package_tier, encryption,
+                chain, quantity, file_name, staged_file_path, estimated_storage_gb, metadata_json,
+                subtotal_usd, tax_rate, tax_state, tax_amount_usd, processing_fee_usd, discount_amount_usd,
+                total_usd, payment_method, crypto_token, crypto_spot_price_usd, quote_snapshot_json,
+                cancellation_fee_usd, refund_due_usd, minted_order_id, minted_serial, minted_invoice_number,
+                payment_captured_at, canceled_at, minted_at, status, created_at, updated_at
+            ) VALUES (
+                :id, :payment_reference, :payment_public_token, :receipt_number, :receipt_public_token, :user_id, :user_email,
+                :user_name, :billing_address_line1, :billing_address_line2, :billing_city, :billing_state,
+                :billing_postal_code, :billing_phone, :billing_dob, :nft_type, :package_tier, :encryption,
+                :chain, :quantity, :file_name, :staged_file_path, :estimated_storage_gb, :metadata_json,
+                :subtotal_usd, :tax_rate, :tax_state, :tax_amount_usd, :processing_fee_usd, :discount_amount_usd,
+                :total_usd, :payment_method, :crypto_token, :crypto_spot_price_usd, :quote_snapshot_json,
+                :cancellation_fee_usd, :refund_due_usd, :minted_order_id, :minted_serial, :minted_invoice_number,
+                :payment_captured_at, :canceled_at, :minted_at, :status, :created_at, :updated_at
+            )
+            """,
+            row,
+        )
+
+    return row
+
+
+def get_payment_session_by_token(payment_public_token: str) -> Optional[Dict[str, Any]]:
+    with get_connection() as connection:
+        row = connection.execute(
+            "SELECT * FROM payment_sessions WHERE payment_public_token = ?",
+            (payment_public_token,),
+        ).fetchone()
+
+    return _public_payment_session(row) if row else None
+
+
+def get_payment_session_by_receipt_token(receipt_public_token: str) -> Optional[Dict[str, Any]]:
+    with get_connection() as connection:
+        row = connection.execute(
+            "SELECT * FROM payment_sessions WHERE receipt_public_token = ?",
+            (receipt_public_token,),
+        ).fetchone()
+
+    return _public_payment_session(row) if row else None
+
+
+def update_payment_session_status(
+    payment_public_token: str,
+    *,
+    status: str,
+    refund_due_usd: float | None = None,
+    canceled_at: str | None = None,
+    minted_order_id: str | None = None,
+    minted_serial: str | None = None,
+    minted_invoice_number: str | None = None,
+    minted_at: str | None = None,
+) -> None:
+    with get_connection() as connection:
+        current = connection.execute(
+            "SELECT * FROM payment_sessions WHERE payment_public_token = ?",
+            (payment_public_token,),
+        ).fetchone()
+
+        if not current:
+            return
+
+        connection.execute(
+            """
+            UPDATE payment_sessions
+            SET status = ?, refund_due_usd = ?, canceled_at = ?, minted_order_id = ?,
+                minted_serial = ?, minted_invoice_number = ?, minted_at = ?, updated_at = ?
+            WHERE payment_public_token = ?
+            """,
+            (
+                status,
+                refund_due_usd if refund_due_usd is not None else current["refund_due_usd"],
+                canceled_at if canceled_at is not None else current["canceled_at"],
+                minted_order_id if minted_order_id is not None else current["minted_order_id"],
+                minted_serial if minted_serial is not None else current["minted_serial"],
+                minted_invoice_number if minted_invoice_number is not None else current["minted_invoice_number"],
+                minted_at if minted_at is not None else current["minted_at"],
+                utc_now_iso(),
+                payment_public_token,
+            ),
+        )
 
 
 def update_invoice_delivery(

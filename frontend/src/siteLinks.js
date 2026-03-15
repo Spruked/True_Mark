@@ -2,7 +2,6 @@ export const primaryLinks = [
   { label: "Home", to: "/" },
   { label: "About", to: "/about" },
   { label: "Demo Mint", to: "/demo-mint" },
-  { label: "Alpha CertSig", to: "/alpha-certsig" },
   { label: "Why Now", to: "/why-now" },
   { label: "Use Cases", to: "/use-cases" },
   { label: "Mint", to: "/mint", requiresUserAuth: true },
@@ -22,7 +21,6 @@ export const accountLinks = [
 ];
 
 export const infoLinks = [
-  { label: "Alpha CertSig", to: "/alpha-certsig" },
   { label: "Policies", to: "/policies" },
   { label: "Privacy", to: "/privacy-policy" },
   { label: "User Agreement", to: "/user-agreement" },

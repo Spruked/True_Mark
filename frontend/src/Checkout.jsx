@@ -41,7 +41,14 @@ const emptyPricing = {
 };
 
 export default function Checkout() {
-  const { checkoutDraft, clearCheckoutDraft, setCheckoutDraft } = useMintFlow();
+  const {
+    checkoutDraft,
+    clearCheckoutDraft,
+    paymentSession,
+    setPaymentSession,
+    clearPaymentSession,
+    setCheckoutDraft,
+  } = useMintFlow();
   const [pricing, setPricing] = useState(emptyPricing);
   const [quote, setQuote] = useState(null);
   const [nextSerial, setNextSerial] = useState("");
@@ -51,7 +58,6 @@ export default function Checkout() {
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [completedOrder, setCompletedOrder] = useState(null);
   const [selections, setSelections] = useState({
     package_tier: "starter",
     encryption: "none",
@@ -75,7 +81,7 @@ export default function Checkout() {
 
         setPricing(pricingResponse.data);
         setNextSerial(serialResponse.data.next_serial);
-      } catch (requestError) {
+      } catch {
         if (active) {
           setError("Checkout is available, but pricing details could not be loaded from the backend.");
         }
@@ -100,7 +106,35 @@ export default function Checkout() {
       chain: checkoutDraft.chain || "polygon",
       quantity: checkoutDraft.quantity || 1,
     });
+    setPaymentMethod(checkoutDraft.payment_method || "fiat");
   }, [checkoutDraft]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function refreshPaymentSession() {
+      if (!paymentSession?.payment_token) {
+        return;
+      }
+
+      try {
+        const response = await axios.get(`${API_BASE}/payments/${paymentSession.payment_token}`);
+        if (active) {
+          setPaymentSession(response.data);
+        }
+      } catch {
+        if (active) {
+          clearPaymentSession();
+        }
+      }
+    }
+
+    refreshPaymentSession();
+
+    return () => {
+      active = false;
+    };
+  }, [paymentSession?.payment_token, setPaymentSession, clearPaymentSession]);
 
   const fileSizeGb = useMemo(() => {
     if (checkoutDraft?.file?.size) {
@@ -141,7 +175,7 @@ export default function Checkout() {
         }
 
         setQuote(response.data);
-      } catch (requestError) {
+      } catch {
         if (active) {
           setQuote(null);
           setError("The backend could not calculate a pricing quote for this mint.");
@@ -172,25 +206,25 @@ export default function Checkout() {
       setCheckoutDraft({
         ...checkoutDraft,
         ...nextSelections,
+        payment_method: paymentMethod,
       });
     }
   };
 
-  const handleCheckout = async () => {
+  const handleProcessPayment = async () => {
     if (!checkoutDraft?.file) {
-      setError("A live file must be attached before checkout can finish. Return to Mint to reattach the file for this protected order.");
+      setError("A live file must be attached before payment can be processed. Return to Mint to reattach the file.");
       return;
     }
 
     if (!agree) {
-      setError("You need to confirm the checkout and record policy before minting.");
+      setError("You need to confirm the estimate, payment policy, and cancellation fee before continuing.");
       return;
     }
 
     setProcessing(true);
     setError("");
     setSuccess("");
-    setCompletedOrder(null);
 
     try {
       const data = new FormData();
@@ -205,18 +239,39 @@ export default function Checkout() {
       data.append("quantity", String(selections.quantity));
       data.append("payment_method", paymentMethod);
 
-      const response = await axios.post(`${API_BASE}/mint`, data);
-      setCompletedOrder(response.data);
-      setSuccess(
-        `Checkout complete. Invoice ${response.data.invoice_number} and mint serial ${response.data.serial} are now recorded.`,
-      );
+      const response = await axios.post(`${API_BASE}/payments/process`, data);
+      setPaymentSession(response.data);
+      setSuccess(`Payment cleared. Receipt ${response.data.receipt_number} is ready. Return to Mint to complete the NFT issuance.`);
       clearCheckoutDraft();
     } catch (requestError) {
-      setError(requestError.response?.data?.detail || "Checkout could not complete the mint request. Please try again.");
+      setError(requestError.response?.data?.detail || "Payment could not be processed. Please try again.");
     } finally {
       setProcessing(false);
     }
   };
+
+  const handleCancelAfterPayment = async () => {
+    if (!paymentSession?.payment_token) {
+      return;
+    }
+
+    setProcessing(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await axios.post(`${API_BASE}/payments/${paymentSession.payment_token}/cancel`);
+      setPaymentSession(response.data);
+      setSuccess(response.data.message || "Payment canceled.");
+    } catch (requestError) {
+      setError(requestError.response?.data?.detail || "The payment could not be canceled right now.");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const hasPaidSession = paymentSession?.status === "payment_cleared";
+  const wasCanceledAfterPayment = paymentSession?.status === "canceled_after_payment";
 
   return (
     <Box sx={{ minHeight: "100vh", background: colors.background, color: colors.text, py: 8 }}>
@@ -225,49 +280,46 @@ export default function Checkout() {
           Checkout
         </Typography>
         <Typography variant="body1" sx={{ mb: 3, opacity: 0.84 }}>
-          Review the mint request, select the package level, and confirm the final quote before submission.
+          Upload first, review the estimate here, process payment, then return to Mint to finalize the NFT.
         </Typography>
         <Alert severity="info" sx={{ mb: 3 }}>
-          Pricing is set in {pricing.settlement?.display_currency || pricing.currency || "USD"}.
-          {` `}
-          If crypto is used for payment, it is only quoted as the fiat equivalent at the time of purchase.
-          {` `}
-          Customers do not connect a wallet. Minting is executed through the platform-managed wallet and Alchemy flow.
+          Prices shown here are estimates until payment is processed. Payment must clear before the NFT can be minted.
+          If a paid request is canceled after processing has started, a $5.00 cancellation fee applies.
         </Alert>
 
-        {!checkoutDraft && (
+        {!checkoutDraft && !paymentSession && (
           <Alert severity="warning" sx={{ mb: 3 }}>
-            There is no mint request in progress yet. Start from the mint page first, then return here for checkout.
+            There is no active checkout request yet. Start from Mint, upload your file, and return here for the estimate and payment step.
           </Alert>
         )}
 
         {(processing || quoteLoading) && <LinearProgress sx={{ mb: 3 }} />}
         {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
         {success && <Alert severity="success" sx={{ mb: 3 }}>{success}</Alert>}
-        {completedOrder && (
-          <Alert severity="info" sx={{ mb: 3 }}>
-            Invoice delivery: {completedOrder.invoice_email_status}.
-            {` `}
-            {completedOrder.invoice_email_detail}
+
+        {paymentSession && (
+          <Alert severity={wasCanceledAfterPayment ? "warning" : "info"} sx={{ mb: 3 }}>
+            Payment reference: {paymentSession.payment_reference} | Receipt: {paymentSession.receipt_number} | Status: {paymentSession.status}
+            {paymentSession.refund_due_usd != null ? ` | Refund due: $${Number(paymentSession.refund_due_usd).toFixed(2)}` : ""}
           </Alert>
         )}
 
         <Stack direction={{ xs: "column", xl: "row" }} spacing={3}>
           <Box sx={{ flex: 1, p: 3, borderRadius: 3, background: "rgba(255,255,255,0.05)" }}>
             <Typography variant="h6" fontWeight={700} gutterBottom>
-              Order Summary
+              Upload Summary
             </Typography>
             <Stack spacing={1.5}>
-              <Typography><b>Name:</b> {checkoutDraft?.name || "Not provided yet"}</Typography>
-              <Typography><b>Email:</b> {checkoutDraft?.email || "Not provided yet"}</Typography>
-              <Typography><b>NFT Type:</b> {checkoutDraft?.nft_type || "Not selected yet"}</Typography>
-              <Typography><b>File:</b> {checkoutDraft?.file?.name || checkoutDraft?.fileName || "No file attached"}</Typography>
-              <Typography><b>Estimated file size:</b> {checkoutDraft ? `${(fileSizeGb * 1024).toFixed(2)} MB` : "N/A"}</Typography>
-              <Typography><b>Preview serial:</b> {nextSerial || "Loading..."}</Typography>
-              <Typography><b>Metadata:</b> {checkoutDraft?.metadata || "No metadata provided"}</Typography>
-              {!checkoutDraft?.file && checkoutDraft?.fileName && (
+              <Typography><b>Name:</b> {checkoutDraft?.name || paymentSession?.user_name || "Not provided yet"}</Typography>
+              <Typography><b>Email:</b> {checkoutDraft?.email || paymentSession?.user_email || "Not provided yet"}</Typography>
+              <Typography><b>NFT Type:</b> {checkoutDraft?.nft_type || paymentSession?.nft_type || "Not selected yet"}</Typography>
+              <Typography><b>File:</b> {checkoutDraft?.file?.name || checkoutDraft?.fileName || paymentSession?.file_name || "No file attached"}</Typography>
+              <Typography><b>Estimated file size:</b> {checkoutDraft ? `${(fileSizeGb * 1024).toFixed(2)} MB` : "Stored on the backend"}</Typography>
+              <Typography><b>Projected serial:</b> {nextSerial || paymentSession?.minted_serial || "Loading..."}</Typography>
+              <Typography><b>Metadata:</b> {checkoutDraft?.metadata || "Metadata is staged with the uploaded file."}</Typography>
+              {!checkoutDraft?.file && checkoutDraft?.fileName && !paymentSession && (
                 <Alert severity="warning">
-                  This order was restored from the protected workspace. Reattach the original file in Mint before final checkout.
+                  This order was restored from the protected workspace. Reattach the original file in Mint before payment.
                 </Alert>
               )}
             </Stack>
@@ -284,6 +336,7 @@ export default function Checkout() {
                 value={selections.package_tier}
                 onChange={(event) => updateSelection("package_tier", event.target.value)}
                 fullWidth
+                disabled={hasPaidSession}
                 InputLabelProps={{ style: { color: "#C8CCD0" } }}
                 InputProps={{ style: { color: "#F4F7F8" } }}
               >
@@ -300,6 +353,7 @@ export default function Checkout() {
                 value={selections.encryption}
                 onChange={(event) => updateSelection("encryption", event.target.value)}
                 fullWidth
+                disabled={hasPaidSession}
                 InputLabelProps={{ style: { color: "#C8CCD0" } }}
                 InputProps={{ style: { color: "#F4F7F8" } }}
               >
@@ -316,6 +370,7 @@ export default function Checkout() {
                 value={selections.chain}
                 onChange={(event) => updateSelection("chain", event.target.value)}
                 fullWidth
+                disabled={hasPaidSession}
                 InputLabelProps={{ style: { color: "#C8CCD0" } }}
                 InputProps={{ style: { color: "#F4F7F8" } }}
               >
@@ -332,6 +387,7 @@ export default function Checkout() {
                 value={selections.quantity}
                 onChange={(event) => updateSelection("quantity", event.target.value)}
                 fullWidth
+                disabled={hasPaidSession}
                 inputProps={{ min: 1 }}
                 InputLabelProps={{ style: { color: "#C8CCD0" } }}
                 InputProps={{ style: { color: "#F4F7F8" } }}
@@ -345,7 +401,7 @@ export default function Checkout() {
 
           <Box sx={{ flex: 1, p: 3, borderRadius: 3, background: "rgba(255,255,255,0.05)" }}>
             <Typography variant="h6" fontWeight={700} gutterBottom>
-              Live Quote
+              Estimate and Payment
             </Typography>
             {quote ? (
               <Stack spacing={1.25}>
@@ -362,7 +418,7 @@ export default function Checkout() {
                 <Typography><b>Processing Fee:</b> ${quote.processing_fee.toFixed(2)}</Typography>
                 <Typography><b>Estimated Tax:</b> ${Number(quote.estimated_tax || 0).toFixed(2)}</Typography>
                 <Typography variant="h5" sx={{ color: colors.gold, pt: 1 }}>
-                  Grand Total: ${Number(quote.grand_total ?? quote.total).toFixed(2)}
+                  Estimated Total: ${Number(quote.grand_total ?? quote.total).toFixed(2)}
                 </Typography>
                 <Typography variant="body2" sx={{ opacity: 0.84 }}>
                   Per unit: ${quote.per_unit_total.toFixed(2)} {quote.currency}
@@ -375,7 +431,7 @@ export default function Checkout() {
               </Stack>
             ) : (
               <Typography variant="body2" sx={{ opacity: 0.84 }}>
-                A live quote will appear here after the backend pricing engine responds.
+                A live estimate will appear here after the backend pricing engine responds.
               </Typography>
             )}
 
@@ -383,46 +439,59 @@ export default function Checkout() {
               <Typography variant="subtitle2" sx={{ mb: 1, color: colors.gold }}>
                 Payment Path
               </Typography>
-              <RadioGroup value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)}>
-                <FormControlLabel value="fiat" control={<Radio sx={{ color: colors.gold }} />} label="Fiat checkout in USD" />
-                <FormControlLabel value="crypto" control={<Radio sx={{ color: colors.gold }} />} label="Crypto equivalent quote at time of purchase" />
+              <RadioGroup
+                value={paymentMethod}
+                onChange={(event) => {
+                  setPaymentMethod(event.target.value);
+                  if (checkoutDraft) {
+                    setCheckoutDraft({
+                      ...checkoutDraft,
+                      payment_method: event.target.value,
+                    });
+                  }
+                }}
+              >
+                <FormControlLabel value="fiat" control={<Radio sx={{ color: colors.gold }} />} label="Fiat payment in USD" />
+                <FormControlLabel value="crypto" control={<Radio sx={{ color: colors.gold }} />} label="Crypto-equivalent settlement quote" />
               </RadioGroup>
             </FormControl>
 
             {paymentMethod === "crypto" && (
               <Alert severity="info" sx={{ mb: 2 }}>
-                The customer still does not connect a wallet here. This option only means the order can be settled against a live crypto equivalent of the USD quote.
+                This only affects settlement quoting. The NFT still will not mint until payment clears and you return to Mint for final issuance.
               </Alert>
             )}
 
             <FormControlLabel
               control={<Checkbox checked={agree} onChange={(event) => setAgree(event.target.checked)} sx={{ color: colors.gold }} />}
-              label="I confirm the order details, pricing, record policy, and final submission."
+              label="I confirm this estimate, agree to the payment step, and understand the $5 cancellation fee after payment."
             />
 
             <Stack spacing={2} sx={{ mt: 2 }}>
-              <Button
-                onClick={handleCheckout}
-                disabled={processing || !checkoutDraft}
-                variant="contained"
-                sx={styles.primaryButton}
-              >
-                Confirm Checkout
-              </Button>
+              {!hasPaidSession && !wasCanceledAfterPayment && (
+                <Button
+                  onClick={handleProcessPayment}
+                  disabled={processing || !checkoutDraft}
+                  variant="contained"
+                  sx={styles.primaryButton}
+                >
+                  Process Payment
+                </Button>
+              )}
               <Button component={RouterLink} to="/mint" variant="outlined" sx={styles.secondaryButton}>
-                Back to Mint Form
+                {hasPaidSession ? "Return to Mint" : "Back to Mint Form"}
               </Button>
               <Button component={RouterLink} to="/cart" variant="outlined" sx={{ borderColor: colors.neutral, color: colors.neutral, fontWeight: 700 }}>
                 Open Cart Workspace
               </Button>
-              {completedOrder?.vault_download_url && (
-                <Button href={completedOrder.vault_download_url} variant="outlined" sx={styles.secondaryButton}>
-                  Download Vault Package
+              {paymentSession?.receipt_download_url && (
+                <Button href={paymentSession.receipt_download_url} variant="outlined" sx={styles.secondaryButton}>
+                  Download Payment Receipt
                 </Button>
               )}
-              {completedOrder?.invoice_download_url && (
-                <Button href={completedOrder.invoice_download_url} variant="outlined" sx={styles.secondaryButton}>
-                  Download Invoice PDF
+              {hasPaidSession && (
+                <Button onClick={handleCancelAfterPayment} variant="outlined" sx={{ borderColor: "#FCA5A5", color: "#FCA5A5", fontWeight: 700 }}>
+                  Cancel After Payment ($5 Fee)
                 </Button>
               )}
             </Stack>

@@ -21,6 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 INVOICE_DIR = DATA_DIR / "invoices"
 VAULT_DIR = DATA_DIR / "vault_packages"
+RECEIPT_DIR = DATA_DIR / "receipts"
 
 BRAND_GOLD = colors.HexColor("#C9A227")
 BRAND_NAVY = colors.HexColor("#0B1220")
@@ -30,6 +31,7 @@ BRAND_MUTED = colors.HexColor("#4B5563")
 def ensure_invoice_directories() -> None:
     INVOICE_DIR.mkdir(parents=True, exist_ok=True)
     VAULT_DIR.mkdir(parents=True, exist_ok=True)
+    RECEIPT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def invoice_path_for(invoice_number: str) -> Path:
@@ -40,6 +42,11 @@ def invoice_path_for(invoice_number: str) -> Path:
 def vault_path_for(serial: str) -> Path:
     ensure_invoice_directories()
     return VAULT_DIR / f"{serial}.zip"
+
+
+def receipt_path_for(receipt_number: str) -> Path:
+    ensure_invoice_directories()
+    return RECEIPT_DIR / f"{receipt_number}.pdf"
 
 
 def _logo_path() -> Path | None:
@@ -106,6 +113,8 @@ def generate_invoice_pdf(order: Dict[str, Any]) -> Path:
     header_rows = [
         ["Invoice Number", order["invoice_number"]],
         ["Mint Serial", order["serial"]],
+        ["Payment Reference", order.get("payment_reference") or "Not recorded"],
+        ["Receipt Number", order.get("receipt_number") or "Not recorded"],
         ["Issued", order["created_at"]],
         ["Status", order.get("status", "completed").title()],
         ["Payment Method", str(order.get("payment_method", "fiat")).title()],
@@ -214,6 +223,132 @@ def generate_invoice_pdf(order: Dict[str, Any]) -> Path:
         Paragraph(
             "This invoice reflects the recorded payment breakdown and tax treatment at the time of order creation inside the True Mark sovereign mint system.",
             styles["InvoiceMeta"],
+        )
+    )
+
+    document.build(story)
+    return output_path
+
+
+def generate_receipt_pdf(payment_session: Dict[str, Any]) -> Path:
+    ensure_invoice_directories()
+    output_path = receipt_path_for(payment_session["receipt_number"])
+    document = SimpleDocTemplate(
+        str(output_path),
+        pagesize=LETTER,
+        rightMargin=0.65 * inch,
+        leftMargin=0.65 * inch,
+        topMargin=0.65 * inch,
+        bottomMargin=0.65 * inch,
+        title=f"True Mark Receipt {payment_session['receipt_number']}",
+    )
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name="ReceiptTitle", parent=styles["Heading1"], textColor=BRAND_NAVY, fontSize=22, leading=28))
+    styles.add(ParagraphStyle(name="ReceiptMeta", parent=styles["BodyText"], textColor=BRAND_MUTED, fontSize=10, leading=14))
+    styles.add(ParagraphStyle(name="ReceiptSection", parent=styles["Heading2"], textColor=BRAND_GOLD, fontSize=13, leading=18))
+
+    story = []
+    logo_path = _logo_path()
+    if logo_path:
+        story.append(Image(str(logo_path), width=1.4 * inch, height=1.4 * inch))
+        story.append(Spacer(1, 0.15 * inch))
+
+    story.append(Paragraph("True Mark Mint Engine", styles["ReceiptTitle"]))
+    story.append(Paragraph("Payment Receipt", styles["ReceiptSection"]))
+    story.append(Spacer(1, 0.12 * inch))
+
+    header_rows = [
+        ["Receipt Number", payment_session["receipt_number"]],
+        ["Payment Reference", payment_session["payment_reference"]],
+        ["Captured", payment_session.get("payment_captured_at") or payment_session.get("created_at") or "Pending"],
+        ["Status", str(payment_session.get("status", "payment_cleared")).replace("_", " ").title()],
+        ["Payment Method", str(payment_session.get("payment_method", "fiat")).title()],
+    ]
+    if payment_session.get("crypto_token"):
+        header_rows.append(
+            ["Crypto Reference", f"{payment_session['crypto_token']} @ {_money(payment_session.get('crypto_spot_price_usd'))} spot"]
+        )
+
+    header_table = Table(header_rows, colWidths=[1.8 * inch, 4.5 * inch], hAlign="LEFT")
+    header_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#F4F1E6")),
+                ("TEXTCOLOR", (0, 0), (0, -1), BRAND_NAVY),
+                ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+                ("FONTSIZE", (0, 0), (-1, -1), 10),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+                ("TOPPADDING", (0, 0), (-1, -1), 7),
+                ("BOX", (0, 0), (-1, -1), 0.4, colors.HexColor("#D1D5DB")),
+                ("INNERGRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#E5E7EB")),
+            ]
+        )
+    )
+    story.append(header_table)
+    story.append(Spacer(1, 0.22 * inch))
+
+    billing_address = ", ".join(
+        part
+        for part in [
+            payment_session.get("billing_address_line1"),
+            payment_session.get("billing_address_line2"),
+            payment_session.get("billing_city"),
+            payment_session.get("billing_state"),
+            payment_session.get("billing_postal_code"),
+        ]
+        if part
+    ) or "No billing address on file"
+
+    story.append(Paragraph("Paid By", styles["ReceiptSection"]))
+    story.append(Paragraph(payment_session.get("user_name") or "Customer", styles["BodyText"]))
+    story.append(Paragraph(payment_session.get("user_email") or "", styles["BodyText"]))
+    story.append(Paragraph(billing_address, styles["BodyText"]))
+    story.append(Paragraph(f"Phone: {payment_session.get('billing_phone') or 'Not provided'}", styles["ReceiptMeta"]))
+    story.append(Spacer(1, 0.22 * inch))
+
+    line_item_rows = [
+        ["Line Item", "Amount"],
+        ["Estimated Mint Subtotal", _money(payment_session.get("subtotal_usd"))],
+        ["Processing Fee", _money(payment_session.get("processing_fee_usd"))],
+        ["Estimated Tax", _money(payment_session.get("tax_amount_usd"))],
+        ["Payment Total", _money(payment_session.get("total_usd"))],
+    ]
+    line_item_table = Table(line_item_rows, colWidths=[4.8 * inch, 1.4 * inch], hAlign="LEFT")
+    line_item_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), BRAND_NAVY),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("BACKGROUND", (0, 1), (-1, -1), colors.white),
+                ("TEXTCOLOR", (0, 1), (-1, -1), BRAND_NAVY),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F8FAFC")]),
+                ("GRID", (0, 0), (-1, -1), 0.3, colors.HexColor("#CBD5E1")),
+                ("ALIGN", (1, 0), (1, -1), "RIGHT"),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+            ]
+        )
+    )
+    story.append(Paragraph("Payment Summary", styles["ReceiptSection"]))
+    story.append(line_item_table)
+    story.append(Spacer(1, 0.22 * inch))
+
+    story.append(Paragraph("Workflow Notice", styles["ReceiptSection"]))
+    story.append(
+        Paragraph(
+            (
+                "Payment has been captured for this True Mark order. NFT minting is a separate final step. "
+                "If the customer cancels after payment and processing has started, a $5.00 cancellation fee applies."
+            ),
+            styles["BodyText"],
+        )
+    )
+    story.append(Spacer(1, 0.2 * inch))
+    story.append(
+        Paragraph(
+            "This receipt confirms payment clearance only. The final invoice is issued after the NFT mint is completed.",
+            styles["ReceiptMeta"],
         )
     )
 

@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import App from "./App";
 import ChatBubble from "./ChatBubble";
 import About from "./About";
-import AlphaCertSig from "./AlphaCertSig";
 import DemoMint from "./DemoMint";
 import Signup from "./Signup";
 import MintNFT from "./MintNFT";
@@ -47,7 +46,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Routes>
             <Route path="/" element={<App />} />
             <Route path="/about" element={<About />} />
-            <Route path="/alpha-certsig" element={<AlphaCertSig />} />
             <Route path="/demo-mint" element={<DemoMint />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/login" element={<Login />} />

@@ -13,7 +13,7 @@ import { useMintFlow } from "./context/MintFlowContext";
 import { colors, styles } from "./designTokens";
 
 export default function Cart() {
-  const { checkoutDraft, workspace, updateWorkspace } = useMintFlow();
+  const { checkoutDraft, paymentSession, workspace, updateWorkspace } = useMintFlow();
 
   const fileSizeMb = checkoutDraft?.fileSize
     ? (checkoutDraft.fileSize / (1024 * 1024)).toFixed(2)
@@ -47,10 +47,17 @@ export default function Cart() {
                     The file reference was saved, but the actual file must be reattached before final minting after a refresh or return visit.
                   </Alert>
                 )}
+                {paymentSession?.status === "payment_cleared" && (
+                  <Alert severity="info">
+                    Payment is already cleared under {paymentSession.payment_reference}. Return to Mint to finalize the NFT.
+                  </Alert>
+                )}
               </Stack>
             ) : (
               <Alert severity="info">
-                Your cart is empty right now. Start in Mint to prepare the protected order.
+                {paymentSession?.status === "payment_cleared"
+                  ? "Payment is cleared and the order is ready to mint. Go to Mint to complete the NFT."
+                  : "Your cart is empty right now. Start in Mint to prepare the protected order."}
               </Alert>
             )}
 

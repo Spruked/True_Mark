@@ -176,7 +176,7 @@ const WhyNow = () => (
         Digital object infrastructure is emerging as the technical foundation for this capability.
       </Typography>
       <Typography paragraph>
-        Systems like Alpha CertSig and True Mark Mint are designed specifically for this new phase of the digital economy.
+        True Mark Mint is designed specifically for this new phase of the digital economy.
       </Typography>
       <Divider sx={{ my: 4 }} />
       <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 4 }}>

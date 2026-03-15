@@ -8,6 +8,7 @@ const defaultWorkspace = {
   links: "",
   checklist: "",
   draftSummary: null,
+  paymentSession: null,
   updatedAt: null,
 };
 
@@ -104,11 +105,11 @@ export function MintFlowProvider({ children }) {
 
   const setDraftAndPersist = (draft) => {
     setCheckoutDraft(draft);
-    const nextWorkspace = {
-      ...workspace,
-      draftSummary: buildSerializableDraft(draft),
-      updatedAt: new Date().toISOString(),
-    };
+      const nextWorkspace = {
+        ...workspace,
+        draftSummary: buildSerializableDraft(draft),
+        updatedAt: new Date().toISOString(),
+      };
     setWorkspace(nextWorkspace);
     persistWorkspace(nextWorkspace, draft);
   };
@@ -124,10 +125,33 @@ export function MintFlowProvider({ children }) {
     persistWorkspace(nextWorkspace, null);
   };
 
+  const setPaymentSessionAndPersist = (paymentSession) => {
+    const nextWorkspace = {
+      ...workspace,
+      paymentSession,
+      updatedAt: new Date().toISOString(),
+    };
+    setWorkspace(nextWorkspace);
+    persistWorkspace(nextWorkspace);
+  };
+
+  const clearPaymentSessionAndPersist = () => {
+    const nextWorkspace = {
+      ...workspace,
+      paymentSession: null,
+      updatedAt: new Date().toISOString(),
+    };
+    setWorkspace(nextWorkspace);
+    persistWorkspace(nextWorkspace);
+  };
+
   const value = useMemo(() => ({
     checkoutDraft,
     setCheckoutDraft: setDraftAndPersist,
     clearCheckoutDraft: clearDraftAndPersist,
+    paymentSession: workspace.paymentSession || null,
+    setPaymentSession: setPaymentSessionAndPersist,
+    clearPaymentSession: clearPaymentSessionAndPersist,
     workspace,
     updateWorkspace,
   }), [checkoutDraft, workspace]);

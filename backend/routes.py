@@ -6,6 +6,7 @@ import shutil
 import uuid
 import zipfile
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict
 
 from fastapi import Body, Depends, File, Form, HTTPException, Request, UploadFile, status
@@ -15,48 +16,72 @@ from pydantic import BaseModel
 
 try:
     from .auth import authenticate_admin, require_admin_session
-    from .invoices import generate_invoice_pdf, invoice_path_for, vault_path_for
+    from .invoices import (
+        generate_invoice_pdf,
+        generate_receipt_pdf,
+        invoice_path_for,
+        receipt_path_for,
+        vault_path_for,
+    )
     from .mailer import send_invoice_email
     from .main import app
     from .market import get_market_snapshot
     from .pricing import calculate_quote, load_pricing, save_pricing
     from .storage import (
         authenticate_user,
+        create_payment_session,
         create_user,
         get_analytics,
         get_next_invoice_number,
+        get_next_payment_reference,
+        get_next_receipt_number,
         get_next_truemark_serial,
         get_order_by_invoice_number,
         get_order_by_invoice_token,
         get_order_by_vault_token,
+        get_payment_session_by_receipt_token,
+        get_payment_session_by_token,
         get_user_by_email,
         list_orders,
         list_users,
         record_order,
         update_invoice_delivery,
+        update_payment_session_status,
     )
     from .tax import load_tax_table, resolve_tax_rate, save_tax_table
 except ImportError:
     from auth import authenticate_admin, require_admin_session
-    from invoices import generate_invoice_pdf, invoice_path_for, vault_path_for
+    from invoices import (
+        generate_invoice_pdf,
+        generate_receipt_pdf,
+        invoice_path_for,
+        receipt_path_for,
+        vault_path_for,
+    )
     from mailer import send_invoice_email
     from main import app
     from market import get_market_snapshot
     from pricing import calculate_quote, load_pricing, save_pricing
     from storage import (
         authenticate_user,
+        create_payment_session,
         create_user,
         get_analytics,
         get_next_invoice_number,
+        get_next_payment_reference,
+        get_next_receipt_number,
         get_next_truemark_serial,
         get_order_by_invoice_number,
         get_order_by_invoice_token,
         get_order_by_vault_token,
+        get_payment_session_by_receipt_token,
+        get_payment_session_by_token,
         get_user_by_email,
         list_orders,
         list_users,
         record_order,
         update_invoice_delivery,
+        update_payment_session_status,
     )
     from tax import load_tax_table, resolve_tax_rate, save_tax_table
 
@@ -70,8 +95,9 @@ app.add_middleware(
 )
 
 
-TEMP_DIR = "temp"
-os.makedirs(TEMP_DIR, exist_ok=True)
+BASE_DIR = Path(__file__).resolve().parent
+STAGED_UPLOADS_DIR = BASE_DIR / "data" / "payment_sessions"
+STAGED_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 class QuoteRequest(BaseModel):
@@ -106,6 +132,10 @@ class AccountSignupRequest(BaseModel):
 class AccountLoginRequest(BaseModel):
     email: str
     password: str
+
+
+class MintFinalizeRequest(BaseModel):
+    payment_token: str
 
 
 def build_quote_response(quote_payload: QuoteRequest) -> Dict[str, Any]:
@@ -144,16 +174,22 @@ def _metadata_payload(metadata: str) -> Any:
         return {"raw": cleaned}
 
 
+def _payment_session_directory(payment_reference: str) -> Path:
+    directory = STAGED_UPLOADS_DIR / payment_reference
+    directory.mkdir(parents=True, exist_ok=True)
+    return directory
+
+
 def _write_vault_package(
     output_path: str,
-    uploaded_file_path: str,
+    staged_file_path: str,
     original_filename: str,
-    metadata: str,
+    metadata_payload: Any,
     nft_record: Dict[str, Any],
 ) -> None:
     with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as archive:
-        archive.write(uploaded_file_path, arcname=original_filename)
-        archive.writestr("metadata.json", json.dumps(_metadata_payload(metadata), indent=2))
+        archive.write(staged_file_path, arcname=original_filename)
+        archive.writestr("metadata.json", json.dumps(metadata_payload, indent=2))
         archive.writestr("truemark_record.json", json.dumps(nft_record, indent=2))
 
 
@@ -167,6 +203,52 @@ def _invoice_file_response(order: Dict[str, Any]) -> FileResponse:
         media_type="application/pdf",
         filename=f"{order['invoice_number']}.pdf",
     )
+
+
+def _receipt_file_response(payment_session: Dict[str, Any]) -> FileResponse:
+    receipt_path = receipt_path_for(payment_session["receipt_number"])
+    if not receipt_path.exists():
+        generate_receipt_pdf(payment_session)
+
+    return FileResponse(
+        str(receipt_path),
+        media_type="application/pdf",
+        filename=f"{payment_session['receipt_number']}.pdf",
+    )
+
+
+def _payment_session_response(payment_session: Dict[str, Any], request: Request) -> Dict[str, Any]:
+    return {
+        "payment_token": payment_session["payment_public_token"],
+        "payment_reference": payment_session["payment_reference"],
+        "receipt_number": payment_session["receipt_number"],
+        "receipt_download_url": _public_url(request, f"/downloads/receipts/{payment_session['receipt_public_token']}"),
+        "status": payment_session["status"],
+        "user_name": payment_session["user_name"],
+        "user_email": payment_session["user_email"],
+        "nft_type": payment_session["nft_type"],
+        "package_tier": payment_session["package_tier"],
+        "encryption": payment_session["encryption"],
+        "chain": payment_session["chain"],
+        "quantity": payment_session["quantity"],
+        "file_name": payment_session.get("file_name"),
+        "payment_method": payment_session["payment_method"],
+        "subtotal_usd": payment_session["subtotal_usd"],
+        "tax_amount_usd": payment_session["tax_amount_usd"],
+        "total_usd": payment_session["total_usd"],
+        "tax_rate": payment_session["tax_rate"],
+        "tax_state": payment_session.get("tax_state") or "",
+        "processing_fee_usd": payment_session["processing_fee_usd"],
+        "discount_amount_usd": payment_session["discount_amount_usd"],
+        "cancellation_fee_usd": payment_session["cancellation_fee_usd"],
+        "refund_due_usd": payment_session.get("refund_due_usd"),
+        "payment_captured_at": payment_session.get("payment_captured_at"),
+        "canceled_at": payment_session.get("canceled_at"),
+        "minted_at": payment_session.get("minted_at"),
+        "minted_serial": payment_session.get("minted_serial"),
+        "minted_invoice_number": payment_session.get("minted_invoice_number"),
+        "quote_snapshot": payment_session.get("quote_snapshot"),
+    }
 
 
 @app.post("/accounts/signup")
@@ -185,8 +267,8 @@ def login_account(credentials: AccountLoginRequest):
         return JSONResponse(content={"detail": str(error)}, status_code=401)
 
 
-@app.post("/mint")
-def mint_nft(
+@app.post("/payments/process")
+def process_payment(
     request: Request,
     name: str = Form(...),
     email: str = Form(...),
@@ -199,19 +281,22 @@ def mint_nft(
     quantity: int = Form(1),
     payment_method: str = Form("fiat"),
 ):
-    temp_dir = os.path.join(TEMP_DIR, str(uuid.uuid4()))
-    os.makedirs(temp_dir, exist_ok=True)
+    payment_reference = get_next_payment_reference()
+    receipt_number = get_next_receipt_number()
+    payment_public_token = uuid.uuid4().hex
+    receipt_public_token = uuid.uuid4().hex
+    captured_at = datetime.now(timezone.utc).isoformat()
 
+    stage_dir = _payment_session_directory(payment_reference)
     original_filename = _safe_filename(file.filename)
-    uploaded_file_path = os.path.join(temp_dir, original_filename)
-    invoice_path = None
-    vault_path = None
+    staged_file_path = stage_dir / original_filename
+    receipt_path = None
 
     try:
-        with open(uploaded_file_path, "wb") as buffer:
+        with open(staged_file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        file_size_gb = os.path.getsize(uploaded_file_path) / (1024 * 1024 * 1024)
+        file_size_gb = staged_file_path.stat().st_size / (1024 * 1024 * 1024)
         quote = build_quote_response(
             QuoteRequest(
                 nft_type=nft_type,
@@ -224,14 +309,9 @@ def mint_nft(
             )
         )
 
-        serial = get_next_truemark_serial()
-        invoice_number = get_next_invoice_number()
-        invoice_public_token = uuid.uuid4().hex
-        vault_public_token = uuid.uuid4().hex
-        created_at = datetime.now(timezone.utc).isoformat()
-
         user = get_user_by_email(email)
         customer_name = name.strip() or (user.get("name") if user else "") or "Customer"
+        metadata_payload = _metadata_payload(metadata)
         market_snapshot = get_market_snapshot() if payment_method == "crypto" else None
         crypto_token = None
         crypto_spot_price = None
@@ -240,14 +320,11 @@ def mint_nft(
             crypto_token = "MATIC" if chain == "polygon" else "ETH"
             crypto_spot_price = market_snapshot["assets"][chain]["usd"]
 
-        invoice_download_url = _public_url(request, f"/downloads/invoices/{invoice_public_token}")
-        vault_download_url = _public_url(request, f"/downloads/vault/{vault_public_token}")
-
-        order_payload = {
-            "serial": serial,
-            "invoice_number": invoice_number,
-            "invoice_public_token": invoice_public_token,
-            "vault_public_token": vault_public_token,
+        payment_session = {
+            "payment_reference": payment_reference,
+            "payment_public_token": payment_public_token,
+            "receipt_number": receipt_number,
+            "receipt_public_token": receipt_public_token,
             "user_id": user.get("id") if user else None,
             "user_email": email,
             "user_name": customer_name,
@@ -264,7 +341,9 @@ def mint_nft(
             "chain": chain,
             "quantity": quantity,
             "file_name": original_filename,
+            "staged_file_path": str(staged_file_path),
             "estimated_storage_gb": file_size_gb,
+            "metadata": metadata_payload,
             "subtotal_usd": quote["total"],
             "tax_rate": quote["tax_rate"],
             "tax_state": quote.get("tax_state") or (user.get("state", "") if user else ""),
@@ -276,43 +355,205 @@ def mint_nft(
             "crypto_token": crypto_token,
             "crypto_spot_price_usd": crypto_spot_price,
             "quote_snapshot": quote,
-            "invoice_email_status": "pending",
-            "status": "completed",
-            "created_at": created_at,
+            "cancellation_fee_usd": 5.0,
+            "payment_captured_at": captured_at,
+            "status": "payment_cleared",
+            "created_at": captured_at,
+            "updated_at": captured_at,
         }
 
+        receipt_path = generate_receipt_pdf(payment_session)
+        create_payment_session(payment_session)
+
+        response_payload = _payment_session_response(payment_session, request)
+        response_payload["message"] = (
+            "Payment cleared. Return to Mint to finalize the NFT. A $5 cancellation fee applies if you cancel after payment."
+        )
+        return response_payload
+    except Exception:
+        if receipt_path and receipt_path.exists():
+            receipt_path.unlink()
+        shutil.rmtree(stage_dir, ignore_errors=True)
+        raise
+
+
+@app.get("/payments/{payment_token}")
+def get_payment_session(payment_token: str, request: Request):
+    payment_session = get_payment_session_by_token(payment_token)
+    if not payment_session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Payment session not found.",
+        )
+
+    return _payment_session_response(payment_session, request)
+
+
+@app.post("/payments/{payment_token}/cancel")
+def cancel_payment(payment_token: str, request: Request):
+    payment_session = get_payment_session_by_token(payment_token)
+    if not payment_session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Payment session not found.",
+        )
+
+    if payment_session["status"] == "minted":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This payment has already been minted and can no longer be canceled.",
+        )
+
+    if payment_session["status"] == "canceled_after_payment":
+        return _payment_session_response(payment_session, request)
+
+    refund_due_usd = max(float(payment_session["total_usd"]) - float(payment_session["cancellation_fee_usd"]), 0.0)
+    canceled_at = datetime.now(timezone.utc).isoformat()
+    update_payment_session_status(
+        payment_token,
+        status="canceled_after_payment",
+        refund_due_usd=refund_due_usd,
+        canceled_at=canceled_at,
+    )
+
+    staged_file_path = payment_session.get("staged_file_path")
+    if staged_file_path:
+        shutil.rmtree(Path(staged_file_path).parent, ignore_errors=True)
+
+    updated_session = get_payment_session_by_token(payment_token)
+    response_payload = _payment_session_response(updated_session, request)
+    response_payload["message"] = (
+        f"Payment canceled. A $5.00 cancellation fee was retained and ${refund_due_usd:.2f} remains eligible for refund handling."
+    )
+    return response_payload
+
+
+@app.post("/mint/complete")
+def mint_nft(request: Request, payload: MintFinalizeRequest):
+    payment_session = get_payment_session_by_token(payload.payment_token)
+    if not payment_session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Payment session not found.",
+        )
+
+    if payment_session["status"] == "canceled_after_payment":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This payment was canceled and can no longer be minted.",
+        )
+
+    if payment_session["status"] == "minted":
+        existing_order = get_order_by_invoice_number(payment_session["minted_invoice_number"])
+        if not existing_order:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="The mint was recorded, but the linked order record could not be found.",
+            )
+        return {
+            "serial": payment_session.get("minted_serial"),
+            "invoice_number": payment_session.get("minted_invoice_number"),
+            "invoice_download_url": _public_url(request, f"/downloads/invoices/{existing_order['invoice_public_token']}"),
+            "vault_download_url": _public_url(request, f"/downloads/vault/{existing_order['vault_public_token']}"),
+            "receipt_download_url": _public_url(request, f"/downloads/receipts/{payment_session['receipt_public_token']}"),
+            "message": "This payment session was already minted.",
+        }
+
+    staged_file_path = Path(payment_session.get("staged_file_path") or "")
+    if not staged_file_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_410_GONE,
+            detail="The staged source file is no longer available. Please upload and pay again.",
+        )
+
+    serial = get_next_truemark_serial()
+    invoice_number = get_next_invoice_number()
+    invoice_public_token = uuid.uuid4().hex
+    vault_public_token = uuid.uuid4().hex
+    minted_at = datetime.now(timezone.utc).isoformat()
+    invoice_download_url = _public_url(request, f"/downloads/invoices/{invoice_public_token}")
+    vault_download_url = _public_url(request, f"/downloads/vault/{vault_public_token}")
+    receipt_download_url = _public_url(request, f"/downloads/receipts/{payment_session['receipt_public_token']}")
+    invoice_path = None
+    vault_path = None
+
+    try:
+        order_payload = {
+            "serial": serial,
+            "invoice_number": invoice_number,
+            "invoice_public_token": invoice_public_token,
+            "vault_public_token": vault_public_token,
+            "payment_reference": payment_session["payment_reference"],
+            "receipt_number": payment_session["receipt_number"],
+            "user_id": payment_session.get("user_id"),
+            "user_email": payment_session["user_email"],
+            "user_name": payment_session["user_name"],
+            "billing_address_line1": payment_session.get("billing_address_line1", ""),
+            "billing_address_line2": payment_session.get("billing_address_line2", ""),
+            "billing_city": payment_session.get("billing_city", ""),
+            "billing_state": payment_session.get("billing_state", ""),
+            "billing_postal_code": payment_session.get("billing_postal_code", ""),
+            "billing_phone": payment_session.get("billing_phone", ""),
+            "billing_dob": payment_session.get("billing_dob", ""),
+            "nft_type": payment_session["nft_type"],
+            "package_tier": payment_session["package_tier"],
+            "encryption": payment_session["encryption"],
+            "chain": payment_session["chain"],
+            "quantity": payment_session["quantity"],
+            "file_name": payment_session.get("file_name"),
+            "estimated_storage_gb": payment_session.get("estimated_storage_gb", 0.0),
+            "subtotal_usd": payment_session["subtotal_usd"],
+            "tax_rate": payment_session["tax_rate"],
+            "tax_state": payment_session.get("tax_state", ""),
+            "tax_amount_usd": payment_session["tax_amount_usd"],
+            "processing_fee_usd": payment_session["processing_fee_usd"],
+            "discount_amount_usd": payment_session["discount_amount_usd"],
+            "total_usd": payment_session["total_usd"],
+            "payment_method": payment_session["payment_method"],
+            "crypto_token": payment_session.get("crypto_token"),
+            "crypto_spot_price_usd": payment_session.get("crypto_spot_price_usd"),
+            "quote_snapshot": payment_session.get("quote_snapshot", {}),
+            "invoice_email_status": "pending",
+            "status": "minted",
+            "created_at": minted_at,
+        }
+
+        metadata_payload = payment_session.get("metadata", {})
         nft_record = {
             "serial": serial,
             "invoice_number": invoice_number,
+            "payment_reference": payment_session["payment_reference"],
+            "receipt_number": payment_session["receipt_number"],
             "invoice_download_url": invoice_download_url,
             "vault_download_url": vault_download_url,
-            "customer_name": customer_name,
-            "customer_email": email.strip().lower(),
-            "nft_type": nft_type,
-            "package_tier": package_tier,
-            "encryption": encryption,
-            "chain": chain,
-            "quantity": int(quantity),
-            "filename": original_filename,
-            "metadata": _metadata_payload(metadata),
-            "subtotal_usd": quote["total"],
-            "estimated_tax_usd": quote["estimated_tax"],
-            "grand_total_usd": quote["grand_total"],
-            "payment_method": payment_method,
-            "created_at": created_at,
+            "receipt_download_url": receipt_download_url,
+            "customer_name": payment_session["user_name"],
+            "customer_email": payment_session["user_email"],
+            "nft_type": payment_session["nft_type"],
+            "package_tier": payment_session["package_tier"],
+            "encryption": payment_session["encryption"],
+            "chain": payment_session["chain"],
+            "quantity": int(payment_session["quantity"]),
+            "filename": payment_session.get("file_name"),
+            "metadata": metadata_payload,
+            "subtotal_usd": payment_session["subtotal_usd"],
+            "estimated_tax_usd": payment_session["tax_amount_usd"],
+            "grand_total_usd": payment_session["total_usd"],
+            "payment_method": payment_session["payment_method"],
+            "minted_at": minted_at,
         }
 
         vault_path = vault_path_for(serial)
         _write_vault_package(
             str(vault_path),
-            uploaded_file_path,
-            original_filename,
-            metadata,
+            str(staged_file_path),
+            payment_session.get("file_name") or staged_file_path.name,
+            metadata_payload,
             nft_record,
         )
 
         invoice_path = generate_invoice_pdf(order_payload)
-        record_order(order_payload)
+        order_row = record_order(order_payload)
 
         email_result = {
             "status": "pending",
@@ -332,30 +573,50 @@ def mint_nft(
         update_invoice_delivery(
             invoice_number,
             email_status=email_result["status"],
-            sent_to=email.strip().lower(),
+            sent_to=payment_session["user_email"],
             emailed_at=email_result.get("emailed_at"),
         )
+        update_payment_session_status(
+            payload.payment_token,
+            status="minted",
+            minted_order_id=order_row["id"],
+            minted_serial=serial,
+            minted_invoice_number=invoice_number,
+            minted_at=minted_at,
+        )
+        shutil.rmtree(staged_file_path.parent, ignore_errors=True)
 
         return {
             "serial": serial,
             "invoice_number": invoice_number,
+            "payment_reference": payment_session["payment_reference"],
+            "receipt_number": payment_session["receipt_number"],
             "invoice_download_url": invoice_download_url,
             "vault_download_url": vault_download_url,
+            "receipt_download_url": receipt_download_url,
             "invoice_email_status": email_result["status"],
             "invoice_email_detail": email_result["detail"],
-            "estimated_tax": quote["estimated_tax"],
-            "grand_total": quote["grand_total"],
-            "tax_rate": quote["tax_rate"],
-            "tax_state": quote.get("tax_state") or "",
+            "grand_total": payment_session["total_usd"],
+            "message": "Mint completed. Your invoice, receipt, and vault package are ready.",
         }
     except Exception:
-        if invoice_path and os.path.exists(invoice_path):
-            os.remove(invoice_path)
-        if vault_path and os.path.exists(vault_path):
-            os.remove(vault_path)
+        if invoice_path and invoice_path.exists():
+            invoice_path.unlink()
+        if vault_path and vault_path.exists():
+            vault_path.unlink()
         raise
-    finally:
-        shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+@app.get("/downloads/receipts/{receipt_token}")
+def download_receipt(receipt_token: str):
+    payment_session = get_payment_session_by_receipt_token(receipt_token)
+    if not payment_session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Receipt not found.",
+        )
+
+    return _receipt_file_response(payment_session)
 
 
 @app.get("/downloads/invoices/{invoice_token}")

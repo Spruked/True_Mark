@@ -599,6 +599,9 @@ export default function AdminDashboard() {
                       Total ${Number(order.total_usd || 0).toFixed(2)} | Tax ${Number(order.tax_amount_usd || 0).toFixed(2)}
                     </Typography>
                     <Typography variant="body2">
+                      Payment {order.payment_reference || "N/A"} | Receipt {order.receipt_number || "N/A"} | Status {order.status || "minted"}
+                    </Typography>
+                    <Typography variant="body2">
                       Invoice {order.invoice_number || "Pending"} | Delivery {order.invoice_email_status || "pending"}
                     </Typography>
                     <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mt: 1.5 }}>

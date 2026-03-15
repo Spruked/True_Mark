@@ -37,7 +37,7 @@ const UseCases = () => (
         Certified Digital Objects for High-Value Knowledge
       </Typography>
       <Typography paragraph sx={{ mt: 2 }}>
-        The Alpha CertSig and True Mark Mint architecture is designed for environments where <b>verifiable authorship, immutable records, and long-term traceability</b> are essential.
+        True Mark Mint is designed for environments where <b>verifiable authorship, immutable records, and long-term traceability</b> are essential.
       </Typography>
       <Typography paragraph>
         Rather than serving as a public NFT marketplace, the system functions as <b>forensic digital object infrastructure</b> deployed inside organizations that need permanent proof of creation and ownership.
@@ -66,7 +66,7 @@ const UseCases = () => (
         Traditional systems store these records in internal databases or document repositories. While useful operationally, they often lack <b>independent proof of authorship and creation timing</b>.
       </Typography>
       <Typography paragraph>
-        Using the Alpha CertSig mint engine, a hospital can mint each discovery as a <b>forensic digital object</b>.
+        Using the True Mark mint engine, a hospital can mint each discovery as a <b>forensic digital object</b>.
       </Typography>
       <Typography paragraph>
         Example identifier:
