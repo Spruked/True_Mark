@@ -26,6 +26,7 @@ backend/.env
 truemark-chat-assistant/.env
 backend/data/
 *.db
+backend/config/tax_table.json
 
 # OS
 .DS_Store
