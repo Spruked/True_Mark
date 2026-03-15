@@ -1,8 +1,21 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import { Box, Container, Typography } from "@mui/material";
 import { colors } from "./designTokens";
 
 export default function About() {
+  const videoRef = useRef(null);
+  const [muted, setMuted] = useState(true);
+
+  const toggleMute = () => {
+    if (!videoRef.current) {
+      return;
+    }
+
+    const nextMuted = !muted;
+    videoRef.current.muted = nextMuted;
+    setMuted(nextMuted);
+  };
+
   return (
     <Box
       sx={{
@@ -12,12 +25,13 @@ export default function About() {
         backgroundColor: colors.background,
         color: colors.text,
       }}
-    >
+      >
       {/* Launch/about video background */}
       <video
+        ref={videoRef}
         autoPlay
         loop
-        muted
+        muted={muted}
         playsInline
         style={{
           position: "absolute",
@@ -32,6 +46,25 @@ export default function About() {
       >
         <source src="/assets/truemark launch in 2026.mp4" type="video/mp4" />
       </video>
+      <button
+        onClick={toggleMute}
+        style={{
+          position: "absolute",
+          top: 24,
+          right: 24,
+          zIndex: 10,
+          background: "rgba(0,0,0,0.5)",
+          color: "#fff",
+          border: "none",
+          borderRadius: 24,
+          padding: "8px 16px",
+          fontSize: 18,
+          cursor: "pointer",
+        }}
+        aria-label={muted ? "Unmute video" : "Mute video"}
+      >
+        {muted ? "🔇 Sound Off" : "🔊 Sound On"}
+      </button>
       {/* Watermark overlay */}
       <img
         src="/assets/tree_watermark_1200.png"
