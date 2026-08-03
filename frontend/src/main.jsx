@@ -2,9 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-
 import App from "./App";
-import ChatBubble from "./ChatBubble";
 import About from "./About";
 import DemoMint from "./DemoMint";
 import Signup from "./Signup";
@@ -64,7 +62,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="*" element={<NotFound />} />
           </Routes>
           <SiteFooter />
-          <ChatBubble />
         </>
       </BrowserRouter>
     </MintFlowProvider>
