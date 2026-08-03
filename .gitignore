@@ -28,9 +28,17 @@ backend/data/
 *.db
 backend/config/tax_table.json
 
+# Canonical Vault runtime state
+# Structure and migration manifests may be tracked, but customer/runtime data must not be committed.
+vault_system/runtime/
+vault_system/backups/
+vault_system/exports/
+vault_system/secrets/
+
 # OS
 .DS_Store
 Thumbs.db
+*:Zone.Identifier
 
 # VSCode
 .vscode/
