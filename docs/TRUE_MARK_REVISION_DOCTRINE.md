@@ -21,10 +21,10 @@ Secretum Privatum is the private, mutable preparation layer. It is not the Immut
 ## Authority boundary
 
 ```text
-WORKING COPY → READY FOR REVIEW → COMMIT → SEALED
+WORKING_COPY → READY_FOR_REVIEW → COMMIT_PENDING → COMMITTED → SEALED
 ```
 
-Upload alone never creates authority. The commit operation establishes exact submitted bytes, canonical metadata, identities, timestamps, hashes, signatures, applicable encryption, anchors, and chain of custody. The certificate manifest is canonical, not authoritative; authority resides in the evidence, issuing authority, and Vault events.
+Upload alone never creates authority. Commit is the customer-authorized action that moves a ready object through `COMMIT_PENDING` to `COMMITTED`; sealing then establishes the immutable record. The operation establishes exact submitted bytes, canonical metadata, identities, timestamps, hashes, signatures, applicable encryption, anchors, and chain of custody. The certificate manifest is canonical, not authoritative; authority resides in the evidence, issuing authority, and Vault events.
 
 ## Account hierarchy
 

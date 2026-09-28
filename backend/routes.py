@@ -12,11 +12,12 @@ from typing import Any, Dict
 from fastapi import Body, Depends, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 try:
-    from .auth import authenticate_admin, require_admin_session
+    from .auth import authenticate_admin, create_user_session, decode_admin_token, decode_user_token, require_admin_session, require_user_session
     from .certificate_profiles import build_certificate_manifest, get_certificate_profile, manifest_hash
+    from .escalation_storage import add_message, assign_case, close_case, create_case, get_case
     from .invoices import (
         generate_invoice_pdf,
         generate_receipt_pdf,
@@ -54,8 +55,9 @@ try:
     )
     from .tax import load_tax_table, resolve_tax_rate, save_tax_table
 except ImportError:
-    from auth import authenticate_admin, require_admin_session
+    from auth import authenticate_admin, create_user_session, decode_admin_token, decode_user_token, require_admin_session, require_user_session
     from certificate_profiles import build_certificate_manifest, get_certificate_profile, manifest_hash
+    from escalation_storage import add_message, assign_case, close_case, create_case, get_case
     from invoices import (
         generate_invoice_pdf,
         generate_receipt_pdf,
@@ -108,7 +110,6 @@ STAGED_UPLOADS_DIR = BASE_DIR / "data" / "payment_sessions"
 DALS_EXPORTS_DIR = BASE_DIR / "data" / "dals_exports"
 STAGED_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 DALS_EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
-ESCALATION_CASES: Dict[str, Dict[str, Any]] = {}
 
 
 class QuoteRequest(BaseModel):
@@ -151,14 +152,43 @@ class MintFinalizeRequest(BaseModel):
 
 class EscalationRequest(BaseModel):
     reason_code: str = "CUSTOMER_REQUESTED_HUMAN"
-    account_id: str
     object_id: str | None = None
-    authorized_context: Dict[str, Any] = {}
+    authorized_context: Dict[str, Any] = Field(default_factory=dict)
 
 
 class EscalationMessageRequest(BaseModel):
     message: str
     reason_code: str | None = None
+
+
+class EscalationAssignmentRequest(BaseModel):
+    agent_id: str = Field(min_length=1, max_length=160)
+
+
+APPROVED_ESCALATION_CONTEXT_KEYS = {
+    "object_title",
+    "object_id",
+    "disputed_evidence_id",
+    "certificate_profile",
+    "workflow_state",
+    "orb_summary",
+}
+
+
+def _approved_escalation_context(context: Dict[str, Any]) -> Dict[str, Any]:
+    return {key: value for key, value in context.items() if key in APPROVED_ESCALATION_CONTEXT_KEYS}
+
+
+def _require_escalation_principal(request: Request) -> tuple[str, Dict[str, Any]]:
+    authorization = request.headers.get("Authorization", "")
+    scheme, _, credentials = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not credentials:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication is required.")
+    token = credentials.strip()
+    try:
+        return "user", decode_user_token(token)
+    except HTTPException:
+        return "admin", decode_admin_token(token)
 
 
 def build_quote_response(quote_payload: QuoteRequest) -> Dict[str, Any]:
@@ -329,7 +359,9 @@ def signup_account(account: AccountSignupRequest):
 @app.post("/accounts/login")
 def login_account(credentials: AccountLoginRequest):
     try:
-        return authenticate_user(credentials.email, credentials.password)
+        user = authenticate_user(credentials.email, credentials.password)
+        session = create_user_session(user["id"], user["email"])
+        return {**user, "session_token": session["token"], "session_expires_at": session["expires_at"]}
     except ValueError as error:
         return JSONResponse(content={"detail": str(error)}, status_code=401)
 
@@ -942,48 +974,53 @@ def get_public_tax_table():
 
 
 @app.post("/api/escalations")
-def create_escalation(request: EscalationRequest):
-    case_id = f"CASE-TM-{uuid.uuid4().hex[:12].upper()}"
-    created_at = datetime.now(timezone.utc).isoformat()
-    ESCALATION_CASES[case_id] = {
-        "case_id": case_id,
-        "account_id": request.account_id,
-        "object_id": request.object_id,
-        "reason_code": request.reason_code,
-        "authorized_context": request.authorized_context,
-        "status": "WAITING_FOR_AGENT",
-        "created_at": created_at,
-        "messages": [],
-    }
-    return {"case_id": case_id, "status": "WAITING_FOR_AGENT", "created_at": created_at}
+def create_escalation(request: EscalationRequest, session: Dict[str, Any] = Depends(require_user_session)):
+    context = _approved_escalation_context(request.authorized_context)
+    case = create_case(session["sub"], request.reason_code, request.object_id, context)
+    return {"case_id": case["id"], "status": case["status"], "created_at": case["created_at"]}
 
 
 @app.get("/api/escalations/{case_id}")
-def get_escalation(case_id: str):
-    case = ESCALATION_CASES.get(case_id)
+def get_escalation(case_id: str, session: Dict[str, Any] = Depends(require_user_session)):
+    case = get_case(case_id, session["sub"])
     if not case:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Escalation case not found.")
-    return {key: value for key, value in case.items() if key != "messages"}
+    return case
 
 
 @app.post("/api/escalations/{case_id}/messages")
-def queue_escalation_message(case_id: str, request: EscalationMessageRequest):
-    case = ESCALATION_CASES.get(case_id)
+def queue_escalation_message(case_id: str, request: EscalationMessageRequest, session: Dict[str, Any] = Depends(require_user_session)):
+    if not request.message.strip():
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Message cannot be empty.")
+    case = get_case(case_id, session["sub"])
     if not case:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Escalation case not found.")
     if case["status"] in {"RESOLVED", "CLOSED"}:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This escalation case is closed.")
-    case["messages"].append({"from": "customer", "message": request.message, "reason_code": request.reason_code, "created_at": datetime.now(timezone.utc).isoformat()})
+    if not add_message(case_id, session["sub"], "CUSTOMER", session["sub"], request.message.strip()):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This escalation case is no longer accepting messages.")
     return {"status": "QUEUED_FOR_HUMAN_AGENT"}
 
 
 @app.post("/api/escalations/{case_id}/close")
-def close_escalation(case_id: str):
-    case = ESCALATION_CASES.get(case_id)
-    if not case:
+def close_escalation(case_id: str, request: Request):
+    principal_type, principal = _require_escalation_principal(request)
+    account_id = principal["sub"] if principal_type == "user" else None
+    if not get_case(case_id, account_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Escalation case not found.")
-    case["status"] = "CLOSED"
-    return {"case_id": case_id, "status": case["status"]}
+    if not close_case(case_id, account_id):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This escalation case is already closed.")
+    return {"case_id": case_id, "status": "CLOSED"}
+
+
+@app.post("/api/escalations/{case_id}/assign")
+def assign_escalation(case_id: str, assignment: EscalationAssignmentRequest, session: Dict[str, Any] = Depends(require_admin_session)):
+    if not get_case(case_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Escalation case not found.")
+    agent_id = assignment.agent_id.strip()
+    if not assign_case(case_id, agent_id):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This escalation case is already closed.")
+    return {"case_id": case_id, "status": "ASSIGNED", "assigned_agent_id": agent_id}
 
 
 @app.post("/quote")

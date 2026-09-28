@@ -15,8 +15,9 @@ const sampleImage = "/assets/CertificateKNFTsample.png";
 const demoRecord = {
   owner: "Jane Doe",
   title: "Knowledge Preservation Demonstration Record",
-  nftType: "K-NFT",
-  serial: "TM-DEMO-KNFT-2026-00001",
+  objectType: "Research Record",
+  certificateProfile: "5-Layer Certificate",
+  serial: "TM-DEMO-OBJECT-2026-00001",
   institution: "Jane Doe Research Group",
   anchor: "ipfs://QmDemoJaneDoeKnowledgeAnchor2026",
   glyph: "9b04f2fbc11d6e2c4b9a1d7aef5f0d34",
@@ -52,15 +53,15 @@ export default function DemoMint() {
           <div class="header">
             <div class="meta">
               <h1>Demo Certificate Mockup</h1>
-              <p>This printable mockup mirrors the intended True Mark certification flow for investor and user demonstration. The certificate image also doubles as the NFT face.</p>
+          <p>This printable mockup mirrors the intended True Mark object-authentication flow for investor and user demonstration. Digital extensions are optional after certification.</p>
               <div class="section">
                 <div class="grid">
                   <div><div class="label">Owner</div><div class="value">${demoRecord.owner}</div></div>
-                  <div><div class="label">NFT Type</div><div class="value">${demoRecord.nftType}</div></div>
+                  <div><div class="label">Object Type</div><div class="value">${demoRecord.objectType}</div></div>
                   <div><div class="label">Asset Title</div><div class="value">${demoRecord.title}</div></div>
                   <div><div class="label">Serial</div><div class="value">${demoRecord.serial}</div></div>
                   <div><div class="label">Institution</div><div class="value">${demoRecord.institution}</div></div>
-                  <div><div class="label">Chain</div><div class="value">${demoRecord.chain}</div></div>
+                  <div><div class="label">Certificate Profile</div><div class="value">${demoRecord.certificateProfile}</div></div>
                   <div><div class="label">Anchor</div><div class="value">${demoRecord.anchor}</div></div>
                   <div><div class="label">Timestamp</div><div class="value">${demoRecord.timestamp}</div></div>
                 </div>
@@ -68,7 +69,7 @@ export default function DemoMint() {
               <div class="section">
                 <div class="label">Glyph Trace</div>
                 <div class="value">${demoRecord.glyph}</div>
-                <p>Jane Doe uploads a record, the system assigns a serial, generates a forensic certificate image, and then uses that image as the face of the NFT for the public verification view.</p>
+                <p>The owner prepares an object record, reviews the evidence, authorizes Commit, seals the record, and receives a verifiable Prime Layer Certificate.</p>
               </div>
             </div>
             <div class="sample">
@@ -76,7 +77,7 @@ export default function DemoMint() {
             </div>
           </div>
           <div class="footer">
-            True Mark Mint Engine demo mint flow. Sample data only. Not a live certificate issuance.
+            True Mark object-authentication demonstration. Sample data only. Not a live certificate issuance.
           </div>
         </div>
       </body>
@@ -101,14 +102,14 @@ export default function DemoMint() {
     <Box sx={{ minHeight: "100vh", background: colors.background, color: colors.text, py: 8 }}>
       <Container maxWidth="xl">
         <Typography variant="h3" fontWeight={700} gutterBottom sx={styles.title}>
-          Demo Mint
+          Demo Object Authentication
         </Typography>
         <Typography variant="body1" sx={{ color: colors.neutral, maxWidth: 900, lineHeight: 1.8 }}>
-          This public demo shows the intended simplicity of the True Mark mint flow without requiring login. It walks through a preloaded Jane Doe issuance and displays the certificate image that would also serve as the NFT face.
+          This public demo shows the intended True Mark workflow without requiring login: Object → Evidence → Commit → Sealed Record → Prime Layer Certificate → Verify.
         </Typography>
 
         <Alert severity="info" sx={{ mt: 3, mb: 4 }}>
-          This is a visible demonstration flow only. It does not write to the protected mint system or issue a live certificate.
+          This is a visible demonstration flow only. It does not write to the protected record system or issue a live certificate.
         </Alert>
 
         <Box
@@ -120,7 +121,7 @@ export default function DemoMint() {
         >
           <Box sx={{ ...styles.panel, p: 4 }}>
             <Typography variant="h5" fontWeight={700} sx={{ color: colors.gold, mb: 2 }}>
-              Jane Doe Demo Flow
+              Object Authentication Demo
             </Typography>
             <Stack spacing={2}>
               <Box>
@@ -138,7 +139,7 @@ export default function DemoMint() {
                 </Typography>
                 <Typography fontWeight={700}>Asset Preparation</Typography>
                 <Typography sx={{ color: colors.neutral }}>
-                  {demoRecord.title} is prepared as a {demoRecord.nftType} and routed into the certification workflow.
+                  {demoRecord.title} is prepared as a {demoRecord.objectType} and routed into the governed evidence workflow.
                 </Typography>
               </Box>
               <Box>
@@ -163,7 +164,7 @@ export default function DemoMint() {
             >
               {[
                 ["Owner", demoRecord.owner],
-                ["NFT Type", demoRecord.nftType],
+                ["Object Type", demoRecord.objectType],
                 ["Serial", demoRecord.serial],
                 ["Anchor", demoRecord.anchor],
                 ["Timestamp", demoRecord.timestamp],
@@ -192,7 +193,7 @@ export default function DemoMint() {
 
           <Box sx={{ ...styles.panel, p: 3 }}>
             <Typography variant="h5" fontWeight={700} sx={{ color: colors.gold, mb: 2 }}>
-              Certificate Sample / NFT Face
+              Certificate Sample
             </Typography>
             <Box
               component="img"
@@ -207,7 +208,7 @@ export default function DemoMint() {
               }}
             />
             <Typography variant="body2" sx={{ mt: 2, color: colors.neutral, lineHeight: 1.7 }}>
-              This sample certificate sits next to the demo flow and represents the exact concept you described: the certificate render doubles as the NFT face while the PDF remains printable.
+              This sample certificate represents the sealed-record outcome. The certificate remains independently verifiable, while digital extensions remain optional.
             </Typography>
           </Box>
         </Box>
@@ -215,7 +216,7 @@ export default function DemoMint() {
         {showMockup && (
           <Box sx={{ ...styles.panel, mt: 4, p: 4 }}>
             <Typography variant="h5" fontWeight={700} sx={{ color: colors.gold, mb: 2 }}>
-              Printable Jane Doe Mockup
+              Printable Certificate Mockup
             </Typography>
             <Box
               sx={{
@@ -234,7 +235,8 @@ export default function DemoMint() {
                 <Stack spacing={1.4}>
                   <Typography><b>Owner:</b> {demoRecord.owner}</Typography>
                   <Typography><b>Asset Title:</b> {demoRecord.title}</Typography>
-                  <Typography><b>Type:</b> {demoRecord.nftType}</Typography>
+                  <Typography><b>Object Type:</b> {demoRecord.objectType}</Typography>
+                  <Typography><b>Certificate:</b> {demoRecord.certificateProfile}</Typography>
                   <Typography><b>Serial:</b> {demoRecord.serial}</Typography>
                   <Typography><b>Institution:</b> {demoRecord.institution}</Typography>
                   <Typography><b>Anchor:</b> {demoRecord.anchor}</Typography>

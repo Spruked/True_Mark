@@ -1,60 +1,34 @@
-"""Human Support escalation service boundary."""
+"""Deprecated local adapter for the True Mark Human Support boundary.
 
-from datetime import datetime, timezone
-from typing import Any
-from uuid import uuid4
+Production escalation is integrated into the main True Mark backend, where
+signed account sessions and persistent storage are available. This companion
+process exposes only a health/deprecation response so it cannot be mistaken
+for an authoritative or secure escalation service.
+"""
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from fastapi.responses import JSONResponse
 
-app = FastAPI(title="True Mark Human Support Escalation Service")
-app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:3300", "http://127.0.0.1:3300"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
-CASES: dict[str, dict[str, Any]] = {}
-
-
-class EscalationRequest(BaseModel):
-    reason_code: str = "CUSTOMER_REQUESTED_HUMAN"
-    account_id: str
-    object_id: str | None = None
-    authorized_context: dict[str, Any] = Field(default_factory=dict)
+app = FastAPI(title="True Mark Human Support Adapter")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3300", "http://127.0.0.1:3300"],
+    allow_credentials=True,
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
 
 
-class MessageRequest(BaseModel):
-    message: str
-    reason_code: str | None = None
+@app.get("/health")
+async def health():
+    return {"status": "deprecated", "service": "main-backend-human-support"}
 
 
-@app.post("/api/escalations")
-async def create_escalation(request: EscalationRequest):
-    case_id = f"CASE-TM-{uuid4().hex[:12].upper()}"
-    CASES[case_id] = {"case_id": case_id, "account_id": request.account_id, "object_id": request.object_id, "reason_code": request.reason_code, "authorized_context": request.authorized_context, "status": "WAITING_FOR_AGENT", "created_at": datetime.now(timezone.utc).isoformat(), "messages": []}
-    return {"case_id": case_id, "status": "WAITING_FOR_AGENT"}
-
-
-@app.get("/api/escalations/{case_id}")
-async def get_escalation(case_id: str):
-    case = CASES.get(case_id)
-    if not case:
-        raise HTTPException(status_code=404, detail="Escalation case not found.")
-    return {key: value for key, value in case.items() if key != "messages"}
-
-
-@app.post("/api/escalations/{case_id}/messages")
-async def queue_message(case_id: str, request: MessageRequest):
-    case = CASES.get(case_id)
-    if not case:
-        raise HTTPException(status_code=404, detail="Escalation case not found.")
-    if case["status"] in {"RESOLVED", "CLOSED"}:
-        raise HTTPException(status_code=409, detail="This escalation case is closed.")
-    case["messages"].append({"from": "customer", "message": request.message, "created_at": datetime.now(timezone.utc).isoformat()})
-    return {"status": "QUEUED_FOR_HUMAN_AGENT"}
-
-
-@app.post("/api/escalations/{case_id}/close")
-async def close_escalation(case_id: str):
-    case = CASES.get(case_id)
-    if not case:
-        raise HTTPException(status_code=404, detail="Escalation case not found.")
-    case["status"] = "CLOSED"
-    return {"case_id": case_id, "status": case["status"]}
+@app.api_route("/api/escalations", methods=["GET", "POST"])
+@app.api_route("/api/escalations/{case_id}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
+async def deprecated_escalation_endpoint():
+    return JSONResponse(
+        status_code=410,
+        content={"detail": "Human Support is integrated into the main True Mark backend at port 13001."},
+    )

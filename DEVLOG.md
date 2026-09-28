@@ -35,6 +35,15 @@
 - Created `backend/.venv` from `backend/requirements.txt`; the environment remains ignored and is not committed.
 - Verified backend root, pricing profiles, escalation creation, message queueing, and case retrieval.
 
+## 2026-09-28 — Human Support hardening
+
+- Added signed account sessions to account login and Human Support requests.
+- Derived escalation ownership from the authenticated session instead of accepting caller-supplied account IDs.
+- Persisted escalation cases and messages in SQLite so restarts do not erase the queue.
+- Scoped case reads and customer messages to the owning account; added authenticated admin assignment.
+- Restricted the escalation context envelope to approved object/workflow fields.
+- Synchronized the doctrine with `WORKING_COPY → READY_FOR_REVIEW → COMMIT_PENDING → COMMITTED → SEALED`, with Commit defined as the customer-authorized action.
+
 ### Known boundary
 
 The legacy payment/token issuance routes remain available temporarily for compatibility. They must be adapted into the canonical Object → Evidence → Commit → Vault pipeline before they can be treated as an authoritative production path.

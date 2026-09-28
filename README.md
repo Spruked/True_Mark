@@ -9,8 +9,9 @@ Account
   → Secretum Privatum / Private Sanctum
   → Project / Object Workbench
   → Evidence Staging
-  → Ready for Review
-  → Commit action
+  → READY_FOR_REVIEW
+  → COMMIT_PENDING
+  → COMMITTED
   → Sealed / Immutable Vault event
   → Canonical Certificate Manifest
   → Prime Layer Certificate
@@ -28,7 +29,7 @@ Secretum Privatum is private, mutable working space. The Immutable Vault is the 
 - Governed project states and transition validation in [backend/secretum_models.py](backend/secretum_models.py).
 - Prime Layer profiles limited to 2, 3, 5, 7, 11, and 13 layers.
 - Canonical manifest generation with a manifest hash; authority remains in the sealed evidence/Vault chain.
-- Human Support escalation channel, hidden by default and limited to scoped cases.
+- Human Support escalation channel, hidden by default, signed-session authenticated, account-scoped, and persisted in SQLite.
 
 ## Compatibility boundary
 
@@ -65,4 +66,4 @@ The existing frontend build should pass with `npm run build` from `frontend/`. D
 
 ## Human Support
 
-The support channel is not an automated named assistant. It is hidden by default and appears only after a governed escalation case is authorized. Agents receive only the approved case context; unrelated Sanctum projects, temporary files, private notes, and encryption keys remain excluded.
+The support channel is not an automated named assistant. It is hidden by default and appears only after a governed escalation case is authorized. Customer ownership is derived from the signed account session, cases survive backend restarts, and agents receive only the approved case context; unrelated Sanctum projects, temporary files, private notes, and encryption keys remain excluded. The production escalation API is integrated into the main backend on port `13001`; the companion `truemark-human-support` service is only a deprecated adapter.

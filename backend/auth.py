@@ -68,6 +68,48 @@ def get_admin_session_ttl_seconds() -> int:
         return DEFAULT_SESSION_TTL_SECONDS
 
 
+def get_user_session_secret() -> str:
+    configured = os.getenv("TRUEMARK_USER_SESSION_SECRET", "").strip()
+    if configured:
+        return configured
+    if os.getenv("TRUEMARK_ENV", "development").lower() == "development":
+        return "truemark-local-development-user-session-secret"
+    raise _configuration_error()
+
+
+def _sign_user_message(message: str) -> str:
+    digest = hmac.new(get_user_session_secret().encode("utf-8"), message.encode("utf-8"), hashlib.sha256).digest()
+    return _b64url_encode(digest)
+
+
+def create_user_session(user_id: str, email: str) -> Dict[str, Any]:
+    issued_at = int(time.time())
+    expires_at = issued_at + get_admin_session_ttl_seconds()
+    payload = {"sub": user_id, "email": email.strip().lower(), "iat": issued_at, "exp": expires_at, "kind": "user"}
+    encoded_payload = _b64url_encode(json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8"))
+    return {"token": f"{encoded_payload}.{_sign_user_message(encoded_payload)}", "expires_at": expires_at}
+
+
+def decode_user_token(token: str) -> Dict[str, Any]:
+    try:
+        encoded_payload, provided_signature = token.split(".", 1)
+        if not hmac.compare_digest(provided_signature, _sign_user_message(encoded_payload)):
+            raise ValueError("signature")
+        payload = json.loads(_b64url_decode(encoded_payload).decode("utf-8"))
+    except (ValueError, json.JSONDecodeError, UnicodeDecodeError):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid user session token.")
+    if payload.get("kind") != "user" or int(payload.get("exp", 0)) <= int(time.time()) or not payload.get("sub"):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User session has expired or is invalid.")
+    return payload
+
+
+def require_user_session(request: Request) -> Dict[str, Any]:
+    authorization = request.headers.get("Authorization", "")
+    scheme, _, credentials = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not credentials:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="A signed-in user session is required.")
+    return decode_user_token(credentials.strip())
+
 def _sign_message(message: str) -> str:
     digest = hmac.new(
         get_admin_session_secret().encode("utf-8"),

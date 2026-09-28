@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { colors } from "./designTokens";
 import { getEscalationApiUrl } from "./escalationApi";
+import { getUserAuthHeaders } from "./authStorage";
 
 const API_URL = getEscalationApiUrl();
 
@@ -21,7 +22,7 @@ export default function HumanSupportBubble({ visible = false, caseId = null, rea
     setInput("");
     setLoading(true);
     try {
-      const response = await axios.post(`${API_URL}/${caseId}/messages`, { message, reason_code: reasonCode });
+      const response = await axios.post(`${API_URL}/${caseId}/messages`, { message, reason_code: reasonCode }, { headers: getUserAuthHeaders() });
       if (response.data?.message) setMessages((current) => [...current, { from: "human", text: response.data.message }]);
     } catch {
       setMessages((current) => [...current, { from: "system", text: "Human Support is temporarily unavailable. Your case remains recorded." }]);

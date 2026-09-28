@@ -1,11 +1,13 @@
 User-agent: *
 Allow: /
-Disallow: /admin/
 Disallow: /cart
 Disallow: /checkout
 Disallow: /investor
 Disallow: /login
 Disallow: /mint
 Disallow: /signup
+Disallow: /sanctum
+Disallow: /objects/
+Disallow: /admin/
 
 Sitemap: https://truemarkmint.com/sitemap.xml

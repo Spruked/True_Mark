@@ -252,10 +252,10 @@ export default function Signup() {
                     type="button"
                     variant="outlined"
                     fullWidth
-                    onClick={() => navigate("/mint")}
+                    onClick={() => navigate("/sanctum")}
                     sx={styles.secondaryButton}
                   >
-                    Continue to Mint
+                    Continue to My Sanctum
                   </Button>
                   <Button
                     type="button"

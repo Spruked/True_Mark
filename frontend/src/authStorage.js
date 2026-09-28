@@ -23,8 +23,11 @@ export function saveStoredAccount(account) {
 
 export function startUserSession(account) {
   window.sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+    id: account.id,
     email: account.email,
     name: account.name,
+    token: account.session_token,
+    expiresAt: account.session_expires_at,
     startedAt: new Date().toISOString(),
   }));
   window.dispatchEvent(new Event("tm-auth-changed"));
@@ -49,7 +52,18 @@ export function getActiveUser() {
 }
 
 export function isUserAuthenticated() {
-  return Boolean(getUserSession());
+  const session = getUserSession();
+  if (!session?.token) return false;
+  if (session.expiresAt && Date.now() >= session.expiresAt * 1000) {
+    clearUserSession();
+    return false;
+  }
+  return true;
+}
+
+export function getUserAuthHeaders() {
+  const session = getUserSession();
+  return session?.token ? { Authorization: `Bearer ${session.token}` } : {};
 }
 
 export function clearUserSession() {
