@@ -58,7 +58,7 @@ Backend:
 ```bash
 cd backend
 pip install -r requirements.txt
-uvicorn main:app --reload --port 13000
+uvicorn main:app --reload --port 13001
 ```
 
 The existing frontend build should pass with `npm run build` from `frontend/`. Do not add payment, blockchain, SMTP, or production credential configuration until the core authentication transaction is deterministic and recovery-safe.

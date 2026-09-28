@@ -108,6 +108,7 @@ STAGED_UPLOADS_DIR = BASE_DIR / "data" / "payment_sessions"
 DALS_EXPORTS_DIR = BASE_DIR / "data" / "dals_exports"
 STAGED_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 DALS_EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
+ESCALATION_CASES: Dict[str, Dict[str, Any]] = {}
 
 
 class QuoteRequest(BaseModel):
@@ -146,6 +147,18 @@ class AccountLoginRequest(BaseModel):
 
 class MintFinalizeRequest(BaseModel):
     payment_token: str
+
+
+class EscalationRequest(BaseModel):
+    reason_code: str = "CUSTOMER_REQUESTED_HUMAN"
+    account_id: str
+    object_id: str | None = None
+    authorized_context: Dict[str, Any] = {}
+
+
+class EscalationMessageRequest(BaseModel):
+    message: str
+    reason_code: str | None = None
 
 
 def build_quote_response(quote_payload: QuoteRequest) -> Dict[str, Any]:
@@ -926,6 +939,51 @@ def get_public_mint_standard():
 @app.get("/tax-table")
 def get_public_tax_table():
     return JSONResponse(content=load_tax_table())
+
+
+@app.post("/api/escalations")
+def create_escalation(request: EscalationRequest):
+    case_id = f"CASE-TM-{uuid.uuid4().hex[:12].upper()}"
+    created_at = datetime.now(timezone.utc).isoformat()
+    ESCALATION_CASES[case_id] = {
+        "case_id": case_id,
+        "account_id": request.account_id,
+        "object_id": request.object_id,
+        "reason_code": request.reason_code,
+        "authorized_context": request.authorized_context,
+        "status": "WAITING_FOR_AGENT",
+        "created_at": created_at,
+        "messages": [],
+    }
+    return {"case_id": case_id, "status": "WAITING_FOR_AGENT", "created_at": created_at}
+
+
+@app.get("/api/escalations/{case_id}")
+def get_escalation(case_id: str):
+    case = ESCALATION_CASES.get(case_id)
+    if not case:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Escalation case not found.")
+    return {key: value for key, value in case.items() if key != "messages"}
+
+
+@app.post("/api/escalations/{case_id}/messages")
+def queue_escalation_message(case_id: str, request: EscalationMessageRequest):
+    case = ESCALATION_CASES.get(case_id)
+    if not case:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Escalation case not found.")
+    if case["status"] in {"RESOLVED", "CLOSED"}:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This escalation case is closed.")
+    case["messages"].append({"from": "customer", "message": request.message, "reason_code": request.reason_code, "created_at": datetime.now(timezone.utc).isoformat()})
+    return {"status": "QUEUED_FOR_HUMAN_AGENT"}
+
+
+@app.post("/api/escalations/{case_id}/close")
+def close_escalation(case_id: str):
+    case = ESCALATION_CASES.get(case_id)
+    if not case:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Escalation case not found.")
+    case["status"] = "CLOSED"
+    return {"case_id": case_id, "status": case["status"]}
 
 
 @app.post("/quote")

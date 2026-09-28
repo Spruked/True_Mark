@@ -25,6 +25,16 @@
 - Illegal direct `WORKING_COPY → SEALED` transitions are rejected.
 - No named-assistant references, old assistant API variables, or old assistant hostnames remain.
 
+## 2026-09-28 — Local development stack verification
+
+- Confirmed True Mark frontend on `http://localhost:3300`.
+- Confirmed Secretum Privatum UI on `http://localhost:1420`.
+- Moved the local True Mark backend to `http://localhost:13001` because port `13000` is occupied by an unrelated system service in this environment.
+- Updated frontend API and Human Support escalation defaults to port `13001`.
+- Added and verified the main-backend escalation routes.
+- Created `backend/.venv` from `backend/requirements.txt`; the environment remains ignored and is not committed.
+- Verified backend root, pricing profiles, escalation creation, message queueing, and case retrieval.
+
 ### Known boundary
 
 The legacy payment/token issuance routes remain available temporarily for compatibility. They must be adapted into the canonical Object → Evidence → Commit → Vault pipeline before they can be treated as an authoritative production path.
