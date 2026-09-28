@@ -3,6 +3,9 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import App from "./App";
+import SanctumDashboard from "./SanctumDashboard";
+import ObjectWorkbench from "./ObjectWorkbench";
+import Verify from "./Verify";
 import About from "./About";
 import DemoMint from "./DemoMint";
 import Signup from "./Signup";
@@ -43,6 +46,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <SiteNav />
           <Routes>
             <Route path="/" element={<App />} />
+            <Route path="/sanctum" element={<ProtectedRoute><SanctumDashboard /></ProtectedRoute>} />
+            <Route path="/objects/new" element={<ProtectedRoute><ObjectWorkbench /></ProtectedRoute>} />
+            <Route path="/objects/:objectId" element={<ProtectedRoute><ObjectWorkbench /></ProtectedRoute>} />
+            <Route path="/verify" element={<Verify />} />
             <Route path="/about" element={<About />} />
             <Route path="/demo-mint" element={<DemoMint />} />
             <Route path="/signup" element={<Signup />} />

@@ -43,7 +43,7 @@ export default function MintNFT() {
     region_code: "US",
     registrant_code: "",
     nft_type: "K-NFT",
-    package_tier: "starter",
+    package_tier: "p2",
     encryption: "none",
     chain: "polygon",
     quantity: 1,
@@ -179,7 +179,7 @@ export default function MintNFT() {
     setMintResult(null);
 
     if (!form.file) {
-      setError("Upload the file you want to mint before continuing.");
+      setError("Add the evidence file you want to authenticate before continuing.");
       return;
     }
 
@@ -198,7 +198,7 @@ export default function MintNFT() {
       links: "",
       checklist: "",
     });
-    setSuccess("File confirmed. Continue to checkout for the estimate and payment step.");
+    setSuccess("Evidence staged. Continue to review the certificate profile and next authority step.");
     setTimeout(() => {
       setProgress(false);
       navigate("/checkout");
@@ -220,10 +220,10 @@ export default function MintNFT() {
         payment_token: paymentSession.payment_token,
       });
       setMintResult(response.data);
-      setSuccess(`Mint completed. ${response.data.nft_identifier} is now recorded and invoice ${response.data.invoice_number} is ready.`);
+      setSuccess(`Object commitment completed. ${response.data.nft_identifier} is now recorded and invoice ${response.data.invoice_number} is ready.`);
       clearPaymentSession();
     } catch (requestError) {
-      setError(requestError.response?.data?.detail || "The NFT could not be minted right now.");
+      setError(requestError.response?.data?.detail || "The object could not be committed right now.");
     } finally {
       setProgress(false);
     }
@@ -236,13 +236,13 @@ export default function MintNFT() {
     <Box sx={{ minHeight: "100vh", background: colors.background, color: colors.text, py: 8 }}>
       <Container maxWidth="sm">
         <Typography variant="h4" fontWeight={700} gutterBottom sx={styles.title}>
-          Mint Your NFT
+          Authenticate an Object
         </Typography>
         <Typography variant="body2" sx={{ mb: 2, opacity: 0.8 }}>
-          Upload your knowledge, legacy, or custom asset. Your file is staged for pricing first, payment is processed second, and the actual NFT mint happens only after you return here to finalize it.
+          Build a private object record. Upload evidence, add provenance and ownership context, choose a certificate profile, and review the record before any authoritative commitment.
         </Typography>
         <Alert severity="info" sx={{ mb: 2 }}>
-          True Mark is a standalone mint platform. Upload and prepare your record here, process payment in checkout, then return to this page to complete the NFT mint and receive the final invoice.
+          This is your working copy inside Secretum Privatum. Uploads remain mutable until you explicitly commit and seal the object record.
         </Alert>
         {progress && <LinearProgress sx={{ mb: 2 }} />}
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -258,10 +258,10 @@ export default function MintNFT() {
             Customer Workflow
           </Typography>
           <Stack spacing={1.2}>
-            <Typography variant="body2">1. Sign in or create your account before preparing the mint request.</Typography>
-            <Typography variant="body2">2. Upload the source file and save the request for checkout.</Typography>
-            <Typography variant="body2">3. In Checkout, review the estimate and process payment.</Typography>
-            <Typography variant="body2">4. Return here to mint the NFT only after payment clears.</Typography>
+            <Typography variant="body2">1. Sign in or create your account to open your private Sanctum.</Typography>
+            <Typography variant="body2">2. Stage evidence and supporting object information.</Typography>
+            <Typography variant="body2">3. Review the canonical record and choose a Prime Layer certificate profile.</Typography>
+            <Typography variant="body2">4. Commit and seal only when you are ready to create an authoritative Vault event.</Typography>
           </Stack>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ mt: 2 }}>
             <Button component={RouterLink} to="/login" variant="outlined" sx={styles.secondaryButton}>
@@ -279,7 +279,7 @@ export default function MintNFT() {
         {hasPaidSession && (
           <Box sx={{ mb: 3, p: 3, borderRadius: 3, background: "rgba(255,255,255,0.05)" }}>
             <Typography variant="h6" fontWeight={700} sx={{ color: colors.gold, mb: 1 }}>
-              Payment Cleared, Ready to Mint
+              Review Complete, Ready for Commitment
             </Typography>
             <Stack spacing={1.2}>
               <Typography><b>Payment Reference:</b> {paymentSession.payment_reference}</Typography>
@@ -294,7 +294,7 @@ export default function MintNFT() {
             </Stack>
             <Stack spacing={2} sx={{ mt: 2 }}>
               <Button onClick={handleFinalizeMint} variant="contained" sx={styles.primaryButton}>
-                Mint NFT Now
+                Commit and Seal Object
               </Button>
               {paymentSession.receipt_download_url && (
                 <Button href={paymentSession.receipt_download_url} variant="outlined" sx={styles.secondaryButton}>
@@ -310,18 +310,18 @@ export default function MintNFT() {
 
         {wasCanceledAfterPayment && (
           <Alert severity="warning" sx={{ mb: 3 }}>
-            This payment was canceled after processing began. The request must be started again from a new upload if you still want to mint.
+            This working request was canceled after processing began. Start again from a new evidence package if you still want to continue.
           </Alert>
         )}
 
         {mintResult && (
           <Box sx={{ mb: 3, p: 3, borderRadius: 3, background: "rgba(255,255,255,0.05)" }}>
             <Typography variant="h6" fontWeight={700} sx={{ color: colors.gold, mb: 1 }}>
-              Mint Complete
+              Object Sealed
             </Typography>
             <Stack spacing={1.2}>
               <Typography><b>Serial:</b> {mintResult.serial}</Typography>
-              <Typography><b>NFT Identifier:</b> {mintResult.nft_identifier}</Typography>
+              <Typography><b>Object Identifier:</b> {mintResult.nft_identifier}</Typography>
               <Typography><b>Node Code:</b> {mintResult.node_id || mintStandard.node_id}</Typography>
               <Typography><b>Region:</b> {mintResult.region_code || mintStandard.region_code}</Typography>
               <Typography><b>Registrant Code:</b> {mintResult.registrant_code || form.registrant_code || "PUBLIC"}</Typography>
@@ -376,7 +376,7 @@ export default function MintNFT() {
                 InputProps={{ style: { color: "#F4F7F8" } }}
               />
               <TextField
-                label="Mint Node Code"
+                label="Authority Node Code"
                 name="node_id"
                 value={form.node_id}
                 fullWidth
@@ -390,7 +390,7 @@ export default function MintNFT() {
                 onChange={handleChange}
                 fullWidth
                 required
-                helperText="Geographic region for the mint record, for example US or EU."
+                helperText="Geographic region for the object record, for example US or EU."
                 InputLabelProps={{ style: { color: "#C8CCD0" } }}
                 FormHelperTextProps={{ style: { color: "#C8CCD0" } }}
                 InputProps={{ style: { color: "#F4F7F8" } }}
@@ -409,7 +409,7 @@ export default function MintNFT() {
               />
               <TextField
                 select
-                label="NFT Type"
+                label="Object Type"
                 name="nft_type"
                 value={form.nft_type}
                 onChange={handleChange}

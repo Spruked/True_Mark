@@ -5,6 +5,11 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict
 
+try:
+    from .certificate_profiles import default_certificate_profiles
+except ImportError:
+    from certificate_profiles import default_certificate_profiles
+
 
 BASE_DIR = Path(__file__).resolve().parent
 CONFIG_DIR = BASE_DIR / "config"
@@ -30,36 +35,12 @@ DEFAULT_PRICING: Dict[str, Any] = {
         "C-NFT": {"name": "Custom NFT", "price": 14.99, "enabled": True},
     },
     "package_tiers": {
-        "starter": {
-            "name": "Mint Only",
-            "price": 0.0,
-            "layers": 0,
-            "description": "Low-cost Polygon mint with no certificate package.",
-        },
-        "essential": {
-            "name": "Basic Record",
-            "price": 12.0,
-            "layers": 3,
-            "description": "Mint plus a simple 3-layer record package.",
-        },
-        "secure": {
-            "name": "Secure Record",
-            "price": 28.0,
-            "layers": 5,
-            "description": "Mint plus a stronger certificate package.",
-        },
-        "professional": {
-            "name": "Professional Record",
-            "price": 45.0,
-            "layers": 7,
-            "description": "Mint plus a premium 7-layer package.",
-        },
-        "forensic": {
-            "name": "Forensic Record",
-            "price": 95.0,
-            "layers": 10,
-            "description": "Full forensic package for high-assurance records.",
-        },
+        "p2": {**default_certificate_profiles()["p2"], "price": 12.0},
+        "p3": {**default_certificate_profiles()["p3"], "price": 18.0},
+        "p5": {**default_certificate_profiles()["p5"], "price": 28.0},
+        "p7": {**default_certificate_profiles()["p7"], "price": 45.0},
+        "p11": {**default_certificate_profiles()["p11"], "price": 70.0},
+        "p13": {**default_certificate_profiles()["p13"], "price": 95.0},
     },
     "encryption_options": {
         "none": {"name": "No Encryption", "price": 0.0},
@@ -99,6 +80,27 @@ def _deep_merge(current: Dict[str, Any], updates: Dict[str, Any]) -> Dict[str, A
     return merged
 
 
+def _enforce_certificate_profiles(pricing: Dict[str, Any]) -> Dict[str, Any]:
+    """Keep configurable prices, but lock profile IDs, names, and layer counts."""
+    governed = default_certificate_profiles()
+    existing = pricing.get("package_tiers") or {}
+    prices = {key: value.get("price", 0.0) for key, value in existing.items() if isinstance(value, dict)}
+    defaults = {"p2": 12.0, "p3": 18.0, "p5": 28.0, "p7": 45.0, "p11": 70.0, "p13": 95.0}
+    pricing["package_tiers"] = {
+        profile_id: {
+            **profile,
+            "price": float(prices.get(profile_id, defaults[profile_id])),
+        }
+        for profile_id, profile in governed.items()
+    }
+    pricing["certificate_architecture"] = {
+        "name": "Prime Layer Architecture",
+        "allowed_layer_counts": [profile["layers"] for profile in governed.values()],
+        "rule": "Only governed prime-number certificate profiles may be issued.",
+    }
+    return pricing
+
+
 def ensure_pricing_file() -> Path:
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -112,7 +114,7 @@ def load_pricing() -> Dict[str, Any]:
     ensure_pricing_file()
 
     try:
-        return json.loads(PRICING_PATH.read_text(encoding="utf-8"))
+        return _enforce_certificate_profiles(json.loads(PRICING_PATH.read_text(encoding="utf-8")))
     except json.JSONDecodeError:
         PRICING_PATH.write_text(json.dumps(DEFAULT_PRICING, indent=2), encoding="utf-8")
         return deepcopy(DEFAULT_PRICING)
@@ -122,14 +124,14 @@ def save_pricing(updates: Dict[str, Any]) -> Dict[str, Any]:
     current = load_pricing()
     merged = _deep_merge(current, updates)
     PRICING_PATH.write_text(json.dumps(merged, indent=2), encoding="utf-8")
-    return merged
+    return _enforce_certificate_profiles(merged)
 
 
 def calculate_quote(cart: Dict[str, Any], pricing: Dict[str, Any] | None = None) -> Dict[str, Any]:
     active_pricing = pricing or load_pricing()
 
     nft_type = cart.get("nft_type", "K-NFT")
-    package_tier = cart.get("package_tier", "starter")
+    package_tier = cart.get("package_tier", "p2")
     encryption = cart.get("encryption", "none")
     chain = cart.get("chain", "polygon")
     quantity = max(int(cart.get("quantity", 1) or 1), 1)
@@ -142,6 +144,9 @@ def calculate_quote(cart: Dict[str, Any], pricing: Dict[str, Any] | None = None)
     tier_config = active_pricing["package_tiers"].get(package_tier)
     if not tier_config:
         raise ValueError(f"Package tier {package_tier} is not available.")
+
+    if tier_config.get("layers") not in {2, 3, 5, 7, 11, 13}:
+        raise ValueError("Only 2-, 3-, 5-, 7-, 11-, and 13-layer certificates may be issued.")
 
     encryption_config = active_pricing["encryption_options"].get(encryption)
     if not encryption_config:
@@ -196,7 +201,9 @@ def calculate_quote(cart: Dict[str, Any], pricing: Dict[str, Any] | None = None)
             },
             "package_tier": {
                 "name": tier_config["name"],
+                "profile_id": package_tier,
                 "layers": tier_config["layers"],
+                "layer_inventory": tier_config.get("layer_inventory", []),
                 "unit_price": round(package_price, 2),
                 "total": round(package_price * quantity, 2),
             },

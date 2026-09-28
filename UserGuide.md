@@ -1,93 +1,61 @@
+# True Mark User Guide
 
-# True Mark Mint Engine User Guide
+## 1. Start in Secretum Privatum
 
----
-**Brand:** True Mark Mint Engine  
-**Style:** Elegant, secure, institutional, and legacy-focused  
-**Assistant:** Josephine — Your Trusted Chat Bubble Guide
----
+Sign in to open your private Sanctum. The Sanctum is a mutable working space for projects, notes, evidence staging, images, provenance, ownership information, and supporting documents.
 
-## Table of Contents
-1. System Overview
-2. Key Concepts & NFT Types
-3. User Procedures
-4. Admin Procedures
-5. Security & Privacy
-6. FAQ
-7. Downloadable Resources
+The Sanctum is not the Immutable Vault. Draft uploads can be replaced or deleted according to policy and are not authoritative merely because they exist.
 
----
+## 2. Create an Object Project
 
-## 1. System Overview
-True Mark Mint Engine is a forensic-grade NFT minting platform designed for organizations and individuals who require permanent, verifiable digital records. It supports multiple NFT types (K-NFT, H-NFT, L-NFT, C-NFT) and advanced features such as off-chain storage, encryption, and printable certificates. The platform is not a public marketplace, but a secure infrastructure for knowledge certification and archival.
+From My Sanctum, choose **Create New Project**. A project can represent a painting, heirloom, collectible, photograph, manuscript, invention, software artifact, research package, professional work product, digital asset, intellectual property, or another object.
 
-## 2. Key Concepts & NFT Types
-- **K-NFT (Knowledge NFT):** For research, IP, and institutional knowledge.
-- **H-NFT (Heirloom NFT):** For generational/family knowledge and legacy.
-- **L-NFT (Legacy NFT):** For enterprise and operational frameworks.
-- **C-NFT (Custom NFT):** For specialized or user-defined use cases.
+Use the Object Workbench to complete:
 
-All NFTs are minted with:
-- Immutable provenance
-- Layered forensic certificates
-- Optional encryption (ChaCha20-Poly1305)
-- Off-chain storage (IPFS/Arweave/local)
+- Identity
+- Ownership and creator information
+- Provenance
+- Evidence files
+- Images
+- Supporting documents
+- Notes and metadata
+- Certificate configuration
 
-## 3. User Procedures
-### Account Creation
-- Sign up with name, email, and password. Josephine, your chat assistant, is available to guide you at every step.
-- Agree to User Agreement and Privacy Policy.
+## 3. Authority transition
 
-### Minting an NFT
-1. Log in to your account.
-2. Select NFT type (K-NFT, H-NFT, etc.).
-3. Upload your file and enter metadata.
-4. Choose storage and encryption options.
-5. Review disclosures and pricing. Josephine can answer questions and provide real-time help.
-6. Complete payment (crypto or fiat).
-7. Download your NFT certificate and files.
+Every project follows:
 
-### Privacy & Data Handling
-- All uploaded files are purged after minting and download.
-- Only account info is retained for communication and marketing (never sold or shared).
-- NFT records are permanently logged with a glyph trace and stored in a secure vault for audit and accounting. No personal data is included in these records.
+```text
+WORKING COPY → READY FOR REVIEW → COMMIT action → COMMITTED → SEALED
+```
 
-## 4. Admin Procedures
-- Access admin dashboard with admin wallet.
-- View minting logs, user activity, and NFT vault.
-- Manage pricing, NFT types, and compliance settings.
-- Export audit logs and persistent records.
+Commit is an action, not a durable state. A successful commit creates the governed evidence package. Sealing creates the authoritative Immutable Vault event. A crash or interrupted request must be recoverable without silently changing submitted bytes.
 
+## 4. Prime Layer Certificates
 
-## 5. Security & Privacy
-- All data is encrypted in transit and at rest.
-- Forensic certificates include cryptographic glyph trace and multi-format timestamps (epoch, standard, Julian).
-- No user data is ever sold or shared with third parties.
-- All sales are final except for technical errors.
+After the object is ready for review, choose one governed profile:
 
-## 6. FAQ
-- **Can I get a refund?**
-  - All sales are final. No returns or refunds are offered unless files are corrupted or malformed. If you experience a technical issue, please contact support for resolution.
+- 2-Layer Certificate
+- 3-Layer Certificate
+- 5-Layer Certificate
+- 7-Layer Certificate
+- 11-Layer Forensic Certificate
+- 13-Layer Elite Forensic Certificate
 
----
+Certificate depth and certificate design are separate. Frames, typography, paper, seal, watermark, layout, orientation, color family, and image placement do not change the evidence-layer count.
 
-**Meet Josephine — Your Trusted Chat Bubble Assistant**
+## 5. Canonical record and certificate
 
-Josephine is always available in the lower right corner of the True Mark Mint Engine. She provides:
-- Step-by-step guidance for users and admins
-- Answers to common questions about minting, security, and compliance
-- Real-time support for onboarding, NFT creation, and troubleshooting
-- A friendly, branded experience that matches the elegance and trust of True Mark
-  - All sales are final except for technical errors (e.g., corrupted files).
-- **Is my data private?**
-  - Yes. Files are purged after minting; only account info is retained.
-- **Can I use my own wallet?**
-  - No wallet is required for users; admin wallet is used for management.
+The sealed evidence and Vault events are authoritative. The certificate manifest is a canonical machine-readable representation of that authority. A rendered certificate is a presentation artifact derived from the canonical manifest.
 
-## 7. Downloadable Resources
-- [User Guide PDF](UserGuide.pdf) (coming soon)
-- [Procedures Overview PDF](ProceduresOverview.pdf) (coming soon)
+## 6. Verification
 
----
+Use Verify to check an object identifier, certificate ID, or verification reference. The verifier should compare the canonical manifest, evidence hashes, Vault event, and any applicable signatures or anchors.
 
-For support, contact: bryan@spruked.com
+## 7. Digital extensions
+
+NFTs, licensing, transfer, inheritance, and other digital extensions occur after authentication and certification. They do not create authenticity by themselves.
+
+## 8. Human Support
+
+Human Support is available only after a governed escalation. A human agent sees only the authorized case context, never the full Sanctum by default. Encryption keys, unrelated projects, unrelated temporary files, and private notes remain excluded.

@@ -10,11 +10,13 @@ export default defineConfig(({ mode }) => {
     server: {
       host: "0.0.0.0",
       port: frontendPort,
+      allowedHosts: ["truemarkmint.com", "www.truemarkmint.com"],
       strictPort: true,
     },
     preview: {
       host: "0.0.0.0",
       port: frontendPort,
+      allowedHosts: ["truemarkmint.com", "www.truemarkmint.com"],
       strictPort: true,
     },
   };

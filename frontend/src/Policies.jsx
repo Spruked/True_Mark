@@ -35,7 +35,7 @@ export default function Policies() {
           Policies and Procedures
         </Typography>
         <Typography variant="body1" sx={{ mt: 3, fontSize: 18, opacity: 0.95 }}>
-          <b>Josephine, Your Chat Assistant:</b> Josephine is always available to answer questions about policies, privacy, and compliance.<br /><br />
+          <b>Human Support:</b> When an authorized escalation is opened, a human agent may review the scoped case context and assist with policy, privacy, or compliance questions.<br /><br />
           <b>Data Handling:</b> Files uploaded for NFT minting are staged through the payment and mint workflow, then purged after final document delivery. Only your account information is retained for communications and marketing. NFT records are permanently logged with a glyph trace and stored in a secure vault for audit and accounting.<br /><br />
           <b>Privacy:</b> We do not sell, share, or disclose your data to third parties. You may opt out of marketing communications at any time.<br /><br />
           <b>Security:</b> All records are stored in a secure vault system with persistent logging and cryptographic glyph trace for every NFT.<br /><br />

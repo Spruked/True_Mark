@@ -1,270 +1,110 @@
-import React, { useRef, useState } from "react";
-import Box from "@mui/material/Box";
-import Container from "@mui/material/Container";
-import Typography from "@mui/material/Typography";
-import Stack from "@mui/material/Stack";
-import Button from "@mui/material/Button";
-import Alert from "@mui/material/Alert";
+import React from "react";
+import {
+  Alert,
+  Box,
+  Button,
+  Chip,
+  Container,
+  Divider,
+  Grid,
+  LinearProgress,
+  Paper,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import { colors, styles } from "./designTokens";
 
+const dashboardCards = [
+  { code: "KL", title: "Knowledge Series", body: "Issue encrypted access to masterclasses, methods, and specialist expertise.", action: "Create Knowledge Certificate", to: "/mint", tone: colors.gold },
+  { code: "HL", title: "Heirloom Series", body: "Preserve family archives, memories, and inheritance-bound records.", action: "Open Heirloom Flow", to: "/mint", tone: "#9DB7C9" },
+  { code: "LL", title: "Legacy Series", body: "Protect enterprise IP, training systems, and licensable operating frameworks.", action: "Review Legacy Options", to: "/investor", tone: "#C98762" },
+];
+
+const activity = [
+  ["KL-2026-0042", "Advanced Electrical Systems", "5-Layer Certificate", "Ready"],
+  ["HL-2026-0039", "The Calder Family Archive", "13-Layer Elite Forensic Certificate", "Anchored"],
+  ["LL-2026-0031", "Franchise Operations Manual", "7-Layer Certificate", "Draft"],
+];
+
+function Metric({ label, value, detail }) {
+  return <Paper sx={{ ...styles.panel, p: 2.5, height: "100%" }}>
+    <Typography variant="overline" sx={{ color: colors.mutedText, letterSpacing: 1.4 }}>{label}</Typography>
+    <Typography variant="h4" sx={{ color: colors.gold, fontWeight: 800, mt: 0.5 }}>{value}</Typography>
+    <Typography variant="body2" sx={{ color: colors.mutedText, mt: 0.5 }}>{detail}</Typography>
+  </Paper>;
+}
+
 function App() {
-  const videoRef = useRef(null);
-  const [muted, setMuted] = useState(true);
-
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !muted;
-      setMuted(!muted);
-    }
-  };
-  return (
-    <Box
-      sx={{
-        position: "relative",
-        minHeight: "100vh",
-        overflow: "hidden",
-        backgroundColor: colors.background,
-      }}
-    >
-      {/* Video background */}
-      <video
-        ref={videoRef}
-        autoPlay
-        loop
-        muted={muted}
-        playsInline
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          zIndex: 0,
-          opacity: 0.45,
-        }}
-      >
-        <source src="/assets/Video_Script_Correction_and_Generation.mp4" type="video/mp4" />
-      </video>
-      <Box
-        sx={{
-          position: "absolute",
-          inset: 0,
-          background: "rgba(11, 18, 32, 0.75)",
-          zIndex: 0,
-        }}
-      />
-      {/* Mute/Unmute Button */}
-      <button
-        onClick={toggleMute}
-        style={{
-          position: "absolute",
-          top: 24,
-          right: 24,
-          zIndex: 10,
-          background: "rgba(0,0,0,0.5)",
-          color: "#fff",
-          border: "none",
-          borderRadius: 24,
-          padding: "8px 16px",
-          fontSize: 18,
-          cursor: "pointer"
-        }}
-        aria-label={muted ? "Unmute video" : "Mute video"}
-      >
-        {muted ? "🔇 Sound Off" : "🔊 Sound On"}
-      </button>
-
-      {/* Watermark overlay */}
-      <img
-        src="/assets/tree_watermark_1200.png"
-        alt="True Mark Watermark"
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          opacity: 0.04,
-          zIndex: 1,
-          pointerEvents: "none",
-        }}
-      />
-
-      <Container
-        maxWidth="md"
-        sx={{
-          py: 10,
-          position: "relative",
-          zIndex: 2,
-          color: colors.text,
-          textAlign: "center",
-        }}
-      >
-        {/* Logo */}
-        <Box
-          sx={{
-            width: 152,
-            height: 152,
-            margin: "0 auto 24px",
-            borderRadius: "50%",
-            overflow: "hidden",
-            boxShadow: "0 16px 32px rgba(0,0,0,0.28)",
-          }}
-        >
-          <img
-            src="/assets/truemarkseal.png"
-            alt="True Mark Seal"
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-          />
+  return <Box sx={{ ...styles.page, minHeight: "calc(100vh - 76px)", py: { xs: 4, md: 6 } }}>
+    <Container maxWidth="xl">
+      <Stack direction={{ xs: "column", lg: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", lg: "flex-end" }} spacing={3} sx={{ mb: 4 }}>
+        <Box>
+          <Typography variant="overline" sx={{ color: colors.gold, letterSpacing: 2 }}>FORENSIC VAULT ISSUANCE ENGINE</Typography>
+          <Typography variant="h2" sx={{ color: colors.text, fontWeight: 800, letterSpacing: -1, mt: 1, mb: 1 }}>Issue authority.<br />Preserve what matters.</Typography>
+          <Typography variant="body1" sx={{ color: colors.mutedText, maxWidth: 620, lineHeight: 1.8 }}>Your operational dashboard for encrypted vaults, forensic certificates, licensed knowledge, heirlooms, and enterprise IP.</Typography>
         </Box>
-        <Typography
-          variant="h2"
-          fontWeight={700}
-          gutterBottom
-          sx={{ fontFamily: "Inter, system-ui, sans-serif", color: colors.gold }}
-        >
-          True Mark Mint Engine
-        </Typography>
-        <Typography
-          variant="h5"
-          color="#F4F7F8"
-          gutterBottom
-          sx={{ fontFamily: "Inter, system-ui, sans-serif", opacity: 0.95 }}
-        >
-          Mint Knowledge, Heirloom, Legacy, and Custom NFTs with forensic-grade certificates and seamless checkout.
-        </Typography>
-        <Alert severity="info" sx={{ mt: 4, mb: 3, textAlign: "left", background: "rgba(255,255,255,0.92)" }}>
-          True Mark presents a forensic-grade certification system for knowledge records, heirloom archives, and institutional legacy assets.
-        </Alert>
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="center" sx={{ mt: 4 }}>
-          <Button
-            variant="outlined"
-            size="large"
-            sx={styles.secondaryButton}
-            component={RouterLink}
-            to="/about"
-          >
-            About
-          </Button>
-          <Button
-            variant="contained"
-            size="large"
-            sx={styles.primaryButton}
-            component={RouterLink}
-            to="/mint"
-          >
-            Mint NFT
-          </Button>
+        <Stack direction="row" spacing={1.5}>
+          <Button component={RouterLink} to="/demo-mint" variant="outlined" sx={styles.secondaryButton}>Preview Certificate</Button>
+          <Button component={RouterLink} to="/mint" variant="contained" sx={styles.primaryButton}>Create Certificate</Button>
         </Stack>
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="center" sx={{ mt: 2 }}>
-          <Button
-            variant="outlined"
-            size="large"
-            sx={styles.secondaryButton}
-            component={RouterLink}
-            to="/login"
-          >
-            User Login
-          </Button>
-          <Button
-            variant="outlined"
-            size="large"
-            sx={styles.secondaryButton}
-            component={RouterLink}
-            to="/admin/login"
-          >
-            Admin Login
-          </Button>
-          <Button
-            variant="outlined"
-            size="large"
-            sx={styles.secondaryButton}
-            component={RouterLink}
-            to="/checkout"
-          >
-            Checkout
-          </Button>
-        </Stack>
-        <Box
-          sx={{
-            mt: 6,
-            pt: 5,
-            borderTop: `1px solid ${colors.border}`,
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
-            gap: 2,
-            textAlign: "left",
-          }}
-        >
-          {[
-            {
-              glyph: "K",
-              title: "Knowledge NFTs",
-              text: "Research certification, intellectual property proof, and timestamped authorship records.",
-            },
-            {
-              glyph: "H",
-              title: "Heirloom NFTs",
-              text: "Permanent preservation of generational knowledge, family records, and curated archives.",
-            },
-            {
-              glyph: "L",
-              title: "Legacy NFTs",
-              text: "Institutional frameworks, operational systems, and enduring governance records.",
-            },
-          ].map((item) => (
-            <Box key={item.title} sx={{ p: 3, borderRadius: 3, background: "rgba(255,255,255,0.06)", border: `1px solid ${colors.border}` }}>
-              <Box sx={{ width: 42, height: 42, borderRadius: "50%", display: "grid", placeItems: "center", background: colors.gold, color: "#111111", fontWeight: 800, mb: 2 }}>
-                {item.glyph}
-              </Box>
-              <Typography sx={{ color: colors.gold, fontWeight: 700, mb: 1 }}>{item.title}</Typography>
-              <Typography variant="body2" sx={{ color: colors.neutral, lineHeight: 1.7 }}>{item.text}</Typography>
-            </Box>
-          ))}
-        </Box>
+      </Stack>
 
-        <Box
-          sx={{
-            mt: 5,
-            p: 3,
-            borderRadius: 3,
-            textAlign: "left",
-            background: "rgba(255,255,255,0.06)",
-            border: `1px solid ${colors.border}`,
-          }}
-        >
-          <Typography variant="overline" sx={{ color: colors.mutedText, letterSpacing: 1.2 }}>
-            Platform Direction
-          </Typography>
-          <Typography variant="h5" fontWeight={700} sx={{ color: colors.gold, mt: 1, mb: 1.5 }}>
-            True Mark stands on its own as a mint and certification platform.
-          </Typography>
-          <Typography variant="body1" sx={{ color: colors.neutral, lineHeight: 1.8, mb: 2 }}>
-            True Mark Mint Engine is a standalone website and mint workflow focused on payment-cleared issuance,
-            forensic recordkeeping, and long-term evidentiary continuity without marketplace dependency.
-          </Typography>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-            <Button component={RouterLink} to="/about" variant="contained" sx={styles.primaryButton}>
-              Explore True Mark
-            </Button>
-            <Button
-              component="a"
-              href="https://spruked.com"
-              target="_blank"
-              rel="noreferrer"
-              variant="outlined"
-              sx={styles.secondaryButton}
-            >
-              Open Spruked
-            </Button>
-          </Stack>
-        </Box>
-      </Container>
-    </Box>
-  );
+      <Alert severity="info" sx={{ mb: 3, background: "rgba(201,162,39,0.10)", color: colors.neutral, border: `1px solid ${colors.border}`, "& .MuiAlert-icon": { color: colors.gold } }}>
+        ChaCha20 secure vault is ready. Content is encrypted at source before the issuance workflow continues.
+      </Alert>
+
+      <Grid container spacing={2} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}><Metric label="Active Vaults" value="08" detail="Encrypted records in custody" /></Grid>
+        <Grid item xs={12} sm={6} md={3}><Metric label="Certificates" value="24" detail="Across KL, HL, and LL series" /></Grid>
+        <Grid item xs={12} sm={6} md={3}><Metric label="Protected Assets" value="148 GB" detail="2 GB included per single mint" /></Grid>
+        <Grid item xs={12} sm={6} md={3}><Metric label="Access Events" value="312" detail="Logged in the last 30 days" /></Grid>
+      </Grid>
+
+      <Grid container spacing={3}>
+        <Grid item xs={12} lg={8}>
+          <Paper sx={{ ...styles.panel, p: { xs: 2.5, md: 3 } }}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2.5 }}>
+              <Box><Typography variant="overline" sx={{ color: colors.mutedText, letterSpacing: 1.5 }}>ISSUANCE PATHS</Typography><Typography variant="h5" sx={{ fontWeight: 800 }}>Choose your certificate series</Typography></Box>
+              <Chip label="License-first" size="small" sx={{ color: colors.gold, border: `1px solid ${colors.gold}`, background: "transparent" }} />
+            </Stack>
+            <Grid container spacing={2}>
+              {dashboardCards.map((card) => <Grid item xs={12} md={4} key={card.code}>
+                <Paper sx={{ height: "100%", p: 2.5, background: colors.surfaceSolid, border: `1px solid ${colors.border}`, borderTop: `3px solid ${card.tone}`, borderRadius: 2 }}>
+                  <Typography sx={{ color: card.tone, fontWeight: 900, letterSpacing: 2, fontSize: 18 }}>{card.code}-SERIES</Typography>
+                  <Typography variant="h6" sx={{ color: colors.text, fontWeight: 800, mt: 1 }}>{card.title}</Typography>
+                  <Typography variant="body2" sx={{ color: colors.mutedText, lineHeight: 1.65, mt: 1.5, minHeight: 78 }}>{card.body}</Typography>
+                  <Button component={RouterLink} to={card.to} variant="text" sx={{ color: card.tone, px: 0, mt: 1, fontWeight: 800 }}>{card.action} →</Button>
+                </Paper>
+              </Grid>)}
+            </Grid>
+          </Paper>
+
+          <Paper sx={{ ...styles.panel, p: { xs: 2.5, md: 3 }, mt: 3 }}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}><Box><Typography variant="overline" sx={{ color: colors.mutedText, letterSpacing: 1.5 }}>RECENT ACTIVITY</Typography><Typography variant="h5" sx={{ fontWeight: 800 }}>Your authority ledger</Typography></Box><Button component={RouterLink} to="/demo-mint" sx={{ color: colors.gold }}>View all</Button></Stack>
+            {activity.map(([id, title, cert, status], index) => <React.Fragment key={id}><Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ xs: "flex-start", sm: "center" }} sx={{ py: 2 }}><Box sx={{ width: 42, height: 42, borderRadius: 1.5, display: "grid", placeItems: "center", background: "rgba(201,162,39,0.14)", color: colors.gold, fontWeight: 900 }}>{id.slice(0, 2)}</Box><Box sx={{ flex: 1 }}><Typography sx={{ fontWeight: 800 }}>{title}</Typography><Typography variant="body2" sx={{ color: colors.mutedText }}>{id} · {cert}</Typography></Box><Chip label={status} size="small" sx={{ color: status === "Draft" ? colors.mutedText : "#74D6A0", background: status === "Draft" ? "rgba(255,255,255,0.08)" : "rgba(116,214,160,0.12)" }} /></Stack>{index < activity.length - 1 && <Divider sx={{ borderColor: colors.border }} />}</React.Fragment>)}
+          </Paper>
+        </Grid>
+
+        <Grid item xs={12} lg={4}>
+          <Paper sx={{ ...styles.panel, p: 3, mb: 3 }}>
+            <Typography variant="overline" sx={{ color: colors.mutedText, letterSpacing: 1.5 }}>VAULT HEALTH</Typography>
+            <Typography variant="h5" sx={{ fontWeight: 800, mt: 0.5 }}>Secure and operational</Typography>
+            <Typography variant="body2" sx={{ color: colors.mutedText, lineHeight: 1.7, mt: 1 }}>All active assets are encrypted before exposure. Access logs and key-gated delivery are enabled for this workspace.</Typography>
+            <LinearProgress variant="determinate" value={82} sx={{ mt: 3, height: 8, borderRadius: 99, background: colors.surfaceSolid, "& .MuiLinearProgress-bar": { background: colors.gold } }} />
+            <Stack direction="row" justifyContent="space-between" sx={{ mt: 1 }}><Typography variant="caption" sx={{ color: colors.mutedText }}>Storage used</Typography><Typography variant="caption" sx={{ color: colors.gold }}>82%</Typography></Stack>
+            <Button component={RouterLink} to="/cart" fullWidth variant="outlined" sx={{ ...styles.secondaryButton, mt: 3 }}>Open Vault</Button>
+          </Paper>
+          <Paper sx={{ ...styles.panel, p: 3 }}>
+            <Typography variant="overline" sx={{ color: colors.mutedText, letterSpacing: 1.5 }}>FORENSIC LAYER FORGE</Typography>
+            <Typography variant="h5" sx={{ fontWeight: 800, mt: 0.5 }}>Prime-number profiles</Typography>
+            <Typography variant="body2" sx={{ color: colors.mutedText, lineHeight: 1.7, mt: 1 }}>Every certificate uses a governed 2, 3, 5, 7, 11, or 13-layer evidence profile.</Typography>
+            <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mt: 2 }}>{[2, 3, 5, 7, 11, 13].map((layer) => <Chip key={layer} label={`${layer}L`} sx={{ color: colors.gold, borderColor: colors.gold, background: "transparent" }} variant="outlined" />)}</Stack>
+          </Paper>
+        </Grid>
+      </Grid>
+    </Container>
+  </Box>;
 }
 
 export default App;

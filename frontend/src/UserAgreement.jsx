@@ -36,7 +36,7 @@ export default function UserAgreement() {
         </Typography>
         <Typography variant="body1" sx={{ mt: 3, fontSize: 18, opacity: 0.95 }}>
           By creating an account on True Mark Mint Engine, you agree to abide by all platform rules, policies, and procedures. You acknowledge that your data will be used solely for account management and platform communications, and will never be sold or shared with third parties. You agree to use the platform for lawful, non-speculative, and non-commercial purposes as described in the documentation.<br /><br />
-          <b>Josephine, Your Chat Assistant:</b> Josephine is always available to answer questions about the User Agreement, privacy, and platform rules.<br /><br />
+          <b>Human Support:</b> A human agent may assist through an authorized escalation limited to the relevant account and case context.<br /><br />
           For full details, see our Policies and Procedures document.
         </Typography>
       </Container>

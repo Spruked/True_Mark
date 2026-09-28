@@ -26,7 +26,7 @@ function buildSerializableDraft(draft) {
     prefix: draft.prefix || "",
     industry: draft.industry || "",
     nft_type: draft.nft_type || "",
-    package_tier: draft.package_tier || "starter",
+    package_tier: draft.package_tier || "p2",
     encryption: draft.encryption || "none",
     chain: draft.chain || "polygon",
     quantity: draft.quantity || 1,

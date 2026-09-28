@@ -1,78 +1,36 @@
+# True Mark Procedures Overview
 
-# True Mark Mint Engine — Procedures Overview
+## Product boundary
 
----
-**Brand:** True Mark Mint Engine  
-**Style:** Elegant, secure, institutional, and legacy-focused  
-**Assistant:** Josephine — Your Trusted Chat Bubble Guide
----
+True Mark authenticates objects and preserves evidence before offering certificates or optional digital extensions. Secretum Privatum is the private preparation layer. The Immutable Vault is the authoritative record.
 
+## Customer procedure
 
-## System Outline
+1. Create or access an account.
+2. Enter Secretum Privatum.
+3. Create an Object Project.
+4. Stage evidence, provenance, ownership information, images, documents, and notes.
+5. Move the project to **Ready for Review**.
+6. Explicitly invoke the **Commit** action.
+7. Validate the evidence package and create the Immutable Vault event.
+8. Seal the object record.
+9. Select a Prime Layer Certificate profile and separate render design.
+10. Review the canonical manifest and use independent verification.
+11. Add an optional NFT or digital extension only after certification.
 
+## State and retention rules
 
-- **Purpose:**
-   - Deliver forensic-grade, verifiable digital object minting for organizations and individuals seeking trust, security, and legacy.
-   - Not a public NFT marketplace — True Mark is designed for secure, institutional, and legacy use cases only.
+Project states include `WORKING_COPY`, `READY_FOR_REVIEW`, `COMMIT_PENDING`, `COMMITTED`, `SEALED`, `RELEASED`, `DELETED`, and `EXPIRED`. Evidence uses a separate lifecycle and must not be deleted as ordinary temporary content after it contributes to a sealed record.
 
+Retention periods remain a product-policy decision and must not be invented in implementation defaults.
 
-- **Core Components:**
-   - Smart contracts (ERC-721/ERC-1155, EIP-2981)
-   - Node.js/Express backend
-   - React frontend (with Josephine, the branded chat bubble assistant)
-   - Admin dashboard & persistent NFT vault
-   - Off-chain storage (IPFS/Arweave/local)
-   - Optional encryption (ChaCha20-Poly1305)
-   - Forensic certificate generation (PDF)
+## Security
 
+- Account ownership resolves through account → Sanctum → project → object → evidence.
+- Cross-account reads, updates, commits, and downloads deny by default.
+- ChaCha20-Poly1305 belongs at the storage boundary; keys do not travel in project JSON or certificate records.
+- Human Support cases disclose only explicitly authorized context.
 
-- **Supported NFT Types:**
-   - K-NFT (Knowledge)
-   - H-NFT (Heirloom)
-   - L-NFT (Legacy)
-   - C-NFT (Custom)
+## Administrative boundary
 
-
-## Procedures Summary
-
-
-### User Procedures
-1. **Sign Up:**
-   - Register with name, email, and password; accept legal agreements. Josephine, your chat assistant, is available to guide you at every step.
-2. **Mint NFT:**
-   - Select NFT type, upload file, enter metadata, choose options, pay, and download your forensic certificate. Josephine can answer questions and provide real-time help.
-3. **Data Handling:**
-   - Files are purged after minting; only account info is retained. NFT records are logged with cryptographic glyph trace and multi-format timestamp.
-
-
-### Admin Procedures
-1. **Access Admin Dashboard:**
-   - Log in securely with your admin wallet. Josephine provides onboarding and compliance reminders.
-2. **View Logs & Vault:**
-   - Monitor minting activity, user actions, and persistent NFT records with full auditability.
-3. **Manage Platform:**
-   - Adjust pricing, NFT types, compliance, and export audit logs. Josephine can assist with platform FAQs and procedures.
-
-
-### Security & Compliance
-- All data is encrypted in transit and at rest.
-- Forensic certificates include cryptographic glyph trace and multi-format timestamps (epoch, standard, Julian).
-- No user data is ever sold or shared with third parties.
-- All sales are final except for technical errors.
-
----
-
-
----
-
-**Meet Josephine — Your Trusted Chat Bubble Assistant**
-
-Josephine is always available in the lower right corner of the True Mark Mint Engine. She provides:
-- Step-by-step guidance for users and admins
-- Answers to common questions about minting, security, and compliance
-- Real-time support for onboarding, NFT creation, and troubleshooting
-- A friendly, branded experience that matches the elegance and trust of True Mark
-
-For full details, see the [User Guide](UserGuide.md).
-
-For support, contact: bryan@spruked.com
+Legacy payment and token routes remain compatibility surfaces only. They must be adapted to the canonical project/evidence/commit pipeline before they can create authoritative records.

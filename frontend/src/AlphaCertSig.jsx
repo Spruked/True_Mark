@@ -31,7 +31,7 @@ const licenseTiers = [
     price: "$11,888.88",
     renewal: "15% Annual Renewal",
     points: [
-      "Full 10-layer forensic certificate system",
+      "Full 13-layer elite forensic certificate system",
       "ChaCha20 encryption module",
       "Priority onboarding",
       "Compliance-ready documentation",

@@ -51,7 +51,7 @@ GENERATED_ROOTS = (
 
 ARCHIVE_ROOTS = (
     ROOT / "archive",
-    ROOT / "truemark-chat-assistant",
+    ROOT / "truemark-human-support",
 )
 
 PROTECTED_PATHS = (
@@ -69,7 +69,7 @@ PROTECTED_PATHS = (
 )
 
 ORB_PATTERN = re.compile(
-    r"\b(?:orb|assistant|chatbot|floatingorb|josephine|vite_orb_api|orb_active)\b",
+    r"\b(?:orb|assistant|chatbot|floatingorb|human_support|vite_orb_api|orb_active)\b",
     re.IGNORECASE,
 )
 

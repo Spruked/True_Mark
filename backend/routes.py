@@ -16,6 +16,7 @@ from pydantic import BaseModel
 
 try:
     from .auth import authenticate_admin, require_admin_session
+    from .certificate_profiles import build_certificate_manifest, get_certificate_profile, manifest_hash
     from .invoices import (
         generate_invoice_pdf,
         generate_receipt_pdf,
@@ -54,6 +55,7 @@ try:
     from .tax import load_tax_table, resolve_tax_rate, save_tax_table
 except ImportError:
     from auth import authenticate_admin, require_admin_session
+    from certificate_profiles import build_certificate_manifest, get_certificate_profile, manifest_hash
     from invoices import (
         generate_invoice_pdf,
         generate_receipt_pdf,
@@ -110,7 +112,7 @@ DALS_EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
 class QuoteRequest(BaseModel):
     nft_type: str
-    package_tier: str = "starter"
+    package_tier: str = "p2"
     encryption: str = "none"
     chain: str = "polygon"
     quantity: int = 1
@@ -199,6 +201,7 @@ def _write_vault_package(
         archive.write(staged_file_path, arcname=original_filename)
         archive.writestr("metadata.json", json.dumps(metadata_payload, indent=2))
         archive.writestr("truemark_record.json", json.dumps(nft_record, indent=2))
+        archive.writestr("certificate_manifest.json", json.dumps(nft_record["certificate_manifest"], indent=2))
 
 
 def _write_dals_export(nft_record: Dict[str, Any]) -> Path:
@@ -228,6 +231,9 @@ def _build_public_registry_record(nft_record: Dict[str, Any], mint_standard: Dic
         "minted_at": nft_record.get("minted_at"),
         "tm_serial": nft_record.get("serial"),
         "certificate_hash": nft_record.get("certificate_hash"),
+        "certificate_profile": nft_record.get("certificate_profile"),
+        "certificate_layer_count": nft_record.get("certificate_layer_count"),
+        "certificate_manifest_hash": nft_record.get("certificate_manifest_hash"),
         "chain": nft_record.get("chain"),
     }
 
@@ -327,7 +333,7 @@ def process_payment(
     nft_type: str = Form(...),
     file: UploadFile = File(...),
     metadata: str = Form(...),
-    package_tier: str = Form("starter"),
+    package_tier: str = Form("p2"),
     encryption: str = Form("none"),
     chain: str = Form("polygon"),
     quantity: int = Form(1),
@@ -604,6 +610,24 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
         }
 
         metadata_payload = payment_session.get("metadata", {})
+        certificate_profile_id = payment_session["package_tier"]
+        certificate_profile = get_certificate_profile(certificate_profile_id)
+        certificate_manifest = build_certificate_manifest(
+            certificate_profile_id,
+            {
+                "canonical_identifier": nft_identifier,
+                "true_mark_serial": serial,
+                "nft_type": payment_session["nft_type"],
+                "source_filename": payment_session.get("file_name"),
+                "metadata": metadata_payload,
+                "issuer_node": payment_session.get("node_id"),
+                "region_code": payment_session.get("region_code"),
+                "registrant_code": payment_session.get("registrant_code"),
+                "minted_at": minted_at,
+                "chain": payment_session["chain"],
+            },
+        )
+        certificate_manifest_digest = manifest_hash(certificate_manifest)
         nft_record = {
             "identifier": nft_identifier,
             "identifier_format": mint_standard["identifier_format"],
@@ -627,6 +651,13 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
             "industry": payment_session.get("region_code", ""),
             "nft_type": payment_session["nft_type"],
             "package_tier": payment_session["package_tier"],
+            "certificate_profile": certificate_profile_id,
+            "certificate_name": certificate_profile["name"],
+            "certificate_layer_count": certificate_profile["layers"],
+            "certificate_layer_inventory": certificate_profile["layer_inventory"],
+            "certificate_manifest": certificate_manifest,
+            "certificate_manifest_hash": certificate_manifest_digest,
+            "certificate_hash": certificate_manifest_digest,
             "encryption": payment_session["encryption"],
             "chain": payment_session["chain"],
             "quantity": int(payment_session["quantity"]),
@@ -730,6 +761,10 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
             "receipt_number": payment_session["receipt_number"],
             "invoice_download_url": invoice_download_url,
             "vault_download_url": vault_download_url,
+            "certificate_profile": certificate_profile_id,
+            "certificate_name": certificate_profile["name"],
+            "certificate_layer_count": certificate_profile["layers"],
+            "certificate_manifest_hash": certificate_manifest_digest,
             "receipt_download_url": receipt_download_url,
             "invoice_email_status": email_result["status"],
             "invoice_email_detail": email_result["detail"],

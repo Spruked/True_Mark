@@ -1,4 +1,4 @@
-# Josephine Self-Improvement Loop
+# Human Support Self-Improvement Loop
 
 class ImprovementLoop:
     def __init__(self, kg):

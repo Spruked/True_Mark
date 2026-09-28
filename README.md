@@ -1,94 +1,68 @@
+# True Mark
 
+True Mark is an object-authentication, evidence-preservation, certification, and optional digital-extension platform. It is not primarily an NFT storefront.
 
-# True Mark Mint Engine
+## Product model
 
-**Brand:** True Mark Mint Engine  
-**Style:** Elegant, secure, institutional, and legacy-focused  
-**Assistant:** Josephine — Your Trusted Chat Bubble Guide
+```text
+Account
+  → Secretum Privatum / Private Sanctum
+  → Project / Object Workbench
+  → Evidence Staging
+  → Ready for Review
+  → Commit action
+  → Sealed / Immutable Vault event
+  → Canonical Certificate Manifest
+  → Prime Layer Certificate
+  → Independent Verification
+  → Optional NFT / Digital Extension
+```
 
----
+Secretum Privatum is private, mutable working space. The Immutable Vault is the authoritative append-only record. Uploading a file never makes it authoritative; only an explicit commit/seal operation crosses that boundary.
 
-## System Summary & Outline
+## Current implementation
 
-- **Purpose:** Forensic-grade, institutional digital object minting and certification (not a public NFT marketplace).
-- **Core Components:**
-  - Smart contracts (ERC-721/ERC-1155, EIP-2981)
-  - Python/FastAPI backend
-  - React frontend (with Josephine, the branded chat bubble assistant)
-  - Admin dashboard & persistent NFT vault
-  - Off-chain storage (IPFS/Arweave/local)
-  - Optional encryption (ChaCha20-Poly1305)
-  - Forensic certificate generation (PDF)
-- **Supported NFT Types:**
-  - K-NFT (Knowledge)
-  - H-NFT (Heirloom)
-  - L-NFT (Legacy)
-  - C-NFT (Custom)
+- Revised Sanctum dashboard at `/sanctum`.
+- Object Workbench at `/objects/new` and `/objects/:objectId`.
+- Independent verification surface at `/verify`.
+- Governed project states and transition validation in [backend/secretum_models.py](backend/secretum_models.py).
+- Prime Layer profiles limited to 2, 3, 5, 7, 11, and 13 layers.
+- Canonical manifest generation with a manifest hash; authority remains in the sealed evidence/Vault chain.
+- Human Support escalation channel, hidden by default and limited to scoped cases.
 
-## Features
-- Mint K-NFTs (Knowledge NFTs), H-NFTs (Heirloom), L-NFTs (Legacy), and C-NFTs (Custom)
-- Saleable, licenseable, inheritable NFTs
-- 1.5% royalty for minter on sales, 3% on licensing
-- Off-chain storage (IPFS/Arweave/local)
-- Optional ChaCha20-Poly1305 encryption
-- Forensic-grade, printable certificates
-- Dynamic pricing based on storage, certificate, and encryption
-- Polygon as default chain, Ethereum as upgrade/enterprise
-- Seamless checkout: pay in crypto (auto-quoted to USD) or fiat (no wallet required)
-- Admin wallet for minting and management
-- Extensible for future NFT types and payment methods
-- **Josephine Chat Assistant:** Always available in the lower right corner to guide users and admins, answer questions, and provide real-time support.
+## Compatibility boundary
 
-## Privacy & Security
-- All personal information is used solely for account management and platform communications.
-- No data is ever sold, shared, or disclosed to third parties.
-- All files uploaded for minting are purged after download; only account info is retained for communications and marketing.
-- NFT records are permanently logged with a glyph trace and stored in a secure vault for audit and accounting (no personal data included).
-- All data is encrypted in transit and at rest.
-- All sales are final except for technical errors.
+The existing payment and token-issuance routes remain temporarily available for compatibility. They are legacy surfaces and must be migrated into the canonical Object → Evidence → Commit → Vault path before production authority is expanded. They must not become a second authoritative issuance path.
 
-## Tech Stack
-- Solidity (ERC-721/ERC-1155, EIP-2981)
-- Python/FastAPI backend
-- React frontend
-- Stripe & Coinbase Commerce for payments
-- CoinGecko/CoinMarketCap API for rates
-- PDF generation for certificates
+## Documentation
 
-## WSL And Tunnel Ports
-- Frontend default port: `3300`
-- Backend default port: `13000`
-- Josephine chat assistant default port: `3301`
-- Local frontend API fallback: `http://localhost:13000`
-- Local Josephine API fallback: `http://localhost:3301/chat`
-- Active public frontend hostname: `true_mark.spruked.com`
-- Recommended public API hostname: `truemark-api.spruked.com`
-- Active public Josephine hostname: `truemark-chat-assistant.spruked.com`
+- [True Mark Revision Doctrine](docs/TRUE_MARK_REVISION_DOCTRINE.md)
+- [Product Brochure and Dashboard Manual](docs/TRUE_MARK_PRODUCT_BROCHURE_AND_DASHBOARD_MANUAL.md)
+- [Prime Layer Architecture](docs/PRIME_LAYER_ARCHITECTURE.md)
+- [Development Log](DEVLOG.md)
+- [User Guide](UserGuide.md)
+- [Procedures Overview](ProceduresOverview.md)
 
-For the current Cloudflare Tunnel deployment, use these mappings:
-- `true_mark.spruked.com` -> `http://localhost:3300`
-- `truemark-api.spruked.com` -> `http://localhost:13000`
-- `truemark-chat-assistant.spruked.com` -> `http://localhost:3301`
+## Local development
 
-Do not use `http://3300` or `http://3301` by themselves in Cloudflare. Those service URLs need the `localhost` host included.
-Hyphenated hostnames are still preferred for long-term compatibility, but the app now supports the underscore hostname you are using.
+Frontend:
 
-## Procedures Overview
-See [ProceduresOverview.md](ProceduresOverview.md) for a summary of user/admin procedures, security, and compliance.
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-## User Guide & Manual
-- [UserGuide.md](UserGuide.md) (full user guide)
-- Downloadable PDF versions coming soon
+Backend:
 
-## Getting Started
-1. Install frontend dependencies in `frontend` with `npm install`
-2. Install backend dependencies with `pip install -r backend/requirements.txt`
-3. Create `backend/.env` from `backend/.env.example` and set the admin email, admin password, and session secret
-4. Run the FastAPI backend on port `13000`
-5. Run the Josephine assistant API on port `3301`
-6. Run the Vite frontend on port `3300`
-7. Access the website for user-facing minting and checkout
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn main:app --reload --port 13000
+```
 
----
+The existing frontend build should pass with `npm run build` from `frontend/`. Do not add payment, blockchain, SMTP, or production credential configuration until the core authentication transaction is deterministic and recovery-safe.
 
-For support, contact: bryan@spruked.com
+## Human Support
+
+The support channel is not an automated named assistant. It is hidden by default and appears only after a governed escalation case is authorized. Agents receive only the approved case context; unrelated Sanctum projects, temporary files, private notes, and encryption keys remain excluded.

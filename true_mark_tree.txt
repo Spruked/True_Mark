@@ -1,0 +1,153 @@
+./
+├── .github/
+│   └── copilot-instructions.md
+├── .gitignore
+├── ProceduresOverview.md
+├── README.md
+├── UserGuide.md
+├── backend/
+│   ├── .env.example
+│   ├── auth.py
+│   ├── config/
+│   │   └── pricing.json
+│   ├── index.js
+│   ├── invoices.py
+│   ├── mailer.py
+│   ├── main.py
+│   ├── market.py
+│   ├── node_config.py
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── pricing.py
+│   ├── requirements.txt
+│   ├── routes.py
+│   ├── storage.py
+│   └── tax.py
+├── branding/
+│   └── true-mark-mint-branding.md
+├── certificate_generator_2x/
+│   ├── .dockerignore
+│   ├── .gitattributes
+│   ├── .gitignore
+│   ├── Dockerfile
+│   ├── LICENSE
+│   ├── README.md
+│   ├── Vault_System_1.0/
+│   │   └── vault_system/
+│   │       └── skg_core/
+│   │           ├── skg_cleaner.py
+│   │           ├── skg_drift_analyzer.py
+│   │           ├── skg_engine.py
+│   │           ├── skg_integration.py
+│   │           ├── skg_node.py
+│   │           ├── skg_pattern_learner.py
+│   │           ├── skg_pruner.py
+│   │           └── skg_serializer.py
+│   ├── adapter/
+│   │   └── certificate_adapter.py
+│   ├── docker-compose.yml
+│   └── truemark/
+│       ├── assistant/
+│       │   ├── chat_bubble.py
+│       │   ├── encryption_advisor.py
+│       │   ├── knowledge_base.py
+│       │   └── truemark_skg.py
+│       ├── forge_v2.0/
+│       │   ├── DIRECTORY_STRUCTURE.txt
+│       │   ├── PROJECT_SUMMARY.md
+│       │   ├── README.md
+│       │   ├── START_HERE.txt
+│       │   ├── certificate_forge.py
+│       │   ├── crypto_anchor.py
+│       │   ├── crypto_vault.py
+│       │   ├── forensic_renderer.py
+│       │   ├── install.ps1
+│       │   ├── integration_bridge.py
+│       │   ├── path_config.py
+│       │   ├── quick_test.ps1
+│       │   └── requirements.txt
+│       └── templates/
+│           ├── border_guilloche_vector.svg.placeholder
+│           ├── parchment_base_600dpi.jpg.placeholder
+│           ├── seal_gold_embossed_600dpi.png.placeholder
+│           └── truemark_tree_watermark.png.placeholder
+├── contracts/
+│   └── TrueMarkMintEngine.sol
+├── docs/
+│   └── TRUE_MARK_LAUNCH_READINESS.md
+├── frontend/
+│   ├── App.js
+│   ├── assets/
+│   │   ├── CertificateKNFTsample.png
+│   │   ├── Newassetclass.mp4
+│   │   ├── TMlogotrans512 - Copy.png
+│   │   ├── TMlogotrans86.ico
+│   │   ├── Video_Script_Correction_and_Generation.mp4
+│   │   ├── service-3.jpg
+│   │   ├── tree_watermark_1200.png
+│   │   ├── tree_watermark_512.png
+│   │   ├── truemark launch in 2026.mp4
+│   │   └── truemarkseal.png
+│   ├── index.html
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── public/
+│   │   ├── robots.txt
+│   │   └── sitemap.xml
+│   ├── src/
+│   │   ├── About.jsx
+│   │   ├── AdminDashboard.jsx
+│   │   ├── AdminLogin.jsx
+│   │   ├── AdminProtectedRoute.jsx
+│   │   ├── AlphaCertSig.jsx
+│   │   ├── App.jsx
+│   │   ├── Cart.jsx
+│   │   ├── ChatBubble.jsx
+│   │   ├── Checkout.jsx
+│   │   ├── Contact.jsx
+│   │   ├── DemoMint.jsx
+│   │   ├── InvestorInquiry.jsx
+│   │   ├── Login.jsx
+│   │   ├── MintNFT.jsx
+│   │   ├── Policies.jsx
+│   │   ├── PrivacyPolicy.jsx
+│   │   ├── ProtectedRoute.jsx
+│   │   ├── Signup.jsx
+│   │   ├── SiteFooter.jsx
+│   │   ├── SiteNav.jsx
+│   │   ├── UseCases.jsx
+│   │   ├── UserAgreement.jsx
+│   │   ├── WhyNow.jsx
+│   │   ├── apiBase.js
+│   │   ├── assistantApi.js
+│   │   ├── authStorage.js
+│   │   ├── context/
+│   │   │   └── MintFlowContext.jsx
+│   │   ├── designTokens.js
+│   │   ├── main.jsx
+│   │   └── siteLinks.js
+│   └── vite.config.js
+├── package-lock.json
+├── tools/
+│   └── truemark_readiness_audit.py
+├── true_mark_tree.txt
+└── truemark-human-support/
+    ├── README.md
+    ├── api/
+    │   ├── fastapi_server.py
+    │   └── package-lock.json
+    ├── core/
+    │   ├── improvement_loop.py
+    │   ├── inference_engine.py
+    │   └── knowledge_graph.py
+    ├── frontend/
+    │   ├── ChatBubble.jsx
+    │   ├── index.html
+    │   ├── main.jsx
+    │   ├── package-lock.json
+    │   ├── package.json
+    │   ├── styles.css
+    │   └── vite.config.js
+    └── requirements.txt
+
+26 directories, 125 files

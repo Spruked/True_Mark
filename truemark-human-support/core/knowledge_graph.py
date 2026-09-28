@@ -1,4 +1,4 @@
-# Josephine Knowledge Graph Core
+# Human Support Knowledge Graph Core
 
 class KnowledgeGraph:
     def __init__(self):

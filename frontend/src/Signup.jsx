@@ -123,7 +123,7 @@ export default function Signup() {
             Create Your Account
           </Typography>
           <Typography variant="body2" sx={{ mb: 2, opacity: 0.8 }}>
-            Sign up to mint, manage, and preserve your digital legacy. <b>Josephine</b>, your chat assistant, is always available in the lower right corner to guide you through onboarding, privacy, and platform questions.
+            Sign up to authenticate, manage, and preserve your digital legacy. Human Support is available through a governed escalation when a person is required.
           </Typography>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
           {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}

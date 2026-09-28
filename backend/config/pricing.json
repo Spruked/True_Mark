@@ -33,35 +33,41 @@
     }
   },
   "package_tiers": {
-    "starter": {
-      "name": "Mint Only",
-      "price": 0.0,
-      "layers": 0,
-      "description": "Low-cost Polygon mint with no certificate package."
-    },
-    "essential": {
-      "name": "Basic Record",
+    "p2": {
+      "name": "2-Layer Certificate",
       "price": 12.0,
-      "layers": 3,
-      "description": "Mint plus a simple 3-layer record package."
+      "layers": 2,
+      "description": "Identity and issuance proof for essential records."
     },
-    "secure": {
-      "name": "Secure Record",
+    "p3": {
+      "name": "3-Layer Certificate",
+      "price": 18.0,
+      "layers": 3,
+      "description": "Adds source integrity to identity and issuance proof."
+    },
+    "p5": {
+      "name": "5-Layer Certificate",
       "price": 28.0,
       "layers": 5,
-      "description": "Mint plus a stronger certificate package."
+      "description": "Adds metadata integrity and creator authentication."
     },
-    "professional": {
-      "name": "Professional Record",
+    "p7": {
+      "name": "7-Layer Certificate",
       "price": 45.0,
       "layers": 7,
-      "description": "Mint plus a premium 7-layer package."
+      "description": "Adds timestamp proof and provenance evidence."
     },
-    "forensic": {
-      "name": "Forensic Record",
+    "p11": {
+      "name": "11-Layer Forensic Certificate",
+      "price": 70.0,
+      "layers": 11,
+      "description": "Near-complete forensic evidence for high-assurance records."
+    },
+    "p13": {
+      "name": "13-Layer Elite Forensic Certificate",
       "price": 95.0,
-      "layers": 10,
-      "description": "Full forensic package for high-assurance records."
+      "layers": 13,
+      "description": "The complete governed True Mark forensic certificate."
     }
   },
   "encryption_options": {

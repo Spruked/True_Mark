@@ -65,7 +65,7 @@ export default function Checkout() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [selections, setSelections] = useState({
-    package_tier: "starter",
+    package_tier: "p2",
     encryption: "none",
     chain: "polygon",
     quantity: 1,
@@ -109,7 +109,7 @@ export default function Checkout() {
     }
 
     setSelections({
-      package_tier: checkoutDraft.package_tier || "starter",
+      package_tier: checkoutDraft.package_tier || "p2",
       encryption: checkoutDraft.encryption || "none",
       chain: checkoutDraft.chain || "polygon",
       quantity: checkoutDraft.quantity || 1,
@@ -348,7 +348,7 @@ export default function Checkout() {
             <Stack spacing={2}>
               <TextField
                 select
-                label="Package Tier"
+                label="Certificate Profile"
                 value={selections.package_tier}
                 onChange={(event) => updateSelection("package_tier", event.target.value)}
                 fullWidth

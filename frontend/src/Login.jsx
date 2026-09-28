@@ -39,7 +39,7 @@ export default function Login() {
     event.preventDefault();
     setError("");
     setSuccess("");
-    const redirectTarget = location.state?.from || "/cart";
+    const redirectTarget = location.state?.from || "/sanctum";
 
     if (!form.email || !form.password) {
       setError("Enter your email address and password to continue.");
@@ -71,7 +71,7 @@ export default function Login() {
           User Login
         </Typography>
         <Typography variant="body1" sx={{ mb: 3, opacity: 0.84 }}>
-          Sign in to manage your mint requests, continue to checkout, and access your account workflow.
+          Sign in to open your Secretum Privatum workspace and continue preparing authenticated objects.
         </Typography>
         {location.state?.from && (
           <Alert severity="warning" sx={{ mb: 2 }}>
@@ -107,19 +107,19 @@ export default function Login() {
             <Button type="submit" variant="contained" sx={styles.primaryButton} disabled={submitting}>
               {submitting ? "Signing In..." : "Sign In"}
             </Button>
-            <Button component={RouterLink} to="/mint" variant="outlined" sx={styles.secondaryButton}>
-              Go to Mint
+            <Button component={RouterLink} to="/objects/new" variant="outlined" sx={styles.secondaryButton}>
+              Open My Sanctum
             </Button>
             <Button component={RouterLink} to="/signup" sx={{ color: "#F4F7F8" }}>
               Need an account? Create one here.
             </Button>
             {success && (
               <Button
-                onClick={() => navigate("/checkout")}
+                onClick={() => navigate("/sanctum")}
                 variant="outlined"
                 sx={styles.secondaryButton}
               >
-                Continue to Checkout
+                Continue to My Sanctum
               </Button>
             )}
           </Stack>
