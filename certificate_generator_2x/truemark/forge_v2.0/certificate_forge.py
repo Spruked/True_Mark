@@ -30,6 +30,17 @@ except ImportError as error:
 SKG_AVAILABLE = False
 CertificateSKGBridge = None
 
+ISS_AVAILABLE = False
+try:
+    iss_root = Path(__file__).resolve().parents[3] / "ISS_Module"
+    sys.path.insert(0, str(iss_root))
+    from iss_module.core.utils import current_timecodes, format_iss_time, get_iss_time_ns
+    ISS_AVAILABLE = True
+except ImportError:
+    current_timecodes = None
+    format_iss_time = None
+    get_iss_time_ns = None
+
 try:
     from pathlib import Path as _Path
 
@@ -96,7 +107,7 @@ class TrueMarkForge:
             "owner": metadata["owner_name"],
             "wallet": metadata["wallet_address"],
             "ipfs_hash": metadata["ipfs_hash"],
-            "stardate": self._calculate_stardate(),
+            **self._iss_evidence(),
             "kep_category": metadata.get("kep_category", "Knowledge"),
             "chain_id": metadata.get("chain_id", "Polygon"),
             "asset_title": metadata["asset_title"],
@@ -315,6 +326,30 @@ class TrueMarkForge:
         timestamp = datetime.utcnow().strftime("%Y%m%d")
         unique = uuid.uuid4().hex[:8].upper()
         return f"DALS{category_code}M{timestamp}-{unique}"
+
+    def _iss_evidence(self) -> Dict[str, object]:
+        """Attach the official ISS timestamp envelope to the signed payload."""
+        if not ISS_AVAILABLE:
+            return {
+                "iss_time_ns": None,
+                "iss_timestamp": "ISS unavailable",
+                "iss_epoch": None,
+                "iss_reference_frame": None,
+                "iss_standard_timestamp": None,
+                "iss_julian_timestamp": None,
+                "stardate": None,
+            }
+        timecodes = current_timecodes()
+        iss_time_ns = get_iss_time_ns()
+        return {
+            "iss_time_ns": iss_time_ns,
+            "iss_timestamp": format_iss_time(iss_time_ns, precision="nanoseconds"),
+            "iss_epoch": timecodes["epoch"],
+            "iss_reference_frame": timecodes["reference_frame"],
+            "iss_standard_timestamp": timecodes["iso_timestamp"],
+            "iss_julian_timestamp": timecodes["julian_date"],
+            "stardate": round(iss_time_ns / 1_000_000_000, 9),
+        }
 
     def _calculate_stardate(self) -> str:
         return datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")

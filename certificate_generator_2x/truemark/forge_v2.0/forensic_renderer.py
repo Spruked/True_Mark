@@ -225,6 +225,10 @@ class ForensicCertificateRenderer:
             try:
                 from svglib.svglib import svg2rlg
                 from reportlab.graphics import renderPDF
+                # Keep a visible vector frame even when an SVG adapter omits
+                # stylesheet-class strokes. The selected SVG is layered above
+                # this deterministic fallback.
+                self._draw_simple_border(c, frame_id)
                 drawing = svg2rlg(str(guilloche_file))
                 renderPDF.draw(drawing, c, 0, 0)
             except:
@@ -363,7 +367,7 @@ class ForensicCertificateRenderer:
             ("NFT Category:", data.get('kep_category', 'Knowledge')),
             ("Chain ID:", data.get('chain_id', 'Polygon')),
             ("IPFS Hash:", data.get('ipfs_hash', 'N/A')[:30] + "..." if len(data.get('ipfs_hash', '')) > 30 else data.get('ipfs_hash', 'N/A')),
-            ("Issue Date:", data.get('stardate', datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"))),
+            ("Issue Date:", self._format_issue_date(data)),
             ("DALS Serial:", data.get('dals_serial', 'UNKNOWN')),
             ("Signature ID:", data.get('sig_id', 'N/A')),
         ]
@@ -393,9 +397,9 @@ class ForensicCertificateRenderer:
         w, h = letter
         
         seal_file = self.template_path / "seal_gold_embossed_600dpi.png"
-        seal_size = 2.0 * inch
+        seal_size = 1.7 * inch
         seal_x = w - seal_size - 0.8*inch
-        seal_y = 0.6*inch
+        seal_y = 0.55*inch
         
         if seal_file.exists():
             c.drawImage(str(seal_file), seal_x, seal_y, 
@@ -467,14 +471,14 @@ class ForensicCertificateRenderer:
         qr_img.save(qr_path)
         
         # Draw QR code
-        qr_size = 1.5 * inch
-        c.drawImage(str(qr_path), 1.0*inch, 0.7*inch, 
+        qr_size = 1.3 * inch
+        c.drawImage(str(qr_path), 1.0*inch, 0.65*inch, 
                    width=qr_size, height=qr_size, mask='auto')
         
         # QR label
         c.setFont("Courier-Bold", 8)
         c.setFillColor(Color(0, 0, 0))
-        c.drawCentredString(1.0*inch + qr_size/2, 0.5*inch, "Scan to Verify")
+        c.drawCentredString(1.0*inch + qr_size/2, 0.45*inch, "Scan to Verify")
         
         return qr_path
     
@@ -486,7 +490,7 @@ class ForensicCertificateRenderer:
         c.setFont("Times-Roman", 10)
         c.setFillColor(Color(0, 0, 0))
         
-        sig_y = 1.8*inch
+        sig_y = 2.2*inch
         c.line(1.2*inch, sig_y, 3.5*inch, sig_y)
         c.line(4.5*inch, sig_y, 6.0*inch, sig_y)
         
@@ -529,12 +533,19 @@ class ForensicCertificateRenderer:
         c.saveState()
         c.setFillColor(self.colors["dark_slate"])
         c.setFont("Courier-Bold", 7)
-        c.drawString(1.2 * inch, h - 7.85 * inch, f"FORENSIC SECURITY PROFILE: {count}-LAYER")
-        c.drawString(1.2 * inch, h - 8.05 * inch, f"SECURITY PROFILE VERSION: {profile}/{version}")
-        c.drawString(1.2 * inch, h - 8.25 * inch, f"VERIFICATION STATUS: {status}")
-        c.drawString(1.2 * inch, h - 8.45 * inch, f"CERTIFICATE HASH: {certificate_hash[:48]}")
-        c.drawString(1.2 * inch, h - 8.65 * inch, f"TRUE MARK VERIFICATION ID: {verification_id}")
+        c.drawString(1.2 * inch, h - 7.45 * inch, f"FORENSIC SECURITY PROFILE: {count}-LAYER")
+        c.drawString(1.2 * inch, h - 7.65 * inch, f"SECURITY PROFILE VERSION: {profile}/{version}")
+        c.drawString(1.2 * inch, h - 7.85 * inch, f"VERIFICATION STATUS: {status}")
+        c.drawString(1.2 * inch, h - 8.05 * inch, f"CERTIFICATE HASH: {certificate_hash[:48]}")
+        c.drawString(1.2 * inch, h - 8.25 * inch, f"TRUE MARK VERIFICATION ID: {verification_id}")
         c.restoreState()
+
+    @staticmethod
+    def _format_issue_date(data: Dict) -> str:
+        value = str(data.get("iss_standard_timestamp") or data.get("stardate") or "pending")
+        if "T" in value and value.endswith("+00:00"):
+            return value.replace("T", " ").replace("+00:00", " UTC")
+        return value
 
     def _draw_micro_pattern(self, c: canvas.Canvas):
         """Draw a deterministic micro-pattern inside the selected presentation."""
@@ -562,12 +573,12 @@ class ForensicCertificateRenderer:
         c.saveState()
         c.setStrokeColor(self.colors["gold"])
         c.setLineWidth(1)
-        c.roundRect(w - 3.0 * inch, h - 9.25 * inch, 1.9 * inch, 0.55 * inch, 5, stroke=1, fill=0)
+        c.roundRect(w - 3.0 * inch, 2.65 * inch, 1.9 * inch, 0.55 * inch, 5, stroke=1, fill=0)
         c.setFillColor(self.colors["primary_blue"])
         c.setFont("Helvetica-Bold", 7)
-        c.drawCentredString(w - 2.05 * inch, h - 8.93 * inch, "INDEPENDENT VERIFICATION")
+        c.drawCentredString(w - 2.05 * inch, 2.97 * inch, "INDEPENDENT VERIFICATION")
         c.setFont("Courier", 6)
-        c.drawCentredString(w - 2.05 * inch, h - 9.12 * inch, str(data.get("dals_serial", "PENDING"))[:24])
+        c.drawCentredString(w - 2.05 * inch, 2.78 * inch, str(data.get("dals_serial", "PENDING"))[:24])
         c.restoreState()
 
     def _add_micro_noise(self, c: canvas.Canvas, intensity: float):

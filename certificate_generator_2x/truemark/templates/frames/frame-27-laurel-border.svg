@@ -5,7 +5,7 @@
   <defs><pattern id="micro" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 8 L8 0" stroke="#0f2e74" stroke-width="0.35" opacity="0.32"/></pattern></defs>
   <rect width="100%" height="100%" fill="none"/>
   <rect x="42" y="42" width="732" height="972" fill="url(#micro)" opacity="0.06"/>
-  <g fill="none" stroke-linecap="round"><circle cx="72" cy="72" r="16" class="accent"/><circle cx="744" cy="72" r="16" class="accent"/><circle cx="72" cy="984" r="16" class="accent"/><circle cx="744" cy="984" r="16" class="accent"/></g>
+  <g fill="none" stroke-linecap="round"><rect x="72" y="72" width="672" height="912" class="accent"/><circle cx="72" cy="72" r="16" class="accent"/><circle cx="744" cy="72" r="16" class="accent"/><circle cx="72" cy="984" r="16" class="accent"/><circle cx="744" cy="984" r="16" class="accent"/></g>
   <text x="408" y="1032" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#52717e" letter-spacing="2">TRUEMARK FRAME 27</text>
   <style>.heavy{stroke:#0f2e74;stroke-width:10}.accent{stroke:#daa520;stroke-width:3}.fine{stroke:#0f2e74;stroke-width:1.2}</style>
 </svg>

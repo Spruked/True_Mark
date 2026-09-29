@@ -17,9 +17,9 @@ def _pattern(frame: dict) -> str:
     group = frame["group"]
     number = int(frame["number"])
     if group == "modern_tech":
-        return f'<path d="M72 {84 + number % 3 * 5} H744 M72 {972 - number % 3 * 5} H744" class="accent"/><path d="M84 72 V984 M732 72 V984" class="fine"/>'
+        return f'<rect x="72" y="72" width="672" height="912" class="fine"/><path d="M72 {84 + number % 3 * 5} H744 M72 {972 - number % 3 * 5} H744" class="accent"/><path d="M84 72 V984 M732 72 V984" class="fine"/>'
     if group == "ornamental":
-        return f'<circle cx="72" cy="72" r="{14 + number % 5}" class="accent"/><circle cx="744" cy="72" r="{14 + number % 5}" class="accent"/><circle cx="72" cy="984" r="{14 + number % 5}" class="accent"/><circle cx="744" cy="984" r="{14 + number % 5}" class="accent"/>'
+        return f'<rect x="72" y="72" width="672" height="912" class="accent"/><circle cx="72" cy="72" r="{14 + number % 5}" class="accent"/><circle cx="744" cy="72" r="{14 + number % 5}" class="accent"/><circle cx="72" cy="984" r="{14 + number % 5}" class="accent"/><circle cx="744" cy="984" r="{14 + number % 5}" class="accent"/>'
     if group == "heavy_elite":
         return '<rect x="52" y="52" width="712" height="952" class="heavy"/><rect x="70" y="70" width="676" height="916" class="accent"/>'
     if group == "ultra_minimal":
