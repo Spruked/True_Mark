@@ -102,6 +102,7 @@ class TrueMarkForge:
             "security_profile_version": "1.0",
             "security_manifest_hash": security_manifest_hash,
             "renderer_version": "TM-CERT-RENDERER-2.1",
+            "nft_backed": bool(metadata.get("nft_backed")),
         }
         print(f"    ✅ Payload created ({len(json.dumps(payload))} bytes)")
 
@@ -127,6 +128,37 @@ class TrueMarkForge:
             output_dir=self.vault.certificates_path,
         )
         print(f"    ✅ PDF: {pdf_path}")
+        artifact_paths = dict(self.renderer.last_artifacts)
+        nft_metadata_path = None
+        if metadata.get("nft_backed"):
+            nft_metadata = {
+                "name": metadata["asset_title"],
+                "description": "True Mark forensic certificate image.",
+                "image": metadata.get("nft_image_uri", "ipfs://PENDING"),
+                "external_url": f"https://verify.truemark.io/{dals_serial}",
+                "attributes": [
+                    {"trait_type": "Forensic Security Profile", "value": payload["security_profile"]},
+                    {"trait_type": "Security Profile Version", "value": f"{payload['security_profile']}/{payload['security_profile_version']}"},
+                    {"trait_type": "Verification Status", "value": "Valid"},
+                    {"trait_type": "True Mark Verification ID", "value": dals_serial},
+                ],
+                "true_mark": {
+                    "certificate_hash": signature_bundle["payload_hash"],
+                    "security_manifest_hash": payload["security_manifest_hash"],
+                    "renderer_version": payload["renderer_version"],
+                    "certificate_pdf": str(artifact_paths["pdf"]),
+                    "certificate_png": str(artifact_paths["png"]),
+                    "certificate_jpeg": str(artifact_paths["jpeg"]),
+                    "chain_id": metadata.get("chain_id"),
+                    "token_id": metadata.get("nft_token_id"),
+                },
+            }
+            nft_metadata_path = self.vault.certificates_path / f"{dals_serial}_nft_metadata.json"
+            with open(nft_metadata_path, "w", encoding="utf-8") as handle:
+                json.dump(nft_metadata, handle, indent=2)
+            artifact_paths["nft_metadata"] = nft_metadata_path
+            print(f"    ✅ NFT image: {artifact_paths['png']}")
+            print(f"    ✅ NFT metadata: {nft_metadata_path}")
 
         encryption_package = None
         if metadata.get("encrypt_artifacts"):
@@ -216,8 +248,11 @@ class TrueMarkForge:
             "renderer_version": payload["renderer_version"],
             "verification_status": "VALID",
             "true_mark_verification_id": dals_serial,
+            "nft_backed": bool(metadata.get("nft_backed")),
             "minted_at": datetime.utcnow().isoformat() + "Z",
         }
+        for artifact_type, artifact_path in artifact_paths.items():
+            result[f"certificate_{artifact_type}"] = str(artifact_path)
         if encryption_package:
             result["encryption_package"] = encryption_package
         if skg_payload:
@@ -338,6 +373,13 @@ async def main() -> None:
         default=None,
         help="Optional governed presentation frame ID from truemark/templates/FRAME_CATALOG.json",
     )
+    mint_parser.add_argument(
+        "--nft-backed",
+        action="store_true",
+        help="Also produce pixel-faithful PNG/JPEG certificate artwork and NFT metadata JSON",
+    )
+    mint_parser.add_argument("--nft-image-uri", default=None, help="Final URI for the certificate PNG/JPEG")
+    mint_parser.add_argument("--nft-token-id", default=None, help="Confirmed NFT token ID, when available")
 
     verify_parser = subparsers.add_parser("verify", help="Verify a certificate")
     verify_parser.add_argument("--serial", required=True, help="DALS serial number")
@@ -367,6 +409,9 @@ async def main() -> None:
             "encrypt_artifacts": args.encrypt,
             "layer_count": args.layer_count,
             "frame_id": args.frame_id,
+            "nft_backed": args.nft_backed,
+            "nft_image_uri": args.nft_image_uri,
+            "nft_token_id": args.nft_token_id,
         }
         result = await forge.mint_official_certificate(metadata)
         print("📊 MINTING RESULT")

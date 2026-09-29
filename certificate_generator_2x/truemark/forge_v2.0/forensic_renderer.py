@@ -17,9 +17,11 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import qrcode
 import random
 import hashlib
+import json
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Optional
+from io import BytesIO
 import io
 import sys
 
@@ -42,6 +44,7 @@ class ForensicCertificateRenderer:
     def __init__(self, template_path: Optional[Path] = None, frame_id: Optional[str] = None):
         self.template_path = template_path or get_templates_path()
         self.frame_id = frame_id
+        self.last_artifacts: Dict[str, Path] = {}
         self.font_dir = get_fonts_path()
         
         # Initialize fonts with fallbacks
@@ -147,9 +150,41 @@ class ForensicCertificateRenderer:
             self._draw_verification_block(c, data)
         
         c.save()
+
+        self.last_artifacts = {"pdf": output_path}
+        if data.get("nft_backed"):
+            self.last_artifacts.update(self._export_image_companions(output_path, output_dir))
         
         print(f"✅ Generated forensic PDF: {output_path}")
         return output_path
+
+    def _export_image_companions(self, pdf_path: Path, output_dir: Path) -> Dict[str, Path]:
+        """Rasterize the final PDF page so NFT artwork cannot visually drift."""
+        try:
+            import fitz  # PyMuPDF
+            from PIL import Image
+        except ImportError as error:
+            raise RuntimeError(
+                "NFT-backed certificates require PyMuPDF and Pillow for "
+                "pixel-faithful PDF rasterization. Install forge requirements."
+            ) from error
+
+        document = fitz.open(str(pdf_path))
+        if len(document) != 1:
+            document.close()
+            raise ValueError("Certificate companion rendering requires exactly one PDF page.")
+
+        page = document[0]
+        scale = 300 / 72
+        pixmap = page.get_pixmap(matrix=fitz.Matrix(scale, scale), alpha=False)
+        png_path = output_dir / f"{pdf_path.stem}.png"
+        jpeg_path = output_dir / f"{pdf_path.stem}.jpg"
+        pixmap.save(str(png_path))
+
+        image = Image.open(BytesIO(pixmap.tobytes("png"))).convert("RGB")
+        image.save(str(jpeg_path), format="JPEG", quality=95, optimize=True)
+        document.close()
+        return {"png": png_path, "jpeg": jpeg_path}
     
     def _draw_parchment_base(self, c: canvas.Canvas):
         """Real scanned parchment or procedurally generated texture."""

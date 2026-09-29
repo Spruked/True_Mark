@@ -57,6 +57,22 @@ python truemark/forge_v2.0/certificate_forge.py mint \
 `--layers` accepts only `2 3 5 7 11 13`. `--frame` changes visual treatment
 only; it never changes the evidence depth or authoritative Vault record.
 
+### NFT-backed certificate artifacts
+
+Use `--nft-backed` when the certificate will back an NFT. The forge renders
+the canonical certificate PDF once, then rasterizes that final PDF page into a
+pixel-faithful 300 DPI PNG and an optional JPEG derivative. It also writes NFT
+metadata JSON linking the image, PDF, certificate hash, verification ID,
+security profile, ISS/Vault evidence, chain, and token fields. The NFT image
+is the certificate itself; it is not a separate artwork interpretation.
+
+```bash
+python truemark/forge_v2.0/certificate_forge.py mint \
+  --owner "Alice Johnson" --wallet "0x..." \
+  --title "Provenance Record" --ipfs "Qm..." \
+  --layers 13 --nft-backed --nft-image-uri "ipfs://PENDING"
+```
+
 ### Printable forensic module library
 
 The generator also registers 30 original, brand-neutral, printer-safe
