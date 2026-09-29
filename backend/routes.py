@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import shutil
 import uuid
@@ -248,6 +249,14 @@ def _write_vault_package(
         archive.writestr("metadata.json", json.dumps(metadata_payload, indent=2))
         archive.writestr("truemark_record.json", json.dumps(nft_record, indent=2))
         archive.writestr("certificate_manifest.json", json.dumps(nft_record["certificate_manifest"], indent=2))
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _write_dals_export(nft_record: Dict[str, Any]) -> Path:
@@ -761,6 +770,8 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
                 "total_usd": payment_session["total_usd"],
                 "minted_at": minted_at,
                 "created_at": minted_at,
+                "vault_package_path": str(vault_path),
+                "vault_package_sha256": _sha256_file(vault_path),
             },
         )
 

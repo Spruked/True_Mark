@@ -919,7 +919,12 @@ def record_order_and_mint_event(order: Dict[str, Any], mint_event: Dict[str, Any
     record_vault_audit_event(
         "MINT_EVENT_RECORDED",
         order_row["id"],
-        {"serial": mint_event_row.get("serial"), "nft_identifier": mint_event_row.get("nft_identifier")},
+        {
+            "serial": mint_event_row.get("serial"),
+            "nft_identifier": mint_event_row.get("nft_identifier"),
+            "vault_package_path": mint_event.get("vault_package_path"),
+            "vault_package_sha256": mint_event.get("vault_package_sha256"),
+        },
         order_row.get("user_id"),
     )
     return order_row
