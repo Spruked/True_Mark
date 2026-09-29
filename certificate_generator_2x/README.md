@@ -13,11 +13,49 @@ A production-grade certificate generation system combining forensic-quality PDF 
 ## 🎯 Features
 
 ### Core Capabilities
-- **🎨 Forensic PDF Rendering**: 10-layer anti-AI artifact system with 300 DPI output, microprint, guilloché patterns, and holographic watermarks
+- **🎨 Forensic PDF Rendering**: governed prime-depth rendering with microprint, guilloché patterns, timestamps, seals, and verification evidence
 - **🔐 Ed25519 Cryptography**: Quantum-resistant 256-bit signatures with SHA-256 payload hashing
 - **📦 Immutable Vault**: JSONL append-only ledger compatible with WorkerVaultWriter architecture
 - **🌐 Swarm Broadcasting**: FusionQueue integration for distributed asset awareness
 - **🧠 Knowledge Graph Learning**: SKG v1.0 learns patterns from every certificate (wallet behavior, IPFS clustering, drift detection)
+- **🖼️ 50 Governed Presentation Frames**: SVG-ready 8.5×11 frame library with optional frame selection
+- **🔢 Prime Forensic Depths**: only 2, 3, 5, 7, 11, and 13-layer certificate profiles are accepted
+
+### Certificate depth rule
+
+The certificate engine exposes exactly six forensic depth profiles:
+
+- **2-Layer Certificate**
+- **3-Layer Certificate**
+- **5-Layer Certificate**
+- **7-Layer Certificate**
+- **11-Layer Forensic Certificate**
+- **13-Layer Elite Forensic Certificate**
+
+No one-layer or composite non-prime profile is valid. Pricing is intentionally
+not part of the renderer and will be established separately in the product
+catalog.
+
+The ordered layer definitions are recorded in
+`truemark/forge_v2.0/layer_profiles.py`. Each deeper profile includes the
+earlier governed layers. Presentation frames are independent of depth and are
+listed in `truemark/templates/FRAME_CATALOG.json`, with the 50 original SVG
+assets in `truemark/templates/frames/`.
+
+Example:
+
+```bash
+python truemark/forge_v2.0/certificate_forge.py mint \
+  --owner "Alice Johnson" \
+  --wallet "0x..." \
+  --title "Provenance Record" \
+  --ipfs "Qm..." \
+  --layers 11 \
+  --frame frame-24-art-deco-border
+```
+
+`--layers` accepts only `2 3 5 7 11 13`. `--frame` changes visual treatment
+only; it never changes the evidence depth or authoritative Vault record.
 
 ### Security & Compliance
 - DALS-001 compliant serial numbers with checksums
@@ -84,7 +122,8 @@ certificate_generator_2x/
 │   └── forge_v2.0/
 │       ├── certificate_forge.py      # Main orchestrator
 │       ├── crypto_anchor.py          # Ed25519 signing engine
-│       ├── forensic_renderer.py      # 10-layer PDF generator
+│       ├── forensic_renderer.py      # Prime-depth PDF generator
+│       ├── layer_profiles.py         # 2/3/5/7/11/13 layer rule
 │       ├── integration_bridge.py     # Vault/swarm connector
 │       ├── install.ps1               # Automated setup
 │       └── requirements.txt
@@ -125,17 +164,24 @@ Ed25519 cryptographic engine providing:
 - Signature verification
 
 #### 3. **Forensic Renderer (`forensic_renderer.py`)**
-10-layer anti-AI PDF generation:
-- **Layer 1**: 300 DPI canvas (A4 portrait)
-- **Layer 2**: Holographic gradient background
-- **Layer 3**: Guilloché security patterns
-- **Layer 4**: Microprint borders (0.5pt invisible text)
-- **Layer 5**: Custom TrueMark™ logo
-- **Layer 6**: Certificate content fields
-- **Layer 7**: QR code verification badge
-- **Layer 8**: Cryptographic signature embedding
-- **Layer 9**: Metadata annotations (invisible)
-- **Layer 10**: PDF/A compliance layer
+Prime-depth forensic rendering uses the following ordered layers:
+- **Layer 1**: Certificate substrate and base field
+- **Layer 2**: Certificate identity and canonical content
+- **Layer 3**: Selected SVG presentation frame
+- **Layer 4**: TrueMark watermark treatment
+- **Layer 5**: Canonical timestamp display
+- **Layer 6**: Certificate seal
+- **Layer 7**: Independent verification QR
+- **Layer 8**: Authorized signature block
+- **Layer 9**: Forensic micro-pattern
+- **Layer 10**: Forensic microtexture
+- **Layer 11**: Canonical certificate manifest
+- **Layer 12**: Cryptographic metadata and signature anchor
+- **Layer 13**: Independent verification evidence block
+
+The renderer selects the first `N` ordered layers for the requested governed
+profile. Therefore a 2-layer certificate contains layers 1–2, a 7-layer
+certificate contains layers 1–7, and a 13-layer certificate contains all 13.
 
 #### 4. **Integration Bridge (`integration_bridge.py`)**
 Vault and swarm connectivity:

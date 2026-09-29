@@ -1,12 +1,12 @@
 # forensic_renderer.py
 """
 TrueMark Forensic Certificate Renderer
-Generates PDFs with 10 layers of physical artifact simulation
+Generates PDFs using the governed 2, 3, 5, 7, 11, or 13-layer profiles
 Anti-AI forensic markers + micro-artifacts for authenticity
 """
 
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4
+from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.lib.colors import HexColor, Color
 from reportlab.pdfbase import pdfmetrics
@@ -21,18 +21,27 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, Optional
 import io
+import sys
 
 from path_config import get_templates_path, get_fonts_path, ensure_temp_vault_dir
+from layer_profiles import get_layer_profile
+
+try:
+    from frame_catalog import get_frame, get_frame_asset_path
+except ModuleNotFoundError:
+    sys.path.insert(0, str(get_templates_path()))
+    from frame_catalog import get_frame, get_frame_asset_path
 
 
 class ForensicCertificateRenderer:
     """
-    Generates PDFs with 10 layers of physical artifact simulation.
+    Generates PDFs with one of the six governed prime forensic depths.
     Each layer contains anti-AI forensic markers.
     """
     
-    def __init__(self, template_path: Optional[Path] = None):
+    def __init__(self, template_path: Optional[Path] = None, frame_id: Optional[str] = None):
         self.template_path = template_path or get_templates_path()
+        self.frame_id = frame_id
         self.font_dir = get_fonts_path()
         
         # Initialize fonts with fallbacks
@@ -96,40 +105,45 @@ class ForensicCertificateRenderer:
         output_path = output_dir / f"{data['dals_serial']}_OFFICIAL.pdf"
         output_path.parent.mkdir(parents=True, exist_ok=True)
         
-        c = canvas.Canvas(str(output_path), pagesize=A4)
+        selected_frame = get_frame(data.get("frame_id", self.frame_id))
+        layer_profile = get_layer_profile(data.get("layer_count", 13))
+        data["layer_profile"] = layer_profile
+        c = canvas.Canvas(str(output_path), pagesize=letter)
         c.setTitle(f"TrueMark Certificate {data['dals_serial']}")
         c.setAuthor("TrueMark Forge v2.0")
-        c.setSubject(f"Official Certificate of Authenticity - {data['dals_serial']}")
+        c.setSubject(
+            f"Official Certificate of Authenticity - {data['dals_serial']} - "
+            f"{selected_frame['frame_id']}"
+        )
         
-        # Layer 1: Parchment base (or generated texture)
-        self._draw_parchment_base(c)
-        
-        # Layer 2: Guilloche security border
-        self._draw_guilloche_border(c)
-        
-        # Layer 3: TrueMark Tree watermark
-        self._draw_watermark(c, opacity=0.12, rotation_variation=True)
-        
-        # Layer 4: Header with micro-kerning variations
-        self._draw_forensic_header(c, title=data.get('asset_title', 'Digital Asset'))
-        
-        # Layer 5: Data fields with intentional baseline drift
-        self._draw_data_grid(c, data)
-        
-        # Layer 6: Embossed gold seal
-        self._draw_embossed_seal(c, data['dals_serial'])
-        
-        # Layer 7: QR code with embedded signature fragment
-        qr_path = self._draw_verification_qr(c, data['dals_serial'])
-        
-        # Layer 8: Signature line with simulated ink pressure
-        self._draw_officer_signature(c, officer="Caleon Prime")
-        
-        # Layer 9: Forensic noise (imperceptible scanner sensor artifacts)
-        self._add_micro_noise(c, intensity=0.015)
-        
-        # Layer 10: Cryptographic metadata embedded in PDF
-        self._embed_crypto_metadata(c, data)
+        layer_ids = {layer["id"] for layer in layer_profile["layers"]}
+        if "substrate" in layer_ids:
+            self._draw_parchment_base(c)
+        if "content" in layer_ids:
+            self._draw_forensic_header(c, title=data.get('asset_title', 'Digital Asset'))
+            self._draw_data_grid(c, data)
+        if "frame" in layer_ids:
+            self._draw_guilloche_border(c, selected_frame["frame_id"])
+        if "watermark" in layer_ids:
+            self._draw_watermark(c, opacity=0.12, rotation_variation=True)
+        if "timestamp" in layer_ids:
+            self._draw_timestamp_block(c, data)
+        if "seal" in layer_ids:
+            self._draw_embossed_seal(c, data['dals_serial'])
+        if "verification_qr" in layer_ids:
+            self._draw_verification_qr(c, data['dals_serial'])
+        if "signature" in layer_ids:
+            self._draw_officer_signature(c, officer=data.get("officer", "Authorized Officer"))
+        if "micro_pattern" in layer_ids:
+            self._draw_micro_pattern(c)
+        if "micro_noise" in layer_ids:
+            self._add_micro_noise(c, intensity=0.015)
+        if "manifest" in layer_ids:
+            self._draw_manifest_block(c, data)
+        if "cryptographic_metadata" in layer_ids:
+            self._embed_crypto_metadata(c, data)
+        if "verification_block" in layer_ids:
+            self._draw_verification_block(c, data)
         
         c.save()
         
@@ -138,7 +152,7 @@ class ForensicCertificateRenderer:
     
     def _draw_parchment_base(self, c: canvas.Canvas):
         """Real scanned parchment or procedurally generated texture."""
-        w, h = A4
+        w, h = letter
         
         parchment_file = self.template_path / "parchment_base_600dpi.jpg"
         
@@ -161,11 +175,11 @@ class ForensicCertificateRenderer:
                 c.circle(x, y, size, fill=True, stroke=False)
             c.restoreState()
     
-    def _draw_guilloche_border(self, c: canvas.Canvas):
-        """Mathematical guilloche pattern (cannot be AI-generated easily)."""
-        w, h = A4
-        
-        guilloche_file = self.template_path / "border_guilloche_vector.svg"
+    def _draw_guilloche_border(self, c: canvas.Canvas, frame_id: Optional[str] = None):
+        """Draw the selected governed SVG frame, with a safe fallback."""
+        w, h = letter
+
+        guilloche_file = get_frame_asset_path(self.template_path, frame_id)
         
         if guilloche_file.exists():
             # Use pre-designed SVG
@@ -175,25 +189,25 @@ class ForensicCertificateRenderer:
                 drawing = svg2rlg(str(guilloche_file))
                 renderPDF.draw(drawing, c, 0, 0)
             except:
-                self._draw_simple_border(c)
+                self._draw_simple_border(c, frame_id)
         else:
-            # Draw mathematical border pattern
-            self._draw_simple_border(c)
-    
-    def _draw_simple_border(self, c: canvas.Canvas):
-        """Simple but elegant border pattern."""
-        w, h = A4
+            self._draw_simple_border(c, frame_id)
+
+    def _draw_simple_border(self, c: canvas.Canvas, frame_id: Optional[str] = None):
+        """Simple fallback preserving the selected frame's visual family."""
+        w, h = letter
+        frame = get_frame(frame_id)
         margin = 0.5 * inch
         
         c.saveState()
         c.setStrokeColor(self.colors['gold'])
-        c.setLineWidth(3)
+        c.setLineWidth(6 if frame["group"] == "heavy_elite" else 3)
         
         # Outer border
         c.rect(margin, margin, w - 2*margin, h - 2*margin)
         
         # Inner decorative lines
-        c.setLineWidth(1)
+        c.setLineWidth(1 if frame["group"] != "ultra_minimal" else 0.5)
         c.rect(margin + 5, margin + 5, w - 2*margin - 10, h - 2*margin - 10)
         
         # Corner ornaments
@@ -213,7 +227,7 @@ class ForensicCertificateRenderer:
     
     def _draw_watermark(self, c: canvas.Canvas, opacity: float, rotation_variation: bool):
         """TrueMark Tree with slight rotational variance (anti-AI)."""
-        w, h = A4
+        w, h = letter
         
         tree_file = self.template_path / "truemark_tree_watermark.png"
         
@@ -236,7 +250,7 @@ class ForensicCertificateRenderer:
     
     def _draw_simple_watermark(self, c: canvas.Canvas, opacity: float):
         """Simple tree watermark fallback."""
-        w, h = A4
+        w, h = letter
         
         c.saveState()
         c.setStrokeColorRGB(0.3, 0.5, 0.3, alpha=opacity)
@@ -261,7 +275,7 @@ class ForensicCertificateRenderer:
     
     def _draw_forensic_header(self, c: canvas.Canvas, title: str):
         """Header with micro-kerning and baseline shift."""
-        w, h = A4
+        w, h = letter
         
         # TRUEMARK® with slight kerning variation
         c.setFont("Times-Bold", 52)
@@ -298,7 +312,7 @@ class ForensicCertificateRenderer:
     
     def _draw_data_grid(self, c: canvas.Canvas, data: Dict):
         """Data fields with intentional misalignment (physical typing simulation)."""
-        w, h = A4
+        w, h = letter
         y_start = h - 3.8*inch
         left_margin = 1.2*inch
         label_width = 2.2*inch
@@ -336,7 +350,7 @@ class ForensicCertificateRenderer:
     
     def _draw_embossed_seal(self, c: canvas.Canvas, serial: str):
         """Gold foil seal with specular highlight simulation."""
-        w, h = A4
+        w, h = letter
         
         seal_file = self.template_path / "seal_gold_embossed_600dpi.png"
         seal_size = 2.0 * inch
@@ -393,7 +407,7 @@ class ForensicCertificateRenderer:
     
     def _draw_verification_qr(self, c: canvas.Canvas, serial: str) -> Path:
         """QR code containing verification URL + signature fragment."""
-        w, h = A4
+        w, h = letter
         
         verification_url = f"https://verify.truemark.io/{serial}"
         
@@ -426,7 +440,7 @@ class ForensicCertificateRenderer:
     
     def _draw_officer_signature(self, c: canvas.Canvas, officer: str):
         """Simulated wet signature with pressure variance."""
-        w, h = A4
+        w, h = letter
         
         # Signature line
         c.setFont("Times-Roman", 10)
@@ -451,9 +465,54 @@ class ForensicCertificateRenderer:
         issue_date = datetime.utcnow().strftime("%Y-%m-%d")
         c.drawString(4.6*inch, sig_y + 0.05*inch, issue_date)
     
+    def _draw_timestamp_block(self, c: canvas.Canvas, data: Dict):
+        """Draw canonical time representations without changing their authority."""
+        w, h = letter
+        timestamp = data.get("iss_timestamp") or data.get("stardate", "ISS timestamp pending")
+        c.saveState()
+        c.setFillColor(self.colors["dark_slate"])
+        c.setFont("Courier-Bold", 8)
+        c.drawString(1.2 * inch, h - 7.35 * inch, f"ISS SCALE: {timestamp}")
+        c.drawString(1.2 * inch, h - 7.55 * inch, f"ISS_TIME_NS: {data.get('iss_time_ns', 'pending')}")
+        c.restoreState()
+
+    def _draw_micro_pattern(self, c: canvas.Canvas):
+        """Draw a deterministic micro-pattern inside the selected presentation."""
+        w, h = letter
+        c.saveState()
+        c.setStrokeColorRGB(0.06, 0.18, 0.45, alpha=0.22)
+        c.setLineWidth(0.25)
+        for index in range(0, int(w), 9):
+            c.line(index, 0.55 * inch, index + 42, 0.55 * inch + 42)
+            c.line(w - index, h - 0.55 * inch, w - index - 42, h - 0.55 * inch - 42)
+        c.restoreState()
+
+    def _draw_manifest_block(self, c: canvas.Canvas, data: Dict):
+        """Display the manifest reference without making the PDF authoritative."""
+        c.saveState()
+        c.setFillColor(self.colors["dark_slate"])
+        c.setFont("Courier", 6)
+        manifest = data.get("manifest_hash") or data.get("payload_hash", "pending")
+        c.drawString(1.0 * inch, 0.38 * inch, f"MANIFEST HASH: {str(manifest)[:48]}")
+        c.restoreState()
+
+    def _draw_verification_block(self, c: canvas.Canvas, data: Dict):
+        """Add a visible independent-verification instruction for elite profiles."""
+        w, h = letter
+        c.saveState()
+        c.setStrokeColor(self.colors["gold"])
+        c.setLineWidth(1)
+        c.roundRect(w - 3.0 * inch, h - 9.25 * inch, 1.9 * inch, 0.55 * inch, 5, stroke=1, fill=0)
+        c.setFillColor(self.colors["primary_blue"])
+        c.setFont("Helvetica-Bold", 7)
+        c.drawCentredString(w - 2.05 * inch, h - 8.93 * inch, "INDEPENDENT VERIFICATION")
+        c.setFont("Courier", 6)
+        c.drawCentredString(w - 2.05 * inch, h - 9.12 * inch, str(data.get("dals_serial", "PENDING"))[:24])
+        c.restoreState()
+
     def _add_micro_noise(self, c: canvas.Canvas, intensity: float):
         """Imperceptible scanner sensor noise pattern."""
-        w, h = A4
+        w, h = letter
         
         c.saveState()
         c.setLineWidth(0.005)

@@ -1,0 +1,752 @@
+[
+  {
+    "frame_id": "frame-01-engraved-single-line",
+    "name": "Engraved Single-Line",
+    "number": 1,
+    "group": "classic_forensic",
+    "group_label": "Classic Government / Forensic",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-01-engraved-single-line.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "forensic-certificate",
+      "chain-of-custody-certificate",
+      "audit-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-02-engraved-double-line",
+    "name": "Engraved Double-Line",
+    "number": 2,
+    "group": "classic_forensic",
+    "group_label": "Classic Government / Forensic",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-02-engraved-double-line.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "forensic-certificate",
+      "chain-of-custody-certificate",
+      "audit-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-03-heavy-treasury-border",
+    "name": "Heavy Treasury Border",
+    "number": 3,
+    "group": "classic_forensic",
+    "group_label": "Classic Government / Forensic",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-03-heavy-treasury-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "forensic-certificate",
+      "chain-of-custody-certificate",
+      "audit-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-04-micro-engraved-pattern",
+    "name": "Micro-Engraved Pattern",
+    "number": 4,
+    "group": "classic_forensic",
+    "group_label": "Classic Government / Forensic",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-04-micro-engraved-pattern.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "forensic-certificate",
+      "chain-of-custody-certificate",
+      "audit-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-05-triple-layer-forensic-border",
+    "name": "Triple-Layer Forensic Border",
+    "number": 5,
+    "group": "classic_forensic",
+    "group_label": "Classic Government / Forensic",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-05-triple-layer-forensic-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "forensic-certificate",
+      "chain-of-custody-certificate",
+      "audit-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-06-archival-document-border",
+    "name": "Archival Document Border",
+    "number": 6,
+    "group": "classic_forensic",
+    "group_label": "Classic Government / Forensic",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-06-archival-document-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "forensic-certificate",
+      "chain-of-custody-certificate",
+      "audit-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-07-antiquarian-scroll-border",
+    "name": "Antiquarian Scroll Border",
+    "number": 7,
+    "group": "classic_forensic",
+    "group_label": "Classic Government / Forensic",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-07-antiquarian-scroll-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "forensic-certificate",
+      "chain-of-custody-certificate",
+      "audit-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-08-diplomatic-border",
+    "name": "Diplomatic Border",
+    "number": 8,
+    "group": "classic_forensic",
+    "group_label": "Classic Government / Forensic",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-08-diplomatic-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "forensic-certificate",
+      "chain-of-custody-certificate",
+      "audit-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-09-federal-style-block-border",
+    "name": "Federal-Style Block Border",
+    "number": 9,
+    "group": "classic_forensic",
+    "group_label": "Classic Government / Forensic",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-09-federal-style-block-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "forensic-certificate",
+      "chain-of-custody-certificate",
+      "audit-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-10-ornate-corner-flourish",
+    "name": "Ornate Corner Flourish",
+    "number": 10,
+    "group": "classic_forensic",
+    "group_label": "Classic Government / Forensic",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-10-ornate-corner-flourish.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "forensic-certificate",
+      "chain-of-custody-certificate",
+      "audit-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-11-minimal-tech-border",
+    "name": "Minimal Tech Border",
+    "number": 11,
+    "group": "modern_tech",
+    "group_label": "Modern / Tech",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-11-minimal-tech-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-12-thin-line-precision-border",
+    "name": "Thin-Line Precision Border",
+    "number": 12,
+    "group": "modern_tech",
+    "group_label": "Modern / Tech",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-12-thin-line-precision-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-13-geometric-lattice",
+    "name": "Geometric Lattice",
+    "number": 13,
+    "group": "modern_tech",
+    "group_label": "Modern / Tech",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-13-geometric-lattice.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-14-circuit-style-border",
+    "name": "Circuit-Style Border",
+    "number": 14,
+    "group": "modern_tech",
+    "group_label": "Modern / Tech",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-14-circuit-style-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-15-hex-grid-border",
+    "name": "Hex-Grid Border",
+    "number": 15,
+    "group": "modern_tech",
+    "group_label": "Modern / Tech",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-15-hex-grid-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-16-matrix-style-border",
+    "name": "Matrix-Style Border",
+    "number": 16,
+    "group": "modern_tech",
+    "group_label": "Modern / Tech",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-16-matrix-style-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-17-precision-dot-grid",
+    "name": "Precision Dot-Grid",
+    "number": 17,
+    "group": "modern_tech",
+    "group_label": "Modern / Tech",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-17-precision-dot-grid.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-18-angular-tech-frame",
+    "name": "Angular Tech Frame",
+    "number": 18,
+    "group": "modern_tech",
+    "group_label": "Modern / Tech",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-18-angular-tech-frame.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-19-minimal-double-tech",
+    "name": "Minimal Double-Tech",
+    "number": 19,
+    "group": "modern_tech",
+    "group_label": "Modern / Tech",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-19-minimal-double-tech.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-20-orb-style-glyph-border",
+    "name": "ORB-Style Glyph Border",
+    "number": 20,
+    "group": "modern_tech",
+    "group_label": "Modern / Tech",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-20-orb-style-glyph-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-21-floral-corners",
+    "name": "Floral Corners",
+    "number": 21,
+    "group": "ornamental",
+    "group_label": "Ornamental / Decorative",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-21-floral-corners.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-22-victorian-border",
+    "name": "Victorian Border",
+    "number": 22,
+    "group": "ornamental",
+    "group_label": "Ornamental / Decorative",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-22-victorian-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-23-scrollwork-border",
+    "name": "Scrollwork Border",
+    "number": 23,
+    "group": "ornamental",
+    "group_label": "Ornamental / Decorative",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-23-scrollwork-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-24-art-deco-border",
+    "name": "Art Deco Border",
+    "number": 24,
+    "group": "ornamental",
+    "group_label": "Ornamental / Decorative",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-24-art-deco-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-25-filigree-border",
+    "name": "Filigree Border",
+    "number": 25,
+    "group": "ornamental",
+    "group_label": "Ornamental / Decorative",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-25-filigree-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-26-royal-crest-border",
+    "name": "Royal Crest Border",
+    "number": 26,
+    "group": "ornamental",
+    "group_label": "Ornamental / Decorative",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-26-royal-crest-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-27-laurel-border",
+    "name": "Laurel Border",
+    "number": 27,
+    "group": "ornamental",
+    "group_label": "Ornamental / Decorative",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-27-laurel-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-28-ribbon-border",
+    "name": "Ribbon Border",
+    "number": 28,
+    "group": "ornamental",
+    "group_label": "Ornamental / Decorative",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-28-ribbon-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-29-crest-corner-border",
+    "name": "Crest-Corner Border",
+    "number": 29,
+    "group": "ornamental",
+    "group_label": "Ornamental / Decorative",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-29-crest-corner-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-30-decorative-diamond-border",
+    "name": "Decorative Diamond Border",
+    "number": 30,
+    "group": "ornamental",
+    "group_label": "Ornamental / Decorative",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-30-decorative-diamond-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-31-heavy-double-frame",
+    "name": "Heavy Double-Frame",
+    "number": 31,
+    "group": "heavy_elite",
+    "group_label": "Heavy / Elite",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-31-heavy-double-frame.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "forensic-certificate",
+      "chain-of-custody-certificate",
+      "audit-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-32-thick-engraved-border",
+    "name": "Thick Engraved Border",
+    "number": 32,
+    "group": "heavy_elite",
+    "group_label": "Heavy / Elite",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-32-thick-engraved-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "forensic-certificate",
+      "chain-of-custody-certificate",
+      "audit-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-33-institutional-border",
+    "name": "Institutional Border",
+    "number": 33,
+    "group": "heavy_elite",
+    "group_label": "Heavy / Elite",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-33-institutional-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "forensic-certificate",
+      "chain-of-custody-certificate",
+      "audit-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-34-gothic-border",
+    "name": "Gothic Border",
+    "number": 34,
+    "group": "heavy_elite",
+    "group_label": "Heavy / Elite",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-34-gothic-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "forensic-certificate",
+      "chain-of-custody-certificate",
+      "audit-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-35-royal-heavy-border",
+    "name": "Royal Heavy Border",
+    "number": 35,
+    "group": "heavy_elite",
+    "group_label": "Heavy / Elite",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-35-royal-heavy-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "forensic-certificate",
+      "chain-of-custody-certificate",
+      "audit-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-36-elite-crest-border",
+    "name": "Elite Crest Border",
+    "number": 36,
+    "group": "heavy_elite",
+    "group_label": "Heavy / Elite",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-36-elite-crest-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "forensic-certificate",
+      "chain-of-custody-certificate",
+      "audit-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-37-heavy-ribbon-border",
+    "name": "Heavy Ribbon Border",
+    "number": 37,
+    "group": "heavy_elite",
+    "group_label": "Heavy / Elite",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-37-heavy-ribbon-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "forensic-certificate",
+      "chain-of-custody-certificate",
+      "audit-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-38-thick-lattice-border",
+    "name": "Thick Lattice Border",
+    "number": 38,
+    "group": "heavy_elite",
+    "group_label": "Heavy / Elite",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-38-thick-lattice-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "forensic-certificate",
+      "chain-of-custody-certificate",
+      "audit-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-39-heavy-diamond-border",
+    "name": "Heavy Diamond Border",
+    "number": 39,
+    "group": "heavy_elite",
+    "group_label": "Heavy / Elite",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-39-heavy-diamond-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "forensic-certificate",
+      "chain-of-custody-certificate",
+      "audit-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-40-elite-micro-engraved-border",
+    "name": "Elite Micro-Engraved Border",
+    "number": 40,
+    "group": "heavy_elite",
+    "group_label": "Heavy / Elite",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-40-elite-micro-engraved-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "forensic-certificate",
+      "chain-of-custody-certificate",
+      "audit-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-41-ultra-thin-border",
+    "name": "Ultra-Thin Border",
+    "number": 41,
+    "group": "ultra_minimal",
+    "group_label": "Ultra-Minimal / Clean",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-41-ultra-thin-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-42-minimal-corners",
+    "name": "Minimal Corners",
+    "number": 42,
+    "group": "ultra_minimal",
+    "group_label": "Ultra-Minimal / Clean",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-42-minimal-corners.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-43-dot-corner-border",
+    "name": "Dot-Corner Border",
+    "number": 43,
+    "group": "ultra_minimal",
+    "group_label": "Ultra-Minimal / Clean",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-43-dot-corner-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-44-line-break-border",
+    "name": "Line-Break Border",
+    "number": 44,
+    "group": "ultra_minimal",
+    "group_label": "Ultra-Minimal / Clean",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-44-line-break-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-45-soft-corner-border",
+    "name": "Soft-Corner Border",
+    "number": 45,
+    "group": "ultra_minimal",
+    "group_label": "Ultra-Minimal / Clean",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-45-soft-corner-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-46-thin-double-line",
+    "name": "Thin Double-Line",
+    "number": 46,
+    "group": "ultra_minimal",
+    "group_label": "Ultra-Minimal / Clean",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-46-thin-double-line.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-47-minimal-box",
+    "name": "Minimal Box",
+    "number": 47,
+    "group": "ultra_minimal",
+    "group_label": "Ultra-Minimal / Clean",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-47-minimal-box.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-48-light-grid",
+    "name": "Light Grid",
+    "number": 48,
+    "group": "ultra_minimal",
+    "group_label": "Ultra-Minimal / Clean",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-48-light-grid.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-49-soft-lattice",
+    "name": "Soft Lattice",
+    "number": 49,
+    "group": "ultra_minimal",
+    "group_label": "Ultra-Minimal / Clean",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-49-soft-lattice.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  },
+  {
+    "frame_id": "frame-50-minimal-glyph-border",
+    "name": "Minimal Glyph Border",
+    "number": 50,
+    "group": "ultra_minimal",
+    "group_label": "Ultra-Minimal / Clean",
+    "format": "US Letter portrait / 8.5 x 11 in",
+    "asset": "frames/frame-50-minimal-glyph-border.svg",
+    "presentation_only": true,
+    "recommended_certificate_types": [
+      "certificate-of-authentication",
+      "provenance-certificate",
+      "verification-certificate"
+    ]
+  }
+]

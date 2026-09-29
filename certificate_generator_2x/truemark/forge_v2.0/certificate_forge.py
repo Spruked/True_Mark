@@ -11,6 +11,7 @@ import json
 import sys
 import uuid
 from typing import Dict, Optional
+from layer_profiles import ALLOWED_LAYER_COUNTS, get_layer_profile
 
 try:
     from forensic_renderer import ForensicCertificateRenderer
@@ -83,6 +84,8 @@ class TrueMarkForge:
             "kep_category": metadata.get("kep_category", "Knowledge"),
             "chain_id": metadata.get("chain_id", "Polygon"),
             "asset_title": metadata["asset_title"],
+            "layer_count": get_layer_profile(metadata.get("layer_count", 13))["layer_count"],
+            "frame_id": metadata.get("frame_id"),
         }
         print(f"    ✅ Payload created ({len(json.dumps(payload))} bytes)")
 
@@ -291,6 +294,20 @@ async def main() -> None:
         action="store_true",
         help="Encrypt the rendered certificate before storage handoff",
     )
+    mint_parser.add_argument(
+        "--layers",
+        dest="layer_count",
+        type=int,
+        choices=ALLOWED_LAYER_COUNTS,
+        default=13,
+        help="Governed forensic depth: 2, 3, 5, 7, 11, or 13 layers",
+    )
+    mint_parser.add_argument(
+        "--frame",
+        dest="frame_id",
+        default=None,
+        help="Optional governed presentation frame ID from truemark/templates/FRAME_CATALOG.json",
+    )
 
     verify_parser = subparsers.add_parser("verify", help="Verify a certificate")
     verify_parser.add_argument("--serial", required=True, help="DALS serial number")
@@ -318,6 +335,8 @@ async def main() -> None:
             "kep_category": args.category,
             "chain_id": args.chain,
             "encrypt_artifacts": args.encrypt,
+            "layer_count": args.layer_count,
+            "frame_id": args.frame_id,
         }
         result = await forge.mint_official_certificate(metadata)
         print("📊 MINTING RESULT")
