@@ -9,10 +9,12 @@ import argparse
 import asyncio
 import hashlib
 import json
+import mimetypes
 import sys
 import uuid
 from typing import Dict, Optional
 from layer_profiles import ALLOWED_LAYER_COUNTS, get_layer_profile
+from registry import verification_url as registry_verification_url
 
 try:
     from forensic_renderer import ForensicCertificateRenderer
@@ -131,11 +133,12 @@ class TrueMarkForge:
         artifact_paths = dict(self.renderer.last_artifacts)
         nft_metadata_path = None
         if metadata.get("nft_backed"):
+            artifact_records = self._describe_artifacts(artifact_paths)
             nft_metadata = {
                 "name": metadata["asset_title"],
                 "description": "True Mark forensic certificate image.",
                 "image": metadata.get("nft_image_uri", "ipfs://PENDING"),
-                "external_url": f"https://verify.truemark.io/{dals_serial}",
+                "external_url": registry_verification_url(dals_serial),
                 "attributes": [
                     {"trait_type": "Forensic Security Profile", "value": payload["security_profile"]},
                     {"trait_type": "Security Profile Version", "value": f"{payload['security_profile']}/{payload['security_profile_version']}"},
@@ -146,13 +149,16 @@ class TrueMarkForge:
                     "certificate_hash": signature_bundle["payload_hash"],
                     "security_manifest_hash": payload["security_manifest_hash"],
                     "renderer_version": payload["renderer_version"],
-                    "certificate_pdf": str(artifact_paths["pdf"]),
-                    "certificate_png": str(artifact_paths["png"]),
-                    "certificate_jpeg": str(artifact_paths["jpeg"]),
+                    "artifacts": artifact_records,
                     "chain_id": metadata.get("chain_id"),
                     "token_id": metadata.get("nft_token_id"),
                 },
             }
+            nft_metadata["true_mark"]["nft_metadata_hash_scope"] = "canonical metadata excluding nft_metadata_hash fields"
+            metadata_hash_input = json.dumps(nft_metadata, sort_keys=True, separators=(",", ":"))
+            nft_metadata["true_mark"]["nft_metadata_hash"] = hashlib.sha256(
+                metadata_hash_input.encode("utf-8")
+            ).hexdigest()
             nft_metadata_path = self.vault.certificates_path / f"{dals_serial}_nft_metadata.json"
             with open(nft_metadata_path, "w", encoding="utf-8") as handle:
                 json.dump(nft_metadata, handle, indent=2)
@@ -231,7 +237,7 @@ class TrueMarkForge:
         qr_code_path = self.renderer.generate_verification_qr(dals_serial)
         print(f"    ✅ QR Code: {qr_code_path}")
 
-        verification_url = f"https://verify.truemark.io/{dals_serial}"
+        verification_url = registry_verification_url(dals_serial)
         result = {
             "certificate_pdf": str(pdf_path),
             "dals_serial": dals_serial,
@@ -251,6 +257,11 @@ class TrueMarkForge:
             "nft_backed": bool(metadata.get("nft_backed")),
             "minted_at": datetime.utcnow().isoformat() + "Z",
         }
+        if metadata.get("nft_backed"):
+            result["certificate_pdf_hash"] = artifact_records["pdf"]["sha256"]
+            result["certificate_png_hash"] = artifact_records["png"]["sha256"]
+            result["certificate_jpeg_hash"] = artifact_records["jpeg"]["sha256"]
+            result["nft_metadata_hash"] = nft_metadata["true_mark"]["nft_metadata_hash"]
         for artifact_type, artifact_path in artifact_paths.items():
             result[f"certificate_{artifact_type}"] = str(artifact_path)
         if encryption_package:
@@ -268,6 +279,32 @@ class TrueMarkForge:
         print("✅ CERTIFICATE MINTED & ANCHORED")
         print()
         return result
+
+    @staticmethod
+    def _describe_artifacts(artifact_paths: Dict[str, Path]) -> Dict[str, Dict[str, object]]:
+        """Describe and hash every issued artifact for deterministic verification."""
+        records: Dict[str, Dict[str, object]] = {}
+        for artifact_type, artifact_path in artifact_paths.items():
+            digest = hashlib.sha256(artifact_path.read_bytes()).hexdigest()
+            mime_type = mimetypes.guess_type(artifact_path.name)[0] or "application/octet-stream"
+            record: Dict[str, object] = {
+                "path": str(artifact_path),
+                "sha256": digest,
+                "mime_type": mime_type,
+            }
+            if artifact_type in {"png", "jpeg"}:
+                try:
+                    from PIL import Image
+                    with Image.open(artifact_path) as image:
+                        record["width"] = image.width
+                        record["height"] = image.height
+                        record["dpi"] = image.info.get("dpi", (300, 300))[0]
+                except ImportError:
+                    record["width"] = 2550
+                    record["height"] = 3300
+                    record["dpi"] = 300
+            records[artifact_type] = record
+        return records
 
     def _generate_dals_serial(self, category: str) -> str:
         category_code = {

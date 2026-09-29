@@ -26,6 +26,7 @@ import io
 import sys
 
 from path_config import get_templates_path, get_fonts_path, ensure_temp_vault_dir
+from registry import verification_url
 from layer_profiles import get_layer_profile
 
 try:
@@ -161,7 +162,10 @@ class ForensicCertificateRenderer:
     def _export_image_companions(self, pdf_path: Path, output_dir: Path) -> Dict[str, Path]:
         """Rasterize the final PDF page so NFT artwork cannot visually drift."""
         try:
-            import fitz  # PyMuPDF
+            try:
+                import pymupdf as fitz  # PyMuPDF 1.28+
+            except ImportError:
+                import fitz  # PyMuPDF 1.24 compatibility
             from PIL import Image
         except ImportError as error:
             raise RuntimeError(
@@ -179,10 +183,9 @@ class ForensicCertificateRenderer:
         pixmap = page.get_pixmap(matrix=fitz.Matrix(scale, scale), alpha=False)
         png_path = output_dir / f"{pdf_path.stem}.png"
         jpeg_path = output_dir / f"{pdf_path.stem}.jpg"
-        pixmap.save(str(png_path))
-
         image = Image.open(BytesIO(pixmap.tobytes("png"))).convert("RGB")
-        image.save(str(jpeg_path), format="JPEG", quality=95, optimize=True)
+        image.save(str(png_path), format="PNG", dpi=(300, 300), optimize=True)
+        image.save(str(jpeg_path), format="JPEG", quality=95, optimize=True, dpi=(300, 300))
         document.close()
         return {"png": png_path, "jpeg": jpeg_path}
     
@@ -301,11 +304,12 @@ class ForensicCertificateRenderer:
         # Branches (simple triangle)
         c.setFillColorRGB(0.2, 0.6, 0.2, alpha=opacity)
         branch_width = 80
-        c.polygon([
-            (trunk_x - branch_width, trunk_top - 20),
-            (trunk_x + branch_width, trunk_top - 20),
-            (trunk_x, trunk_top + 100)
-        ], fill=True, stroke=False)
+        path = c.beginPath()
+        path.moveTo(trunk_x - branch_width, trunk_top - 20)
+        path.lineTo(trunk_x + branch_width, trunk_top - 20)
+        path.lineTo(trunk_x, trunk_top + 100)
+        path.close()
+        c.drawPath(path, fill=True, stroke=False)
         
         c.restoreState()
     
@@ -445,7 +449,7 @@ class ForensicCertificateRenderer:
         """QR code containing verification URL + signature fragment."""
         w, h = letter
         
-        verification_url = f"https://verify.truemark.io/{serial}"
+        verification_link = verification_url(serial)
         
         # Create QR with L-level error correction
         qr = qrcode.QRCode(
@@ -454,7 +458,7 @@ class ForensicCertificateRenderer:
             box_size=10,
             border=4,
         )
-        qr.add_data(verification_url)
+        qr.add_data(verification_link)
         qr.make(fit=True)
         
         qr_img = qr.make_image(fill_color="black", back_color="white")
@@ -608,7 +612,7 @@ class ForensicCertificateRenderer:
             box_size=10,
             border=4,
         )
-        qr.add_data(f"https://verify.truemark.io/{serial}")
+        qr.add_data(verification_url(serial))
         qr.make(fit=True)
         
         qr_img = qr.make_image(fill_color="black", back_color="white")

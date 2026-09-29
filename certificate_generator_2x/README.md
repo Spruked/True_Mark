@@ -64,7 +64,11 @@ the canonical certificate PDF once, then rasterizes that final PDF page into a
 pixel-faithful 300 DPI PNG and an optional JPEG derivative. It also writes NFT
 metadata JSON linking the image, PDF, certificate hash, verification ID,
 security profile, ISS/Vault evidence, chain, and token fields. The NFT image
-is the certificate itself; it is not a separate artwork interpretation.
+is the certificate itself; it is not a separate artwork interpretation. Each
+artifact records its own SHA-256, MIME type, dimensions, and render DPI. The
+PDF is canonical, the PNG is the NFT visual master, and JPEG is a convenience
+derivative. The metadata hash covers canonical metadata content excluding its
+own hash field.
 
 ```bash
 python truemark/forge_v2.0/certificate_forge.py mint \
@@ -72,6 +76,10 @@ python truemark/forge_v2.0/certificate_forge.py mint \
   --title "Provenance Record" --ipfs "Qm..." \
   --layers 13 --nft-backed --nft-image-uri "ipfs://PENDING"
 ```
+
+QR codes and verification links use the canonical public registry route
+`https://certsig.com/verify/{verification_id}`. The registry must return only
+the approved public verification view, never raw private security configuration.
 
 ### Printable forensic module library
 

@@ -12,6 +12,7 @@ from typing import Dict, Optional
 import secrets
 
 from path_config import get_keys_path
+from registry import verification_url
 
 
 class CryptoAnchorEngine:
@@ -239,7 +240,7 @@ class CryptoAnchorEngine:
             "payload_hash": certificate_data['payload_hash'],
             "signature_fragment": certificate_data['ed25519_signature'][:64],
             "minted_at": certificate_data['signed_at'],
-            "verification_url": f"https://verify.truemark.io/{certificate_data['dals_serial']}"
+            "verification_url": verification_url(certificate_data['dals_serial'])
         }
 
 

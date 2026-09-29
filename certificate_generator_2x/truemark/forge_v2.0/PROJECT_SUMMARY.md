@@ -342,7 +342,7 @@ python certificate_forge.py stats
 1. **Connect Real Vault** - Replace mock WorkerVaultWriter
 2. **Connect FusionQueue** - Replace mock queue
 3. **Add Blockchain Endpoint** - Configure on-chain anchoring
-4. **Deploy Verification API** - Host verify.truemark.io
+4. **Deploy Verification API** - Publish the authorized record at certsig.com/verify/{verification_id}
 
 ### Enhancement Ideas
 - [ ] Batch certificate generation

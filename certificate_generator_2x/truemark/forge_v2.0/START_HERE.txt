@@ -185,7 +185,7 @@ KEY MANAGEMENT:
 
 CERTIFICATE VERIFICATION:
   Customers can verify via:
-  1. QR code scan → https://verify.truemark.io/{serial}
+  1. QR code scan → https://certsig.com/verify/{serial}
   2. Manual serial lookup on verification page
   3. PDF metadata inspection (signature embedded)
   4. Blockchain transaction confirmation

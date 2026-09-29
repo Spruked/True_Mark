@@ -13,6 +13,7 @@ from datetime import datetime
 from typing import Dict, Optional, List
 import hashlib
 from path_config import get_temp_vault_dir, get_vault_root
+from registry import verification_url
 
 
 class MockWorkerVaultWriter:
@@ -159,7 +160,7 @@ class VaultFusionBridge:
             "minted_at": datetime.utcnow().isoformat() + "Z",
             "pdf_path": str(pdf_path),
             "payload": payload,
-            "verification_url": f"https://verify.truemark.io/{dals_serial}",
+            "verification_url": verification_url(dals_serial),
             "vault_integrity_hash": self._calculate_vault_hash(),
             "worker_id": worker_id,
             "signature": signature,

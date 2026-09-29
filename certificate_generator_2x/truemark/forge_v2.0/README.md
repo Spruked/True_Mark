@@ -52,7 +52,7 @@ python certificate_forge.py mint `
 🏷️  Serial:     DALSKM20251210-8A7B3C2F
 🔒 Vault TXN:  VAULT_TXN_DALSKM20251210-8A7B3C2F_1702224567890
 🐝 Swarm TXN:  SWARM_TXN_DALSKM20251210-8A7B3C2F_1702224567
-🔗 Verify URL: https://verify.truemark.io/DALSKM20251210-8A7B3C2F
+🔗 Verify URL: https://certsig.com/verify/DALSKM20251210-8A7B3C2F
 📱 QR Code:    T:/certificate generator 2x/truemark/verification_qr_DALSKM20251210-8A7B3C2F.png
 ```
 
@@ -247,7 +247,7 @@ Vault Path:               T:/certificate generator 2x/True_Mark_Vault_System
 
 Customer verification flow:
 1. **PDF Certificate**: Physical print on security paper
-2. **QR Code Scan**: Redirects to `verify.truemark.io/{serial}`
+2. **QR Code Scan**: Redirects to `https://certsig.com/verify/{serial}`
 3. **Verification Page Shows**:
    - ✅ Vault Transaction ID
    - ✅ Blockchain Anchor (Polygon tx)
