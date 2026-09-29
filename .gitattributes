@@ -1,0 +1,6 @@
+# Generated certificate artifacts are binary; never subject them to text
+# normalization or source-format checks.
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary

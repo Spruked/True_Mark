@@ -35,6 +35,7 @@ True_Mark_Vault_System/backups/
 True_Mark_Vault_System/exports/
 True_Mark_Vault_System/secrets/
 True_Mark_Vault_System/certificates/
+True_Mark_Vault_System/audit/events.jsonl
 True_Mark_Vault_System/vault_logs/
 True_Mark_Vault_System/swarm_queue/
 True_Mark_Vault_System/**/skg_data/

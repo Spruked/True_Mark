@@ -110,6 +110,33 @@ def _enforce_certificate_profiles(pricing: Dict[str, Any]) -> Dict[str, Any]:
     return pricing
 
 
+def _enforce_nft_taxonomy(pricing: Dict[str, Any]) -> Dict[str, Any]:
+    """Migrate legacy display keys while preserving an administrator's prices.
+
+    Runtime configuration created before the canonical H/K/L/B taxonomy used
+    labels such as ``K-NFT``.  Pricing may remain configurable, but the stored
+    keys must match the identifier generator, renderer, and contract taxonomy.
+    """
+    existing = pricing.get("nft_types") or {}
+    normalized: Dict[str, Dict[str, Any]] = {}
+    for key, value in existing.items():
+        if not isinstance(value, dict):
+            continue
+        try:
+            normalized[normalize_nft_type(key)] = value
+        except ValueError:
+            continue
+    pricing["nft_types"] = {
+        code: {
+            **deepcopy(default),
+            **normalized.get(code, {}),
+            "name": default["name"],
+        }
+        for code, default in DEFAULT_PRICING["nft_types"].items()
+    }
+    return pricing
+
+
 def ensure_pricing_file() -> Path:
     ensure_vault_layout()
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
@@ -124,7 +151,11 @@ def load_pricing() -> Dict[str, Any]:
     ensure_pricing_file()
 
     try:
-        return _enforce_certificate_profiles(json.loads(PRICING_PATH.read_text(encoding="utf-8")))
+        pricing = _enforce_nft_taxonomy(_enforce_certificate_profiles(json.loads(PRICING_PATH.read_text(encoding="utf-8"))))
+        # Persist the one-time schema migration so all runtime consumers see
+        # exactly the same canonical taxonomy.
+        PRICING_PATH.write_text(json.dumps(pricing, indent=2), encoding="utf-8")
+        return pricing
     except json.JSONDecodeError:
         PRICING_PATH.write_text(json.dumps(DEFAULT_PRICING, indent=2), encoding="utf-8")
         return deepcopy(DEFAULT_PRICING)
@@ -134,7 +165,7 @@ def save_pricing(updates: Dict[str, Any]) -> Dict[str, Any]:
     current = load_pricing()
     merged = _deep_merge(current, updates)
     PRICING_PATH.write_text(json.dumps(merged, indent=2), encoding="utf-8")
-    return _enforce_certificate_profiles(merged)
+    return _enforce_nft_taxonomy(_enforce_certificate_profiles(merged))
 
 
 def calculate_quote(cart: Dict[str, Any], pricing: Dict[str, Any] | None = None) -> Dict[str, Any]:

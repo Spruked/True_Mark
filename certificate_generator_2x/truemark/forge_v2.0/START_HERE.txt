@@ -195,22 +195,16 @@ CERTIFICATE VERIFICATION:
                     🎯 PRODUCTION INTEGRATION
 ═══════════════════════════════════════════════════════════════════════════
 
-TO CONNECT TO REAL VAULT SYSTEM:
+LOCAL VAULT MODE:
 
-Edit integration_bridge.py (lines 179-190):
-  1. Uncomment real imports:
-     from worker_vault_writer import WorkerVaultWriter
-     from fusion_queue_engine import FusionQueueEngine
-     
-  2. Uncomment real initialization:
-     self.vault_writer = WorkerVaultWriter(vault_base_path)
-     self.fusion_queue = FusionQueueEngine()
+The forge now defaults to the authoritative local True Mark Vault System.
+It records certificate issuance in the Vault audit chain and uses a durable
+local queue. This is not distributed-consensus or blockchain confirmation.
 
-Edit certificate_forge.py (line 320):
-  Change: use_mock_vault=True
-  To:     use_mock_vault=False
-
-That's it! The forge will seamlessly integrate with your production systems.
+Before production use, configure an external payment processor, an approved
+issuer key, an independent registry integration, and a real blockchain
+submission/confirmation adapter. Do not represent the local queue as minting
+or swarm consensus.
 
 
 ═══════════════════════════════════════════════════════════════════════════

@@ -274,7 +274,7 @@ def generate_receipt_pdf(payment_session: Dict[str, Any]) -> Path:
         ["Receipt Number", payment_session["receipt_number"]],
         ["Payment Reference", payment_session["payment_reference"]],
         ["Captured", payment_session.get("payment_captured_at") or payment_session.get("created_at") or "Pending"],
-        ["Status", str(payment_session.get("status", "payment_cleared")).replace("_", " ").title()],
+        ["Status", str(payment_session.get("status", "payment_pending")).replace("_", " ").title()],
         ["Payment Method", str(payment_session.get("payment_method", "fiat")).title()],
     ]
     if payment_session.get("crypto_token"):

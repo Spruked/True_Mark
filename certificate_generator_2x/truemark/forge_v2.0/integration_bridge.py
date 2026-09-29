@@ -16,6 +16,36 @@ from path_config import get_temp_vault_dir, get_vault_root
 from registry import verification_url
 
 
+class LocalVaultWriter:
+    """Durable local Vault writer backed by the authoritative audit chain."""
+
+    def __init__(self, vault_base_path: Path):
+        self.vault_path = vault_base_path
+        self.events_path = vault_base_path / "audit" / "certificate_workers"
+        self.events_path.mkdir(parents=True, exist_ok=True)
+
+    def record_event(self, worker_id: str, event_data: Dict, pattern: Optional[Dict] = None, skg_update: Optional[Dict] = None):
+        # Keep a scoped operational log, and link the material event to the
+        # Vault-wide ISS-stamped hash chain. This is local durability, not a
+        # fabricated distributed-consensus claim.
+        event_record = {"timestamp": datetime.utcnow().isoformat() + "Z", "worker_id": worker_id, "event": event_data, "pattern": pattern or {}, "skg_update": skg_update or {}}
+        worker_events_file = self.events_path / f"{worker_id}_events.jsonl"
+        with open(worker_events_file, "a", encoding="utf-8") as stream:
+            stream.write(json.dumps(event_record, sort_keys=True) + "\n")
+        import sys
+        repository_root = str(Path(__file__).resolve().parents[3])
+        if repository_root not in sys.path:
+            sys.path.insert(0, repository_root)
+        from backend.vault_audit import record_vault_audit_event
+        record_vault_audit_event("CERTIFICATE_ISSUED", event_data["certificate_number"], {"payload_hash": event_data["payload_hash"], "pdf_path": event_data["pdf_path"], "worker_id": worker_id})
+
+    def get_last_repair_timestamp(self) -> str:
+        return "not-applicable"
+
+    def get_active_workers(self) -> List[str]:
+        return ["certificate_forge_worker_001"]
+
+
 class MockWorkerVaultWriter:
     """
     Mock WorkerVaultWriter for standalone operation.
@@ -104,12 +134,8 @@ class VaultFusionBridge:
             self.fusion_queue = MockFusionQueueEngine()
             print("⚠️  Using mock vault/queue systems for standalone operation")
         else:
-            # When integrating with real system:
-            # from worker_vault_writer import WorkerVaultWriter
-            # from fusion_queue_engine import FusionQueueEngine
-            # self.vault_writer = WorkerVaultWriter(vault_base_path)
-            # self.fusion_queue = FusionQueueEngine()
-            raise NotImplementedError("Real vault integration not yet configured")
+            self.vault_writer = LocalVaultWriter(vault_base_path)
+            self.fusion_queue = MockFusionQueueEngine()
     
     async def record_certificate_issuance(
         self,
@@ -318,13 +344,14 @@ class VaultFusionBridge:
         return count
     
     def get_swarm_sync_status(self) -> Dict:
-        """Get swarm synchronization status (mock for now)."""
+        """Report the honest local-queue status; no distributed consensus exists."""
         return {
-            "consensus": True,
-            "guardians_online": 5,
-            "total_guardians": 5,
+            "consensus": False,
+            "guardians_online": 0,
+            "total_guardians": 0,
             "last_sync": datetime.utcnow().isoformat() + "Z",
-            "broadcast_latency_ms": 1200
+            "broadcast_latency_ms": None,
+            "mode": "local-durable-queue"
         }
 
 

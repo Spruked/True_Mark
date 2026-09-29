@@ -38,7 +38,7 @@ RUN mkdir -p /app/True_Mark_Vault_System/certificates/issued && \
 # Set environment variables
 ENV PYTHONPATH=/app
 ENV VAULT_BASE_PATH=/app/True_Mark_Vault_System
-ENV VAULT_MODE=mock
+ENV VAULT_MODE=local
 
 # Expose port (if adding web API in future)
 EXPOSE 8000

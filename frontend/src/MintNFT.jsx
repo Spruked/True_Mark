@@ -16,6 +16,7 @@ import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { useMintFlow } from "./context/MintFlowContext";
 import { colors, styles } from "./designTokens";
 import { getBackendApiBase } from "./apiBase";
+import { getUserAuthHeaders } from "./authStorage";
 
 const API_BASE = getBackendApiBase();
 
@@ -48,6 +49,7 @@ export default function MintNFT() {
     region_code: "US",
     registrant_code: "",
     nft_type: "K",
+    object_id: "",
     frame_id: "frame-01-engraved-single-line",
     package_tier: "p2",
     encryption: "none",
@@ -63,6 +65,7 @@ export default function MintNFT() {
     type_codes: {},
   });
   const [frames, setFrames] = useState([]);
+  const [sealedObjects, setSealedObjects] = useState([]);
   const [progress, setProgress] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -124,6 +127,12 @@ export default function MintNFT() {
   }, []);
 
   useEffect(() => {
+    axios.get(`${API_BASE}/api/objects?state=SEALED`, { headers: getUserAuthHeaders() })
+      .then(({ data }) => setSealedObjects(data.objects || []))
+      .catch(() => setSealedObjects([]));
+  }, []);
+
+  useEffect(() => {
     if (!checkoutDraft) {
       return;
     }
@@ -136,6 +145,7 @@ export default function MintNFT() {
       region_code: checkoutDraft.region_code || checkoutDraft.industry || previous.region_code || mintStandard.region_code,
       registrant_code: checkoutDraft.registrant_code || checkoutDraft.prefix || previous.registrant_code,
       nft_type: checkoutDraft.nft_type || previous.nft_type,
+      object_id: checkoutDraft.object_id || previous.object_id,
       frame_id: checkoutDraft.frame_id || previous.frame_id,
       package_tier: checkoutDraft.package_tier || previous.package_tier,
       encryption: checkoutDraft.encryption || previous.encryption,
@@ -155,7 +165,7 @@ export default function MintNFT() {
       }
 
       try {
-        const response = await axios.get(`${API_BASE}/payments/${paymentSession.payment_token}`);
+        const response = await axios.get(`${API_BASE}/payments/${paymentSession.payment_token}`, { headers: getUserAuthHeaders() });
         if (active) {
           setPaymentSession(response.data);
         }
@@ -194,6 +204,10 @@ export default function MintNFT() {
       setError("Add the evidence file you want to authenticate before continuing.");
       return;
     }
+    if (!form.object_id) {
+      setError("Select the sealed object record that authorizes this optional digital extension.");
+      return;
+    }
 
     setProgress(true);
     setCheckoutDraft({
@@ -230,7 +244,7 @@ export default function MintNFT() {
     try {
       const response = await axios.post(`${API_BASE}/mint/complete`, {
         payment_token: paymentSession.payment_token,
-      });
+      }, { headers: getUserAuthHeaders() });
       setMintResult(response.data);
       setSuccess(`Object commitment completed. ${response.data.nft_identifier} is now recorded and invoice ${response.data.invoice_number} is ready.`);
       clearPaymentSession();
@@ -419,6 +433,24 @@ export default function MintNFT() {
                 FormHelperTextProps={{ style: { color: "#C8CCD0" } }}
                 InputProps={{ style: { color: "#F4F7F8" } }}
               />
+              <TextField
+                select
+                label="Sealed authoritative object"
+                name="object_id"
+                value={form.object_id}
+                onChange={(event) => {
+                  const selected = sealedObjects.find((item) => item.id === event.target.value);
+                  setForm((previous) => ({ ...previous, object_id: event.target.value, package_tier: selected?.certificate_profile || previous.package_tier }));
+                }}
+                fullWidth
+                required
+                helperText="Only a sealed account-owned object may enter the digital-extension flow."
+                InputLabelProps={{ style: { color: "#C8CCD0" } }}
+                InputProps={{ style: { color: "#F4F7F8" } }}
+              >
+                <MenuItem value="" disabled>Select a sealed object</MenuItem>
+                {sealedObjects.map((item) => <MenuItem key={item.id} value={item.id}>{item.title} · {item.certificate_profile}</MenuItem>)}
+              </TextField>
               <TextField
                 select
                 label="Object Type"

@@ -40,19 +40,20 @@ Perpetuum is the account holder's private archive room and mutable working space
 
 ## Current implementation
 
-- Revised Sanctum dashboard at `/sanctum`.
-- Object Workbench at `/objects/new` and `/objects/:objectId`.
+- Account-scoped Perpetuum dashboard at `/sanctum`, backed by persisted object records rather than sample projects.
+- Object Workbench at `/objects/new` and `/objects/:objectId`, with staged evidence uploads, explicit typed Commit authorization, and Seal-to-Vault.
 - Independent verification surface at `/verify`.
+- The `/verify` record button opens the independent CertSig registry at `https://certsig.com/verify/{reference}`; True Mark serial lookup is a separate internal check and is not the NFT verifier.
 - Governed project states and transition validation in [backend/secretum_models.py](backend/secretum_models.py).
 - Prime Layer profiles limited to 2, 3, 5, 7, 11, and 13 layers.
-- Canonical manifest generation with a manifest hash; authority remains in the sealed evidence/Vault chain.
+- Canonical manifest generation with a manifest hash; profile acceptance rejects missing governed evidence rather than treating layer depth as a visual setting.
 - Human Support escalation channel, hidden by default, signed-session authenticated, account-scoped, and persisted in SQLite.
 - All mutable runtime state and generated artifacts are stored under [True_Mark_Vault_System](True_Mark_Vault_System), the single authoritative local Vault root.
 - Perpetuum organizer at [Perpetuum](Perpetuum), with local parsing, ingestion, package review, and ledger-oriented workspace flows. It is a standalone sibling repository, separate from `GOAT`.
 
 ## Compatibility boundary
 
-The existing payment and token-issuance routes remain temporarily available for compatibility. They are legacy surfaces and must be migrated into the canonical Object → Evidence → Commit → Vault path before production authority is expanded. They must not become a second authoritative issuance path.
+The existing payment and token-issuance routes remain temporarily available for compatibility, but now require a signed-in account, an account-owned sealed object, and a matching governed profile. In production they remain pending until a payment processor confirms capture; `TRUEMARK_DEMO_PAYMENT_MODE=true` is an explicit development-only simulation. They must not become a second authoritative issuance path.
 
 ## Documentation
 
@@ -85,6 +86,19 @@ uvicorn main:app --reload --port 13001
 The backend resolves `TRUEMARK_VAULT_ROOT` to `True_Mark_Vault_System` by default. The Vault owns the database, staged uploads, invoices, receipts, sealed packages, exports, support records, certificate artifacts, audit data, and runtime configuration.
 
 The existing frontend build should pass with `npm run build` from `frontend/`. Do not add payment, blockchain, SMTP, or production credential configuration until the core authentication transaction is deterministic and recovery-safe.
+
+## Docker forge
+
+The certificate forge is a local artifact-rendering service, not the True Mark
+web API. Rebuild and run it with:
+
+```bash
+docker compose -f certificate_generator_2x/docker-compose.yml up -d --build
+```
+
+It mounts the complete `True_Mark_Vault_System` as its only runtime root and
+uses local Vault mode. A local queue is not blockchain confirmation or public
+registry issuance.
 
 ## Human Support
 

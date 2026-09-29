@@ -46,6 +46,10 @@ NFT_COLOR_PROFILES = {
     "l": {"id": "TM-NFT-LEGACY-VIOLET", "label": "Legacy / Violet"},
     "b": {"id": "TM-NFT-BLUE-GOLD", "label": "Bespoke / Blue-Gold"},
     "c": {"id": "TM-NFT-CUSTOM-AMBER", "label": "Custom / Gold-Amber"},
+    "hl": {"id": "TM-NFT-HEIRLOOM-GREEN", "label": "Licensable Heirloom / Emerald"},
+    "kl": {"id": "TM-NFT-KNOWLEDGE-BLUE", "label": "Licensable Knowledge / Blue-Teal"},
+    "ll": {"id": "TM-NFT-LEGACY-VIOLET", "label": "Licensable Legacy / Violet"},
+    "bl": {"id": "TM-NFT-BLUE-GOLD", "label": "Licensable Bespoke / Blue-Gold"},
 }
 
 
@@ -183,7 +187,8 @@ class ForensicCertificateRenderer:
             Path to generated PDF
         """
         certificate_number = data["certificate_number"]
-        output_path = output_dir / f"{certificate_number}_OFFICIAL.pdf"
+        artifact_suffix = "DEMONSTRATION" if data.get("demonstration") else "OFFICIAL"
+        output_path = output_dir / f"{certificate_number}_{artifact_suffix}.pdf"
         output_path.parent.mkdir(parents=True, exist_ok=True)
         
         selected_frame = get_frame(data.get("frame_id", self.frame_id))
@@ -217,6 +222,7 @@ class ForensicCertificateRenderer:
                 opacity=watermark_opacity,
                 rotation_variation=True,
                 tint_nft=bool(data.get("nft_backed")),
+                variant=data.get("watermark_variant", "signature"),
             )
         if "timestamp" in layer_ids:
             self._draw_timestamp_block(c, data)
@@ -224,7 +230,10 @@ class ForensicCertificateRenderer:
             self._draw_embossed_seal(c, certificate_number)
         if "verification_qr" in layer_ids:
             self._draw_verification_qr(c, certificate_number)
-        if "signature" in layer_ids:
+        if "signature" in layer_ids or data.get("demonstration"):
+            # Demonstrations may display an expressly presentation-only
+            # signature even below layer 8; it does not constitute issuer
+            # authentication or alter the governed evidence-layer count.
             self._draw_officer_signature(
                 c,
                 officer=data.get("officer", "Bryan A Spruk, President and CEO"),
@@ -239,6 +248,8 @@ class ForensicCertificateRenderer:
             self._embed_crypto_metadata(c, data)
         if "verification_block" in layer_ids:
             self._draw_verification_block(c, data)
+        if data.get("demonstration"):
+            self._draw_demonstration_notice(c)
         
         c.save()
 
@@ -248,6 +259,15 @@ class ForensicCertificateRenderer:
         
         print(f"✅ Generated forensic PDF: {output_path}")
         return output_path
+
+    def _draw_demonstration_notice(self, c: canvas.Canvas):
+        """Mark non-issued examples so they cannot be mistaken for registry records."""
+        w, _ = landscape(letter)
+        c.saveState()
+        c.setFillColor(HexColor("#9A3412"))
+        c.setFont("Helvetica-Bold", 7)
+        c.drawCentredString(w / 2, 12, "DEMONSTRATION ARTIFACT — NOT ISSUED, NOT REGISTERED, NOT VALID FOR VERIFICATION")
+        c.restoreState()
 
     def _export_image_companions(self, pdf_path: Path, output_dir: Path) -> Dict[str, Path]:
         """Rasterize the final PDF page so NFT artwork cannot visually drift."""
@@ -355,14 +375,56 @@ class ForensicCertificateRenderer:
         for x, y in corners:
             # Simple corner decoration
             c.circle(x, y, corner_size/2, fill=False, stroke=True)
+
+        if frame["group"] == "modern_tech":
+            # A visible hex-grid perimeter for the Modern / Tech family.
+            c.setLineWidth(0.8)
+            c.setStrokeColor(self.colors["primary_blue"])
+            radius = 10
+            for x in range(int(margin + 24), int(w - margin - 20), 26):
+                for y in (margin + 18, h - margin - 18):
+                    self._draw_hexagon(c, x, y, radius)
+            for y in range(int(margin + 42), int(h - margin - 40), 24):
+                for x in (margin + 18, w - margin - 18):
+                    self._draw_hexagon(c, x, y, radius)
+        elif frame["group"] == "ornamental":
+            # A scalloped inner edge visibly distinguishes Victorian and
+            # related ornamental choices from forensic/technical frames.
+            c.setLineWidth(0.9)
+            c.setStrokeColor(self.colors["gold"])
+            for x in range(int(margin + 25), int(w - margin - 20), 22):
+                c.circle(x, margin + 18, 5, fill=False, stroke=True)
+                c.circle(x, h - margin - 18, 5, fill=False, stroke=True)
+            for y in range(int(margin + 42), int(h - margin - 40), 22):
+                c.circle(margin + 18, y, 5, fill=False, stroke=True)
+                c.circle(w - margin - 18, y, 5, fill=False, stroke=True)
         
         c.restoreState()
+
+    @staticmethod
+    def _draw_hexagon(c: canvas.Canvas, x: float, y: float, radius: float):
+        """Draw one deterministic perimeter glyph for tech frame variants."""
+        from math import cos, pi, sin
+        path = c.beginPath()
+        for index in range(6):
+            angle = pi / 3 * index
+            point_x, point_y = x + radius * cos(angle), y + radius * sin(angle)
+            if index == 0:
+                path.moveTo(point_x, point_y)
+            else:
+                path.lineTo(point_x, point_y)
+        path.close()
+        c.drawPath(path, fill=False, stroke=True)
     
-    def _draw_watermark(self, c: canvas.Canvas, opacity: float, rotation_variation: bool, tint_nft: bool = False):
+    def _draw_watermark(self, c: canvas.Canvas, opacity: float, rotation_variation: bool, tint_nft: bool = False, variant: str = "signature"):
         """TrueMark Tree with slight rotational variance (anti-AI)."""
         w, h = landscape(letter)
         
-        tree_file = self.brand_assets_path / "tree_watermark_512.png"
+        # Both controlled assets are available as presentation variants. The
+        # 1200px signature variant is the default print source; compact uses
+        # the alternate 512px treatment without changing evidence authority.
+        tree_name = "tree_watermark_512.png" if variant == "compact" else "tree_watermark_1200.png"
+        tree_file = self.brand_assets_path / tree_name
         if not tree_file.exists():
             tree_file = self.template_path / "truemark_tree_watermark.png"
         
@@ -375,8 +437,15 @@ class ForensicCertificateRenderer:
             c.rotate(rotation)
             
             # Center the watermark
-            img_width = w * 0.4
-            if tint_nft and tree_file.name == "tree_watermark_512.png":
+            img_width = w * (0.32 if variant == "compact" else 0.4)
+            if variant == "compact":
+                # Compact is a deliberately distinct Tree medallion rather
+                # than a scaled duplicate of the signature watermark.
+                c.setStrokeColor(self.colors["watermark"])
+                c.setLineWidth(1.1)
+                c.circle(0, 0, img_width * 0.34, fill=False, stroke=True)
+                c.circle(0, 0, img_width * 0.30, fill=False, stroke=True)
+            if tint_nft and tree_file.name in {"tree_watermark_1200.png", "tree_watermark_512.png"}:
                 # The supplied Tree of Life asset is white-on-transparent. Tint
                 # only its visible pixels while preserving the original asset.
                 with Image.open(tree_file).convert("RGBA") as tree_image:
@@ -392,11 +461,11 @@ class ForensicCertificateRenderer:
                                 pixels[px, py] = (red, green, blue, alpha)
                     c.drawImage(
                         ImageReader(tree_image), -img_width / 2, -img_width / 2,
-                        width=img_width, preserveAspectRatio=True, mask="auto"
+                        width=img_width, height=img_width, preserveAspectRatio=True, mask="auto"
                     )
             else:
                 c.drawImage(str(tree_file), -img_width/2, -img_width/2,
-                           width=img_width, preserveAspectRatio=True, mask='auto')
+                           width=img_width, height=img_width, preserveAspectRatio=True, mask='auto')
             c.restoreState()
         else:
             # Draw simple tree watermark

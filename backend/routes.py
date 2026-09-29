@@ -63,6 +63,7 @@ try:
     )
     from .vault_paths import DALS_EXPORTS_ROOT, PAYMENT_SESSIONS_ROOT, ensure_vault_layout
     from .workspace_storage import get_workspace, save_workspace
+    from .object_storage import add_evidence, create_object, get_object, list_objects, seal_object, transition_object, update_object
     from .tax import load_tax_table, resolve_tax_rate, save_tax_table
 except ImportError:
     from auth import authenticate_admin, create_user_session, decode_admin_token, decode_user_token, require_admin_session, require_user_session
@@ -106,6 +107,7 @@ except ImportError:
     )
     from vault_paths import DALS_EXPORTS_ROOT, PAYMENT_SESSIONS_ROOT, ensure_vault_layout
     from workspace_storage import get_workspace, save_workspace
+    from object_storage import add_evidence, create_object, get_object, list_objects, seal_object, transition_object, update_object
     from tax import load_tax_table, resolve_tax_rate, save_tax_table
 
 
@@ -173,6 +175,21 @@ class AccountLoginRequest(BaseModel):
 
 class MintFinalizeRequest(BaseModel):
     payment_token: str
+
+
+class ObjectRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=240)
+    object_type: str = Field(default="object", max_length=120)
+    description: str = Field(default="", max_length=12000)
+    certificate_profile: str = "p2"
+    provenance: Dict[str, Any] = Field(default_factory=dict)
+    ownership: Dict[str, Any] = Field(default_factory=dict)
+    notes: Dict[str, Any] = Field(default_factory=dict)
+
+
+class ObjectTransitionRequest(BaseModel):
+    target_state: str
+    confirmation: str | None = None
 
 
 class OrbCertificationRequest(BaseModel):
@@ -449,8 +466,10 @@ def login_account(credentials: AccountLoginRequest):
 @app.post("/payments/process")
 def process_payment(
     request: Request,
+    session: Dict[str, Any] = Depends(require_user_session),
     name: str = Form(...),
     email: str = Form(...),
+    object_id: str = Form(...),
     registrant_code: str = Form(""),
     region_code: str = Form(""),
     prefix: str = Form(""),
@@ -467,6 +486,13 @@ def process_payment(
 ):
     mint_standard = get_mint_standard()
     resolved_nft_type = normalize_nft_type(nft_type)
+    authoritative_object = get_object(session["sub"], object_id)
+    if not authoritative_object:
+        raise HTTPException(status_code=404, detail="The selected object was not found in this account.")
+    if authoritative_object["state"] != "SEALED":
+        raise HTTPException(status_code=409, detail="Only a sealed object can enter the payment and digital-extension flow.")
+    if package_tier != authoritative_object["certificate_profile"]:
+        raise HTTPException(status_code=409, detail="The certificate profile must match the sealed object's governed profile.")
     nft_taxonomy = get_nft_taxonomy(resolved_nft_type)
     resolved_registrant_code = (registrant_code or prefix).strip().upper() or "PUBLIC"
     resolved_region_code = (region_code or industry).strip().upper() or mint_standard["region_code"]
@@ -494,12 +520,14 @@ def process_payment(
                 chain=chain,
                 quantity=quantity,
                 estimated_storage_gb=file_size_gb,
-                email=email,
+                email=session["email"],
             )
         )
 
-        user = get_user_by_email(email)
-        customer_name = name.strip() or (user.get("name") if user else "") or "Customer"
+        user = get_user_by_email(session["email"])
+        if not user or user.get("id") != session["sub"]:
+            raise HTTPException(status_code=401, detail="The signed-in account could not be resolved.")
+        customer_name = user.get("name") or "Customer"
         metadata_payload = _metadata_payload(metadata)
         metadata_payload.update({
             "nft_type": nft_taxonomy["nft_type"],
@@ -527,7 +555,8 @@ def process_payment(
             "region_code": resolved_region_code,
             "registrant_code": resolved_registrant_code,
             "user_id": user.get("id") if user else None,
-            "user_email": email,
+            "object_id": object_id,
+            "user_email": user["email"],
             "user_name": customer_name,
             "billing_address_line1": user.get("address_line1", "") if user else "",
             "billing_address_line2": user.get("address_line2", "") if user else "",
@@ -563,7 +592,7 @@ def process_payment(
             "quote_snapshot": quote,
             "cancellation_fee_usd": 5.0,
             "payment_captured_at": captured_at,
-            "status": "payment_cleared",
+            "status": "demo_payment_cleared" if os.getenv("TRUEMARK_DEMO_PAYMENT_MODE", "").lower() == "true" else "payment_pending",
             "created_at": captured_at,
             "updated_at": captured_at,
         }
@@ -573,7 +602,8 @@ def process_payment(
 
         response_payload = _payment_session_response(payment_session, request)
         response_payload["message"] = (
-            "Payment cleared. Return to Mint to finalize the NFT. A $5 cancellation fee applies if you cancel after payment."
+            "Demo payment cleared. This development-only record may be finalized." if payment_session["status"] == "demo_payment_cleared"
+            else "Payment intent recorded. A configured payment processor must confirm capture before any digital extension can be finalized."
         )
         return response_payload
     except Exception:
@@ -584,25 +614,29 @@ def process_payment(
 
 
 @app.get("/payments/{payment_token}")
-def get_payment_session(payment_token: str, request: Request):
+def get_payment_session(payment_token: str, request: Request, session: Dict[str, Any] = Depends(require_user_session)):
     payment_session = get_payment_session_by_token(payment_token)
     if not payment_session:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Payment session not found.",
         )
+    if payment_session.get("user_id") != session["sub"]:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment session not found.")
 
     return _payment_session_response(payment_session, request)
 
 
 @app.post("/payments/{payment_token}/cancel")
-def cancel_payment(payment_token: str, request: Request):
+def cancel_payment(payment_token: str, request: Request, session: Dict[str, Any] = Depends(require_user_session)):
     payment_session = get_payment_session_by_token(payment_token)
     if not payment_session:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Payment session not found.",
         )
+    if payment_session.get("user_id") != session["sub"]:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment session not found.")
 
     if payment_session["status"] == "minted":
         raise HTTPException(
@@ -635,7 +669,7 @@ def cancel_payment(payment_token: str, request: Request):
 
 
 @app.post("/mint/complete")
-def mint_nft(request: Request, payload: MintFinalizeRequest):
+def mint_nft(request: Request, payload: MintFinalizeRequest, session: Dict[str, Any] = Depends(require_user_session)):
     mint_standard = get_mint_standard()
     payment_session = get_payment_session_by_token(payload.payment_token)
     if not payment_session:
@@ -643,6 +677,13 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Payment session not found.",
         )
+    if payment_session.get("user_id") != session["sub"]:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment session not found.")
+    authoritative_object = get_object(session["sub"], payment_session.get("object_id", ""))
+    if not authoritative_object or authoritative_object["state"] != "SEALED":
+        raise HTTPException(status_code=409, detail="The payment is not bound to a sealed authoritative object.")
+    if payment_session["status"] not in {"payment_captured", "demo_payment_cleared", "minted"}:
+        raise HTTPException(status_code=409, detail="Digital extension cannot be finalized until payment capture is confirmed.")
 
     if payment_session["status"] == "canceled_after_payment":
         raise HTTPException(
@@ -1079,6 +1120,92 @@ def save_private_workspace(payload: Dict[str, Any], session: Dict[str, Any] = De
     # Workspace state is private account data; ownership is always session-derived.
     payload.pop("account_id", None)
     return save_workspace(session["sub"], payload)
+
+
+@app.get("/api/objects")
+def get_account_objects(
+    state: str | None = None,
+    session: Dict[str, Any] = Depends(require_user_session),
+):
+    """List only the signed-in account holder's authoritative object records."""
+    return {"objects": list_objects(session["sub"], state=state)}
+
+
+@app.post("/api/objects", status_code=status.HTTP_201_CREATED)
+def create_account_object(
+    payload: ObjectRequest,
+    session: Dict[str, Any] = Depends(require_user_session),
+):
+    try:
+        return create_object(session["sub"], payload.dict())
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@app.get("/api/objects/{object_id}")
+def get_account_object(object_id: str, session: Dict[str, Any] = Depends(require_user_session)):
+    record = get_object(session["sub"], object_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Object not found.")
+    return record
+
+
+@app.put("/api/objects/{object_id}")
+def update_account_object(
+    object_id: str,
+    payload: ObjectRequest,
+    session: Dict[str, Any] = Depends(require_user_session),
+):
+    try:
+        return update_object(session["sub"], object_id, payload.dict())
+    except LookupError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+
+@app.post("/api/objects/{object_id}/evidence", status_code=status.HTTP_201_CREATED)
+def stage_object_evidence(
+    object_id: str,
+    file: UploadFile = File(...),
+    session: Dict[str, Any] = Depends(require_user_session),
+):
+    staging_path = PAYMENT_SESSIONS_ROOT / f"upload-{uuid.uuid4().hex}"
+    try:
+        with staging_path.open("wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        return add_evidence(session["sub"], object_id, file.filename or "evidence.bin", staging_path)
+    except LookupError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    finally:
+        if staging_path.exists():
+            staging_path.unlink()
+
+
+@app.post("/api/objects/{object_id}/transition")
+def transition_account_object(
+    object_id: str,
+    payload: ObjectTransitionRequest,
+    session: Dict[str, Any] = Depends(require_user_session),
+):
+    try:
+        return transition_object(session["sub"], object_id, payload.target_state, payload.confirmation)
+    except LookupError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+
+@app.post("/api/objects/{object_id}/seal")
+def seal_account_object(object_id: str, session: Dict[str, Any] = Depends(require_user_session)):
+    try:
+        return seal_object(session["sub"], object_id)
+    except LookupError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
 
 
 @app.get("/mint-standard")

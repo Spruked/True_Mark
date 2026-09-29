@@ -71,7 +71,7 @@ The Python API provides `canonical_timestamp()`, which returns:
   "scale_designation": "ISS",
   "epoch": "2000-01-01 00:00:00.000000000 TAI",
   "reference_frame": "solar-system-barycentric",
-  "clock_id": "ISS-PRIMARY-ATOMIC-01",
+  "clock_id": "ISS-SYSTEM-CLOCK-01",
   "uncertainty_ns": null,
   "proper_time_ns": null,
   "mission_elapsed_ns": null,

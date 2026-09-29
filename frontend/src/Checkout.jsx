@@ -20,6 +20,7 @@ import { Link as RouterLink } from "react-router-dom";
 import { useMintFlow } from "./context/MintFlowContext";
 import { colors, styles } from "./designTokens";
 import { getBackendApiBase } from "./apiBase";
+import { getUserAuthHeaders } from "./authStorage";
 
 const API_BASE = getBackendApiBase();
 
@@ -126,7 +127,7 @@ export default function Checkout() {
       }
 
       try {
-        const response = await axios.get(`${API_BASE}/payments/${paymentSession.payment_token}`);
+        const response = await axios.get(`${API_BASE}/payments/${paymentSession.payment_token}`, { headers: getUserAuthHeaders() });
         if (active) {
           setPaymentSession(response.data);
         }
@@ -238,6 +239,7 @@ export default function Checkout() {
       const data = new FormData();
       data.append("name", checkoutDraft.name);
       data.append("email", checkoutDraft.email);
+      data.append("object_id", checkoutDraft.object_id || "");
       data.append("registrant_code", checkoutDraft.registrant_code || checkoutDraft.prefix || "PUBLIC");
       data.append("region_code", checkoutDraft.region_code || checkoutDraft.industry || mintStandard.region_code || "US");
       data.append("prefix", checkoutDraft.registrant_code || checkoutDraft.prefix || "PUBLIC");
@@ -252,9 +254,9 @@ export default function Checkout() {
       data.append("payment_method", paymentMethod);
       data.append("frame_id", checkoutDraft.frame_id || "frame-01-engraved-single-line");
 
-      const response = await axios.post(`${API_BASE}/payments/process`, data);
+      const response = await axios.post(`${API_BASE}/payments/process`, data, { headers: getUserAuthHeaders() });
       setPaymentSession(response.data);
-      setSuccess(`Payment cleared. Receipt ${response.data.receipt_number} is ready. Return to Mint to complete the NFT issuance.`);
+      setSuccess(response.data.message || `Payment session ${response.data.receipt_number} is ready for its next authorized step.`);
       clearCheckoutDraft();
     } catch (requestError) {
       setError(requestError.response?.data?.detail || "Payment could not be processed. Please try again.");
@@ -273,7 +275,7 @@ export default function Checkout() {
     setSuccess("");
 
     try {
-      const response = await axios.post(`${API_BASE}/payments/${paymentSession.payment_token}/cancel`);
+      const response = await axios.post(`${API_BASE}/payments/${paymentSession.payment_token}/cancel`, {}, { headers: getUserAuthHeaders() });
       setPaymentSession(response.data);
       setSuccess(response.data.message || "Payment canceled.");
     } catch (requestError) {

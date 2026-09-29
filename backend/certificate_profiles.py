@@ -96,6 +96,36 @@ def build_certificate_manifest(profile_id: str, facts: Dict[str, Any]) -> Dict[s
     }
 
 
+def validate_evidence_acceptance(profile_id: str, facts: Dict[str, Any]) -> None:
+    """Reject a profile when its governed proof is not actually present.
+
+    A layer count is never a visual setting.  This gate is intentionally
+    conservative: higher profiles stay unavailable until their independent
+    proof material exists in the authoritative record.
+    """
+    profile = get_certificate_profile(profile_id)
+    checks = {
+        "identity": bool(facts.get("object_id") and facts.get("title")),
+        "issuance": bool(facts.get("account_id")),
+        "source_integrity": bool(facts.get("evidence")) and all(item.get("sha256") for item in facts.get("evidence", [])),
+        "metadata_integrity": bool(facts.get("description") is not None),
+        "creator_authentication": bool((facts.get("ownership") or {}).get("summary")),
+        "timestamp_proof": bool(facts.get("committed_at")),
+        "provenance": bool((facts.get("provenance") or {}).get("summary")),
+        # The following require integrations or attestations not fabricated by
+        # the local renderer. Their absence must prevent premium issuance.
+        "ownership_chain": bool(facts.get("ownership_chain")),
+        "issuer_signature": bool(facts.get("issuer_signature")),
+        "anchor_receipt": bool(facts.get("anchor_receipt")),
+        "verification_reference": bool(facts.get("verification_reference")),
+        "custody_record": bool(facts.get("custody_record")),
+        "audit_record": bool(facts.get("audit_record")),
+    }
+    missing = [layer for layer in profile["layer_inventory"] if not checks[layer]]
+    if missing:
+        raise ValueError(f"{profile['name']} cannot be issued: missing governed evidence for {', '.join(missing)}.")
+
+
 def manifest_hash(manifest: Dict[str, Any]) -> str:
     canonical = json.dumps(manifest, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()

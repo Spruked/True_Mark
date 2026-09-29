@@ -58,7 +58,7 @@ class TrueMarkForge:
     Coordinates certificate rendering, signing, encryption, and vault recording.
     """
 
-    def __init__(self, vault_base_path: Path, use_mock_vault: bool = True):
+    def __init__(self, vault_base_path: Path, use_mock_vault: bool = False):
         self.vault_base_path = vault_base_path
         self.vault = VaultFusionBridge(vault_base_path, use_mock=use_mock_vault)
         self.renderer = ForensicCertificateRenderer()
@@ -197,7 +197,8 @@ class TrueMarkForge:
             encryption_package = {
                 "encrypted_file": str(encrypted_path),
                 "algorithm": vault.algorithm,
-                "key_hex": vault.export_key_hex(),
+                # Key material is never serialized into issuance metadata.
+                "key_reference": f"vault-key:{certificate_number}",
                 "associated_data": certificate_number,
             }
             print(f"    ✅ Encrypted package: {encrypted_path}")
@@ -492,7 +493,7 @@ async def main() -> None:
         return
 
     print_banner()
-    forge = TrueMarkForge(vault_base_path=Path(args.vault), use_mock_vault=True)
+    forge = TrueMarkForge(vault_base_path=Path(args.vault), use_mock_vault=False)
 
     if args.command == "mint":
         metadata = {

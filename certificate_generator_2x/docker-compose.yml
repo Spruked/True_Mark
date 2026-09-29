@@ -9,15 +9,13 @@ services:
     image: truemark-forge:v2.0
     
     volumes:
-      # Mount output directories to persist generated certificates
-      - ../True_Mark_Vault_System/certificates/issued:/app/True_Mark_Vault_System/certificates/issued
-      - ../True_Mark_Vault_System/vault_logs:/app/True_Mark_Vault_System/vault_logs
-      - ../True_Mark_Vault_System/swarm_queue:/app/True_Mark_Vault_System/swarm_queue
-      - ../True_Mark_Vault_System/vault_system/skg_core/skg_data:/app/True_Mark_Vault_System/vault_system/skg_core/skg_data
+      # The one authoritative local Vault persists all forge outputs,
+      # examples, audit data, secrets, and future registry handoffs.
+      - ../True_Mark_Vault_System:/app/True_Mark_Vault_System
     
     environment:
       - VAULT_BASE_PATH=/app/True_Mark_Vault_System
-      - VAULT_MODE=mock
+      - VAULT_MODE=local
       - PYTHONPATH=/app
       - SKG_ENABLED=true
       - SKG_DRIFT_THRESHOLD=0.7

@@ -11,7 +11,9 @@ import hashlib
 import time
 from typing import Any, Optional
 
-ISS_EPOCH = datetime(2000, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+# This is the UTC representation of 2000-01-01 00:00:00 TAI.  TAI−UTC was
+# 32 seconds at the epoch, so treating midnight UTC as the epoch is wrong.
+ISS_EPOCH = datetime(1999, 12, 31, 23, 59, 28, tzinfo=timezone.utc)
 ISS_EPOCH_LABEL = "2000-01-01 00:00:00.000000000 TAI"
 ISS_REFERENCE_FRAME = "solar-system-barycentric"
 ISS_SCALE_NAME = "Interplanetary Stardate Syncrometer Scale"
@@ -19,8 +21,40 @@ ISS_SCALE_DESIGNATION = "ISS"
 
 NANOSECONDS_PER_SECOND = 1_000_000_000
 AVERAGE_YEAR_NS = 31_556_952_000_000_000
+# Effective UTC instants and the corresponding TAI−UTC offset.  No leap
+# second has been introduced since 2017; keeping the table makes historical
+# conversion correct and makes a future update explicit and auditable.
+TAI_UTC_LEAP_TABLE = (
+    (datetime(1972, 1, 1, tzinfo=timezone.utc), 10), (datetime(1972, 7, 1, tzinfo=timezone.utc), 11),
+    (datetime(1973, 1, 1, tzinfo=timezone.utc), 12), (datetime(1974, 1, 1, tzinfo=timezone.utc), 13),
+    (datetime(1975, 1, 1, tzinfo=timezone.utc), 14), (datetime(1976, 1, 1, tzinfo=timezone.utc), 15),
+    (datetime(1977, 1, 1, tzinfo=timezone.utc), 16), (datetime(1978, 1, 1, tzinfo=timezone.utc), 17),
+    (datetime(1979, 1, 1, tzinfo=timezone.utc), 18), (datetime(1980, 1, 1, tzinfo=timezone.utc), 19),
+    (datetime(1981, 7, 1, tzinfo=timezone.utc), 20), (datetime(1982, 7, 1, tzinfo=timezone.utc), 21),
+    (datetime(1983, 7, 1, tzinfo=timezone.utc), 22), (datetime(1985, 7, 1, tzinfo=timezone.utc), 23),
+    (datetime(1988, 1, 1, tzinfo=timezone.utc), 24), (datetime(1990, 1, 1, tzinfo=timezone.utc), 25),
+    (datetime(1991, 1, 1, tzinfo=timezone.utc), 26), (datetime(1992, 7, 1, tzinfo=timezone.utc), 27),
+    (datetime(1993, 7, 1, tzinfo=timezone.utc), 28), (datetime(1994, 7, 1, tzinfo=timezone.utc), 29),
+    (datetime(1996, 1, 1, tzinfo=timezone.utc), 30), (datetime(1997, 7, 1, tzinfo=timezone.utc), 31),
+    (datetime(1999, 1, 1, tzinfo=timezone.utc), 32), (datetime(2006, 1, 1, tzinfo=timezone.utc), 33),
+    (datetime(2009, 1, 1, tzinfo=timezone.utc), 34), (datetime(2012, 7, 1, tzinfo=timezone.utc), 35),
+    (datetime(2015, 7, 1, tzinfo=timezone.utc), 36), (datetime(2017, 1, 1, tzinfo=timezone.utc), 37),
+)
 TAI_UTC_OFFSET_S = 37
 TAI_UTC_OFFSET_NS = TAI_UTC_OFFSET_S * NANOSECONDS_PER_SECOND
+ISS_EPOCH_TAI_UTC_OFFSET_NS = 32 * NANOSECONDS_PER_SECOND
+
+
+def tai_utc_offset_ns(dt: Optional[datetime] = None) -> int:
+    """Return the applicable TAI−UTC offset for a UTC instant."""
+    instant = _as_utc(dt)
+    offset = 10
+    for effective, seconds in TAI_UTC_LEAP_TABLE:
+        if instant >= effective:
+            offset = seconds
+        else:
+            break
+    return offset * NANOSECONDS_PER_SECOND
 
 
 def _as_utc(dt: Optional[datetime] = None) -> datetime:
@@ -41,7 +75,9 @@ def get_iss_time_ns(dt: Optional[datetime] = None) -> int:
     if dt is None:
         utc_ns = time.time_ns()
         epoch_utc_ns = int(ISS_EPOCH.timestamp() * NANOSECONDS_PER_SECOND)
-        return utc_ns + TAI_UTC_OFFSET_NS - epoch_utc_ns
+        # POSIX timestamps omit leap seconds. Restore only the offset change
+        # since epoch so elapsed ISS time remains continuous SI time.
+        return utc_ns - epoch_utc_ns + (TAI_UTC_OFFSET_NS - ISS_EPOCH_TAI_UTC_OFFSET_NS)
 
     now = _as_utc(dt)
     delta: timedelta = now - ISS_EPOCH
@@ -50,7 +86,7 @@ def get_iss_time_ns(dt: Optional[datetime] = None) -> int:
         + delta.seconds * NANOSECONDS_PER_SECOND
         + delta.microseconds * 1_000
     )
-    return total_ns + TAI_UTC_OFFSET_NS
+    return total_ns + (tai_utc_offset_ns(now) - ISS_EPOCH_TAI_UTC_OFFSET_NS)
 
 
 def get_stardate(dt: Optional[datetime] = None) -> float:
@@ -122,8 +158,9 @@ def format_timestamp(dt: Optional[datetime] = None, format_type: str = "iso") ->
 
 def current_timecodes() -> dict[str, Any]:
     """Return the complete current ISS time envelope."""
-    now = _as_utc()
-    iss_ns = get_iss_time_ns(now)
+    unix_timestamp_ns = time.time_ns()
+    now = datetime.fromtimestamp(unix_timestamp_ns / NANOSECONDS_PER_SECOND, timezone.utc)
+    iss_ns = get_iss_time_ns()
     return {
         "iss_time_ns": iss_ns,
         "scale_name": ISS_SCALE_NAME,
@@ -131,12 +168,12 @@ def current_timecodes() -> dict[str, Any]:
         "epoch": ISS_EPOCH_LABEL,
         "reference_frame": ISS_REFERENCE_FRAME,
         "iso_timestamp": now.isoformat(),
-        "unix_timestamp_ns": int(now.timestamp() * NANOSECONDS_PER_SECOND),
-        "stardate": get_stardate(now),
+        "unix_timestamp_ns": unix_timestamp_ns,
+        "stardate": round(iss_ns / NANOSECONDS_PER_SECOND, 9),
         "julian_date": get_julian_date(now),
         "unix_timestamp": int(now.timestamp()),
         "human_readable": now.strftime("%Y-%m-%d %H:%M:%S UTC"),
-        "tai_utc_offset_ns": TAI_UTC_OFFSET_NS,
+        "tai_utc_offset_ns": tai_utc_offset_ns(now),
         "anchor_hash": _generate_time_anchor_hash(now),
     }
 
@@ -152,7 +189,7 @@ def canonical_timestamp(
     proper_time_ns: Optional[int] = None,
     uncertainty_ns: Optional[int] = None,
     relativistic_correction_ns: Optional[int] = None,
-    clock_id: str = "ISS-PRIMARY-ATOMIC-01",
+    clock_id: str = "ISS-SYSTEM-CLOCK-01",
     source: str = "ISS",
     reference_frame: Optional[str] = None,
     _timecodes: Optional[dict[str, Any]] = None,

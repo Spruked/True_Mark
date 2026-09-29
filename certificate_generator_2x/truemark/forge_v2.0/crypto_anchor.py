@@ -10,6 +10,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional
 import secrets
+import os
 
 from path_config import get_keys_path
 from registry import verification_url
@@ -74,9 +75,11 @@ class CryptoAnchorEngine:
                     self._generate_new_keypair_cryptography()
                     
             except ImportError:
-                # Use mock implementation for testing
-                print("⚠️  WARNING: No Ed25519 library found. Using mock signatures for testing only.")
-                self._use_mock_signing()
+                if os.getenv("TRUEMARK_ALLOW_MOCK_SIGNATURES", "").lower() == "true":
+                    print("⚠️  Mock signatures enabled explicitly for development only.")
+                    self._use_mock_signing()
+                else:
+                    raise RuntimeError("Ed25519 support is required; mock signatures are disabled.")
     
     def _generate_new_keypair_ed25519(self):
         """Generate new keypair using ed25519 library."""
@@ -91,6 +94,7 @@ class CryptoAnchorEngine:
         
         with open(key_path, "wb") as f:
             f.write(self.signing_key.to_bytes())
+        os.chmod(key_path, 0o600)
         
         # Save public key for reference
         with open(key_path.parent / "caleon_root.pub", "wb") as f:
@@ -118,6 +122,7 @@ class CryptoAnchorEngine:
         
         with open(key_path, "wb") as f:
             f.write(private_bytes)
+        os.chmod(key_path, 0o600)
         
         # Save public key
         public_bytes = self.verifying_key.public_bytes(

@@ -59,6 +59,7 @@ ORDER_COLUMNS = {
     "payment_reference": "TEXT",
     "receipt_number": "TEXT",
     "user_id": "TEXT",
+    "object_id": "TEXT",
     "user_email": "TEXT",
     "user_name": "TEXT",
     "billing_address_line1": "TEXT",
@@ -106,6 +107,7 @@ PAYMENT_SESSION_COLUMNS = {
     "region_code": "TEXT",
     "registrant_code": "TEXT",
     "user_id": "TEXT",
+    "object_id": "TEXT",
     "user_email": "TEXT",
     "user_name": "TEXT",
     "billing_address_line1": "TEXT",
@@ -146,7 +148,7 @@ PAYMENT_SESSION_COLUMNS = {
     "payment_captured_at": "TEXT",
     "canceled_at": "TEXT",
     "minted_at": "TEXT",
-    "status": "TEXT NOT NULL DEFAULT 'payment_cleared'",
+    "status": "TEXT NOT NULL DEFAULT 'payment_pending'",
     "created_at": "TEXT",
     "updated_at": "TEXT",
 }
@@ -421,7 +423,7 @@ def init_db() -> None:
                 payment_captured_at TEXT,
                 canceled_at TEXT,
                 minted_at TEXT,
-                status TEXT NOT NULL DEFAULT 'payment_cleared',
+                status TEXT NOT NULL DEFAULT 'payment_pending',
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             )
@@ -1038,6 +1040,7 @@ def create_payment_session(payment_session: Dict[str, Any]) -> Dict[str, Any]:
         "region_code": normalize_identifier_component(payment_session.get("region_code"), get_region_code()),
         "registrant_code": normalize_identifier_component(payment_session.get("registrant_code"), "PUBLIC"),
         "user_id": payment_session.get("user_id"),
+        "object_id": payment_session.get("object_id"),
         "user_email": payment_session["user_email"].strip().lower(),
         "user_name": payment_session["user_name"].strip(),
         "billing_address_line1": payment_session.get("billing_address_line1", "").strip(),
@@ -1078,7 +1081,7 @@ def create_payment_session(payment_session: Dict[str, Any]) -> Dict[str, Any]:
         "payment_captured_at": payment_session.get("payment_captured_at", now),
         "canceled_at": payment_session.get("canceled_at"),
         "minted_at": payment_session.get("minted_at"),
-        "status": payment_session.get("status", "payment_cleared"),
+        "status": payment_session.get("status", "payment_pending"),
         "created_at": now,
         "updated_at": payment_session.get("updated_at", now),
     }
@@ -1088,7 +1091,7 @@ def create_payment_session(payment_session: Dict[str, Any]) -> Dict[str, Any]:
             """
             INSERT INTO payment_sessions (
                 id, payment_reference, payment_public_token, receipt_number, receipt_public_token, type_code, node_id, region_code,
-                registrant_code, user_id, user_email,
+                registrant_code, user_id, object_id, user_email,
                 user_name, billing_address_line1, billing_address_line2, billing_city, billing_state,
                 billing_postal_code, billing_phone, billing_dob, prefix, industry, nft_type, package_tier, encryption,
                 chain, quantity, file_name, staged_file_path, estimated_storage_gb, metadata_json,
@@ -1098,7 +1101,7 @@ def create_payment_session(payment_session: Dict[str, Any]) -> Dict[str, Any]:
                 payment_captured_at, canceled_at, minted_at, status, created_at, updated_at
             ) VALUES (
                 :id, :payment_reference, :payment_public_token, :receipt_number, :receipt_public_token, :type_code, :node_id, :region_code,
-                :registrant_code, :user_id, :user_email,
+                :registrant_code, :user_id, :object_id, :user_email,
                 :user_name, :billing_address_line1, :billing_address_line2, :billing_city, :billing_state,
                 :billing_postal_code, :billing_phone, :billing_dob, :prefix, :industry, :nft_type, :package_tier, :encryption,
                 :chain, :quantity, :file_name, :staged_file_path, :estimated_storage_gb, :metadata_json,

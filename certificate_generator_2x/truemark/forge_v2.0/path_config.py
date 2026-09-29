@@ -31,8 +31,10 @@ def get_fonts_path() -> Path:
 
 
 def get_keys_path() -> Path:
-    """Resolve signing key directory."""
-    return get_truemark_root() / "keys"
+    """Resolve private signing-key custody beneath the Vault root."""
+    key_path = get_vault_root() / "secrets" / "signing_keys"
+    key_path.mkdir(parents=True, exist_ok=True)
+    return key_path
 
 
 def get_temp_vault_dir() -> Path:

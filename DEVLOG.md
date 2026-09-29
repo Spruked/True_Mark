@@ -124,3 +124,35 @@ The legacy payment/token issuance routes remain available temporarily for compat
 - Python compilation passed for the updated backend and forge modules.
 - Frontend production build passed.
 - `git diff --check` passed.
+## 2026-09-29 — Independent CertSig registry verification
+
+- Wired the Verify Record action to open `https://certsig.com/verify/{reference}`.
+- Labeled CertSig as the independent public registry authority.
+- Kept True Mark serial-based internal verification distinct from the NFT verifier.
+
+## 2026-09-29 — Authority workflow and issuance hardening
+
+- Replaced sample Object Workbench state with account-scoped persisted objects, staged evidence, and the enforced transition chain `WORKING_COPY → READY_FOR_REVIEW → COMMIT_PENDING → COMMITTED → SEALED`.
+- Added explicit `COMMIT {object_id}` confirmation before committed evidence is recorded.
+- Added atomic sealed-object manifests beneath the Vault runtime and linked lifecycle events to the ISS-stamped Vault audit chain.
+- Added governed evidence acceptance checks: a profile fails when required proof is absent; layer depth is not a visual upgrade.
+- Bound compatibility payment and digital-extension routes to the signed-in owner’s sealed object and matching profile. Unconfigured payment collection produces `payment_pending`, not a false payment-cleared claim.
+- Migrated persisted pricing keys from legacy display aliases to the canonical `H`, `K`, `L`, `B`, `HL`, `KL`, `LL`, `BL`, `C` taxonomy while preserving configured prices.
+- Removed forge publication of encryption key material, moved signing-key custody beneath Vault secrets, made local Vault writing functional, and removed fictional swarm-consensus reporting.
+- Corrected ISS conversion for the 2000 TAI epoch and made system-clock provenance explicit unless an atomic adapter is supplied.
+
+### Validation
+
+- Python compilation passed for backend, ISS, and forge modules.
+- Frontend production build passed.
+- An integration lifecycle test created, committed, and sealed a p7 object with a generated canonical manifest.
+- ISS epoch checks passed: the epoch is zero and 2000-01-01 UTC is 32 elapsed TAI seconds after the stated epoch.
+
+## 2026-09-29 — Certificate example and release cleanup
+
+- Added non-issued Vault examples for K, HL, L, and B color families, with matching 300-DPI PDF, PNG, and JPEG artifacts.
+- Kept demonstration artifacts outside `certificates/issued/`, using fictional identifiers and a visible non-issued notice.
+- Added visible ornamental and hex-grid frame rendering fallbacks plus signature and compact Tree watermark variants.
+- Made the 1200px Tree asset the default print watermark and fixed square centering for the Tree and embedded text.
+- Updated the forge Docker configuration to mount the entire authoritative Vault root in local mode rather than mock mode.
+- Validated account signup, login, and authenticated object creation/listing before release.
