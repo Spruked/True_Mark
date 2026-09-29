@@ -1,5 +1,11 @@
 # ISS Module development log
 
+## 2026-09-29 — Mission control CORS repair
+
+- Allowed the local Tauri webview's `OPTIONS` preflight and `POST` requests through the loopback API.
+- This fixes the widget's generic upload failure when Start Mission or End Mission is clicked; direct API requests were already working.
+- Verified the browser-origin start/end cycle against the live service and confirmed no active diagnostic session remains.
+
 ## 2026-09-29 — WSL substrate deployment and system tray surface
 
 - Copied the complete ISS module to `/home/bryan/substrate/services/ISS_Module` as the WSL services deployment copy.

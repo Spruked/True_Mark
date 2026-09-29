@@ -23,8 +23,11 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["GET"],
+    # The Tauri webview sends a CORS preflight before mission POSTs.
+    # This API is bound to loopback, so the local widget does not need
+    # credentialed cross-origin cookies or browser credentials.
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
