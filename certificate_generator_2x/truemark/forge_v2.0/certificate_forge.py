@@ -209,6 +209,13 @@ class TrueMarkForge:
             "qr_code_path": str(qr_code_path),
             "signature_id": signature_bundle["sig_id"],
             "payload_hash": signature_bundle["payload_hash"],
+            "certificate_hash": signature_bundle["payload_hash"],
+            "security_profile": payload["security_profile"],
+            "security_profile_version": payload["security_profile_version"],
+            "security_manifest_hash": payload["security_manifest_hash"],
+            "renderer_version": payload["renderer_version"],
+            "verification_status": "VALID",
+            "true_mark_verification_id": dals_serial,
             "minted_at": datetime.utcnow().isoformat() + "Z",
         }
         if encryption_package:

@@ -122,6 +122,7 @@ class ForensicCertificateRenderer:
         if "content" in layer_ids:
             self._draw_forensic_header(c, title=data.get('asset_title', 'Digital Asset'))
             self._draw_data_grid(c, data)
+            self._draw_public_security_metadata(c, data, layer_profile)
         if "frame" in layer_ids:
             self._draw_guilloche_border(c, selected_frame["frame_id"])
         if "watermark" in layer_ids:
@@ -474,6 +475,26 @@ class ForensicCertificateRenderer:
         c.setFont("Courier-Bold", 8)
         c.drawString(1.2 * inch, h - 7.35 * inch, f"ISS SCALE: {timestamp}")
         c.drawString(1.2 * inch, h - 7.55 * inch, f"ISS_TIME_NS: {data.get('iss_time_ns', 'pending')}")
+        c.restoreState()
+
+    def _draw_public_security_metadata(self, c: canvas.Canvas, data: Dict, layer_profile: Dict):
+        """Draw only the approved public security fields."""
+        w, h = letter
+        count = int(layer_profile["layer_count"])
+        profile = str(data.get("security_profile") or f"TM-FSP-{count}")
+        version = str(data.get("security_profile_version") or "1.0")
+        certificate_hash = str(data.get("payload_hash") or "PENDING")
+        verification_id = str(data.get("dals_serial") or "PENDING")
+        status = str(data.get("verification_status") or ("VALID" if data.get("ed25519_signature") else "PENDING"))
+
+        c.saveState()
+        c.setFillColor(self.colors["dark_slate"])
+        c.setFont("Courier-Bold", 7)
+        c.drawString(1.2 * inch, h - 7.85 * inch, f"FORENSIC SECURITY PROFILE: {count}-LAYER")
+        c.drawString(1.2 * inch, h - 8.05 * inch, f"SECURITY PROFILE VERSION: {profile}/{version}")
+        c.drawString(1.2 * inch, h - 8.25 * inch, f"VERIFICATION STATUS: {status}")
+        c.drawString(1.2 * inch, h - 8.45 * inch, f"CERTIFICATE HASH: {certificate_hash[:48]}")
+        c.drawString(1.2 * inch, h - 8.65 * inch, f"TRUE MARK VERIFICATION ID: {verification_id}")
         c.restoreState()
 
     def _draw_micro_pattern(self, c: canvas.Canvas):

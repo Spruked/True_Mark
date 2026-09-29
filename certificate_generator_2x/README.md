@@ -66,8 +66,11 @@ micro-QR fragments, watermark fields, lattice systems, foil simulations, and
 other deterministic markers. They are cataloged in
 `truemark/forge_v2.0/forensic_modules.py` and activated progressively by the
 prime depth profile. The selected module IDs are stored with the certificate
-payload for later inspection. They are presentation and forensic annotations;
-the authoritative record remains the sealed Vault evidence chain.
+configuration privately and are not published as certificate metadata. Public
+certificate output is limited to the forensic security profile, profile
+version, verification status, certificate hash, True Mark verification ID,
+and—where required by the verification protocol—the security manifest hash.
+The authoritative record remains the sealed Vault evidence chain.
 
 ### Security & Compliance
 - DALS-001 compliant serial numbers with checksums
