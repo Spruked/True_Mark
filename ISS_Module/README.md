@@ -136,6 +136,7 @@ The service requires the ISS API to be running. Start the API before the widget,
 - [Project tree](PROJECT_TREE.txt)
 - [ISS sitemap](SITE_MAP.md)
 - [Development log](DEVLOG.md)
+- [Relativistic time model](docs/RELATIVISTIC_TIME_MODEL.md)
 
 ## Time endpoints
 
@@ -161,6 +162,11 @@ print(current_timecodes()["stardate"])
 ## Relativistic boundary
 
 There is no physically universal simultaneous “now” across the solar system. ISS therefore uses a shared coordinate-time reference and stores local proper time, clock uncertainty, reference frame, and relativistic corrections alongside events when those measurements are available. Delayed packets remain chronologically comparable because their canonical `iss_time_ns` values are never rewritten.
+
+See [the relativistic time model](docs/RELATIVISTIC_TIME_MODEL.md) for the
+coordinate-time/proper-time boundary, first-order engineering model, and
+adapter contract. ISS does not fabricate relativistic corrections without
+clock, state-vector, and ephemeris inputs.
 
 ## True Mark Vault integration
 

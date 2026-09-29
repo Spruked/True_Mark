@@ -10,6 +10,13 @@
 - Made Julian Date conversion accept an optional datetime and corrected derived display formatting to use the supplied instant.
 - Added type annotations across the core conversion and canonical-envelope functions.
 
+## 2026-09-29 — Relativistic time doctrine
+
+- Documented the separation between authoritative ISS coordinate time and local clock proper time.
+- Defined `proper_time_ns`, `relativistic_correction_ns`, `uncertainty_ns`, clock identity, source, and reference frame as physical annotations.
+- Documented the first-order weak-field/low-velocity model and the requirement for state-vector and ephemeris inputs.
+- Preserved the rule that ISS never rewrites `iss_time_ns` or invents a correction when physical inputs are unavailable.
+
 ## 2026-09-28 — Tauri desktop widget and supervision
 
 - Added a compact Tauri 2/Rust widget under `widget/`.

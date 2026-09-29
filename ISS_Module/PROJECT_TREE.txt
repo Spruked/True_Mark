@@ -6,6 +6,7 @@ ISS_Module/
 ├── LICENSE
 ├── requirements.txt                  # Python service dependencies
 ├── setup.py                           # Python package metadata
+├── docs/RELATIVISTIC_TIME_MODEL.md    # coordinate/proper time doctrine
 ├── iss_module/
 │   ├── __init__.py
 │   ├── service.py                     # local FastAPI process entry point
