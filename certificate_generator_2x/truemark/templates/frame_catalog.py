@@ -43,7 +43,7 @@ def _slug(value: str) -> str:
 _NAMES = [
     ("classic_forensic", "Engraved Single-Line"),
     ("classic_forensic", "Engraved Double-Line"),
-    ("classic_forensic", "Heavy Treasury Border"),
+    ("classic_forensic", "Heavy Forensic Border"),
     ("classic_forensic", "Micro-Engraved Pattern"),
     ("classic_forensic", "Triple-Layer Forensic Border"),
     ("classic_forensic", "Archival Document Border"),

@@ -30,13 +30,13 @@
     ]
   },
   {
-    "frame_id": "frame-03-heavy-treasury-border",
-    "name": "Heavy Treasury Border",
+    "frame_id": "frame-03-heavy-forensic-border",
+    "name": "Heavy Forensic Border",
     "number": 3,
     "group": "classic_forensic",
     "group_label": "Classic Government / Forensic",
     "format": "US Letter portrait / 8.5 x 11 in",
-    "asset": "frames/frame-03-heavy-treasury-border.svg",
+    "asset": "frames/frame-03-heavy-forensic-border.svg",
     "presentation_only": true,
     "recommended_certificate_types": [
       "forensic-certificate",

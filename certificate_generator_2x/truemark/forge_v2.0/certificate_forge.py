@@ -7,6 +7,7 @@ from pathlib import Path
 from datetime import datetime
 import argparse
 import asyncio
+import hashlib
 import json
 import sys
 import uuid
@@ -75,6 +76,19 @@ class TrueMarkForge:
         print(f"    ✅ Serial: {dals_serial}")
 
         print("2️⃣  Creating cryptographic payload...")
+        layer_count = get_layer_profile(metadata.get("layer_count", 13))["layer_count"]
+        private_security_manifest = {
+            "layer_count": layer_count,
+            "module_ids": [
+                module["module_id"]
+                for module in get_layer_profile(layer_count)["forensic_modules"]
+            ],
+            "frame_id": metadata.get("frame_id"),
+        }
+        security_manifest_hash = hashlib.sha256(
+            json.dumps(private_security_manifest, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+
         payload = {
             "dals_serial": dals_serial,
             "owner": metadata["owner_name"],
@@ -84,13 +98,11 @@ class TrueMarkForge:
             "kep_category": metadata.get("kep_category", "Knowledge"),
             "chain_id": metadata.get("chain_id", "Polygon"),
             "asset_title": metadata["asset_title"],
-            "layer_count": get_layer_profile(metadata.get("layer_count", 13))["layer_count"],
-            "frame_id": metadata.get("frame_id"),
+            "security_profile": f"TM-FSP-{layer_count}",
+            "security_profile_version": "1.0",
+            "security_manifest_hash": security_manifest_hash,
+            "renderer_version": "TM-CERT-RENDERER-2.1",
         }
-        payload["forensic_module_ids"] = [
-            module["module_id"]
-            for module in get_layer_profile(payload["layer_count"])["forensic_modules"]
-        ]
         print(f"    ✅ Payload created ({len(json.dumps(payload))} bytes)")
 
         print("3️⃣  Signing with Ed25519 root authority...")
@@ -102,7 +114,14 @@ class TrueMarkForge:
         print(f"    ✅ Hash: {signature_bundle['payload_hash'][:32]}...")
 
         print("4️⃣  Rendering forensic PDF...")
-        pdf_data = {**metadata, **payload, **signature_bundle}
+        pdf_data = {
+            **metadata,
+            **payload,
+            **signature_bundle,
+            # Private renderer input; never published as public certificate metadata.
+            "layer_count": layer_count,
+            "private_security_manifest": private_security_manifest,
+        }
         pdf_path = await self.renderer.create_forensic_pdf(
             data=pdf_data,
             output_dir=self.vault.certificates_path,

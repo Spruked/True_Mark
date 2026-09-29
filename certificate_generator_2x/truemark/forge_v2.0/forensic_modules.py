@@ -1,9 +1,8 @@
 """Printable certificate security-module registry.
 
 These are original, geometric, printer-safe presentation/forensic modules.
-They are not a claim of legal currency or banknote equivalence. Module
-selection is recorded with the certificate profile and never replaces the
-authoritative Vault evidence chain.
+Module selection is retained as private verifier configuration and never
+replaces the authoritative Vault evidence chain.
 """
 
 from __future__ import annotations
@@ -12,36 +11,36 @@ from typing import Dict, List
 
 
 MODULE_NAMES = [
-    ("guilloche-medallions", "Guilloché Medallions", "currency-style mathematical medallion curves"),
-    ("guilloche-borders", "Guilloché Borders", "continuous mathematical border curves"),
-    ("guilloche-corner-rosettes", "Guilloché Corner Rosettes", "corner rosette fields"),
-    ("latent-image-fields", "Latent Image Fields", "angle and scan-responsive geometric field"),
-    ("microtext-borders", "Microtext Borders", "small repeated verification text around the frame"),
-    ("microtext-corner-blocks", "Microtext Corner Blocks", "small encoded corner text blocks"),
-    ("micro-glyph-fields", "Micro-Glyph Fields", "repeating geometric glyph field"),
-    ("dot-cluster-encoding", "Dot-Cluster Encoding", "seeded dot clusters at defined coordinates"),
-    ("serial-encoded-guilloche", "Serial-Encoded Guilloché", "ID-seeded curve variation"),
-    ("serial-encoded-watermark", "Serial-Encoded Watermark", "ID-hash watermark variation"),
-    ("radial-seal-watermark", "Radial Seal Watermark", "circular radial seal field"),
-    ("generic-crest-watermark", "Generic Crest Watermark", "brand-neutral shield, laurel, or starburst"),
-    ("glyph-grid-watermark", "Glyph Grid Watermark", "repeating geometric watermark grid"),
-    ("diagonal-ribbon-watermark", "Diagonal Ribbon Watermark", "diagonal security ribbon"),
-    ("pattern-seeded-lattice", "Pattern-Seeded Lattice", "seeded lattice geometry"),
-    ("noise-field-signature", "Noise-Field Signature", "certificate-hash-derived noise field"),
-    ("hidden-coordinate-points", "Hidden Coordinate Points", "encoded border coordinate markers"),
-    ("alignment-micro-ticks", "Alignment Micro-Ticks", "angle-specific alignment ticks"),
-    ("micro-qr-fragmentation", "Micro-QR Fragmentation", "distributed verification fragments"),
-    ("micro-line-engraving", "Micro-Line Engraving", "fine engraved line field"),
-    ("micro-diamond-field", "Micro-Diamond Field", "small diamond pattern field"),
-    ("corner-anomaly-marks", "Corner-Anomaly Marks", "unique corner variation markers"),
-    ("border-thickness-encoding", "Border-Thickness Encoding", "seeded line-weight variation"),
-    ("serial-column-encoding", "Serial-Column Encoding", "serial-derived vertical micro-mark column"),
-    ("inner-frame-microtext-ring", "Inner-Frame Microtext Ring", "microtext inside the inner frame"),
-    ("mandala-watermark", "Mandala Watermark", "radial encoded mandala"),
-    ("micro-ribbon-watermark", "Micro-Ribbon Watermark", "thin ribbon with repeated microtext"),
-    ("corner-foil-simulation", "Corner Foil Simulation", "printable gradient corner patch"),
-    ("strip-foil-simulation", "Strip Foil Simulation", "printable horizontal or vertical gradient"),
-    ("diagonal-foil-sweep", "Diagonal Foil Sweep", "printable diagonal gradient sweep"),
+    ("F01", "Guilloché Medallions", "mathematical medallion curves"),
+    ("F02", "Guilloché Borders", "continuous mathematical border curves"),
+    ("F03", "Guilloché Corner Rosettes", "corner rosette fields"),
+    ("F04", "Latent Image Fields", "angle and scan-responsive geometric field"),
+    ("F05", "Microtext Borders", "small repeated verification text around the frame"),
+    ("F06", "Microtext Corner Blocks", "small encoded corner text blocks"),
+    ("F07", "Micro-Glyph Fields", "repeating geometric glyph field"),
+    ("F08", "Dot-Cluster Encoding", "seeded dot clusters at defined coordinates"),
+    ("F09", "Serial-Encoded Guilloché", "ID-seeded curve variation"),
+    ("F10", "Serial-Encoded Watermark", "ID-hash watermark variation"),
+    ("F11", "Radial Seal Watermark", "circular radial seal field"),
+    ("F12", "Generic Crest Watermark", "brand-neutral shield, laurel, or starburst"),
+    ("F13", "Glyph Grid Watermark", "repeating geometric watermark grid"),
+    ("F14", "Diagonal Ribbon Watermark", "diagonal security ribbon"),
+    ("F15", "Pattern-Seeded Lattice", "seeded lattice geometry"),
+    ("F16", "Noise-Field Signature", "certificate-hash-derived noise field"),
+    ("F17", "Hidden Coordinate Points", "encoded border coordinate markers"),
+    ("F18", "Alignment Micro-Ticks", "angle-specific alignment ticks"),
+    ("F19", "Micro-QR Fragmentation", "distributed verification fragments"),
+    ("F20", "Micro-Line Engraving", "fine engraved line field"),
+    ("F21", "Micro-Diamond Field", "small diamond pattern field"),
+    ("F22", "Corner-Anomaly Marks", "unique corner variation markers"),
+    ("F23", "Border-Thickness Encoding", "seeded line-weight variation"),
+    ("F24", "Serial-Column Encoding", "serial-derived vertical micro-mark column"),
+    ("F25", "Inner-Frame Microtext Ring", "microtext inside the inner frame"),
+    ("F26", "Mandala Watermark", "radial encoded mandala"),
+    ("F27", "Micro-Ribbon Watermark", "thin ribbon with repeated microtext"),
+    ("F28", "Corner Foil Simulation", "printable gradient corner patch"),
+    ("F29", "Strip Foil Simulation", "printable horizontal or vertical gradient"),
+    ("F30", "Diagonal Foil Sweep", "printable diagonal gradient sweep"),
 ]
 
 # Deeper profiles add modules without changing the authoritative evidence

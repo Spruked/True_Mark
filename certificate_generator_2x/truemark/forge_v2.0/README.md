@@ -198,7 +198,7 @@ Vault Path:               T:/certificate generator 2x/True_Mark_Vault_System
 
 1. **Parchment Base** (`parchment_base_600dpi.jpg`)
    - Scan real security paper at 600 DPI
-   - Alternative: Purchase stock parchment texture
+   - Alternative: Use an original or procedurally generated parchment texture
    - Dimensions: A4 (2480 x 3508 px @ 300 DPI)
 
 2. **Guilloche Border** (`border_guilloche_vector.svg`)
