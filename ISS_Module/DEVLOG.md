@@ -1,5 +1,11 @@
 # ISS Module development log
 
+## 2026-09-29 — Widget drag and topmost permissions
+
+- Added the explicit Tauri window permissions required for native dragging and always-on-top control.
+- Rebuilt the release widget and restarted the user-systemd service.
+- Confirmed the widget is running as one supervised process; the service remains enabled with crash restart enabled.
+
 ## 2026-09-29 — Mission control CORS repair
 
 - Allowed the local Tauri webview's `OPTIONS` preflight and `POST` requests through the loopback API.
