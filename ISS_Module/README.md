@@ -18,7 +18,7 @@ The authoritative value is:
 ISS_TIME = continuous integer nanoseconds from the ISS epoch
 ```
 
-The epoch and master value do not change. Calendars, leap years, leap seconds, time zones, and local planetary displays are conversion layers only.
+The epoch and master value do not change. Calendars, leap years, time zones, and local planetary displays are conversion layers only. The current implementation applies the documented 37-second TAI–UTC offset to both live and explicit datetime paths; an external TAI source can replace this approximation when connected.
 
 ## Four required timestamp formats
 
@@ -85,6 +85,8 @@ The Python API provides `canonical_timestamp()`, which returns:
 
 A production atomic-clock adapter can supply proper-time, uncertainty, and relativistic-correction fields without rewriting `iss_time_ns`.
 
+The `canonical_timestamp()` parameters are `uncertainty_ns`, `proper_time_ns`, `relativistic_correction_ns`, `mission_epoch_ns`, `reference_frame`, `clock_id`, and `source`. Reference frames can be overridden per event, for example `reference_frame="mars-centered"`.
+
 ## Run locally
 
 ```bash
@@ -137,7 +139,7 @@ The service requires the ISS API to be running. Start the API before the widget,
 
 ## Time endpoints
 
-- `GET /api/time` — epoch, standard, Julian, ISS, canonical timestamp, and all four time concepts.
+- `GET /api/time` — epoch, standard, Julian, ISS, canonical timestamp, and all four time concepts. Add `?reference_frame=mars-centered` for an event-specific frame label.
 - `GET /api/stardate` — display-only stardate.
 - `GET /api/health` — service health and current master time.
 - `GET /api/status` — service state, uptime, and current time envelope.
@@ -169,4 +171,4 @@ ISS Scale → canonical time envelope
 Vault     → authoritative event, payload, seal, and audit record
 ```
 
-The desktop widget is read-only. It displays the same ISS values used by Vault audit records.
+The desktop widget is read-only. It displays the same ISS values used by Vault audit records. Earth-market/session data is intentionally not part of the ISS core.

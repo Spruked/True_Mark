@@ -1,5 +1,15 @@
 # ISS Module development log
 
+## 2026-09-29 — Production hardening
+
+- Added explicit `TAI_UTC_OFFSET_NS` handling to live and historical timestamp paths.
+- Preserved nanosecond precision on the live `time.time_ns()` path and documented the microsecond limit of explicit `datetime` inputs.
+- Promoted uncertainty, proper-time, relativistic-correction, mission, source, clock, and reference-frame values to explicit canonical timestamp parameters.
+- Added per-event reference-frame overrides through the API.
+- Removed Earth-market/session data from the ISS core time scale.
+- Made Julian Date conversion accept an optional datetime and corrected derived display formatting to use the supplied instant.
+- Added type annotations across the core conversion and canonical-envelope functions.
+
 ## 2026-09-28 — Tauri desktop widget and supervision
 
 - Added a compact Tauri 2/Rust widget under `widget/`.

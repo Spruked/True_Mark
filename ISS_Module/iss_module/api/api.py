@@ -2,13 +2,13 @@
 
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from ..core.ISS import ISS
-from ..core.utils import canonical_timestamp, current_timecodes, format_iss_time, format_timestamp, get_stardate
+from ..core.utils import ISS_REFERENCE_FRAME, canonical_timestamp, current_timecodes, format_iss_time, format_timestamp
 
 
 app = FastAPI(
@@ -56,9 +56,10 @@ async def status():
 
 
 @app.get("/api/time")
-async def time_formats():
+async def time_formats(reference_frame: str = Query(ISS_REFERENCE_FRAME, min_length=1, max_length=120)):
     """Return the canonical timestamp and its four time concepts."""
     timecodes = current_timecodes()
+    timecodes["reference_frame"] = reference_frame
     canonical = canonical_timestamp(_timecodes=timecodes)
     return {
         "iss_time_ns": canonical["iss_time_ns"],
@@ -82,7 +83,7 @@ async def time_formats():
         "julian_display": format_timestamp(format_type="julian"),
         "human": format_timestamp(format_type="human"),
         "unix": timecodes["unix_timestamp"],
-        "market_info": timecodes["market_info"],
+        "tai_utc_offset_ns": timecodes["tai_utc_offset_ns"],
         "anchor_hash": timecodes["anchor_hash"],
     }
 
