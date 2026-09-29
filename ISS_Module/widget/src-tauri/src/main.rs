@@ -25,6 +25,9 @@ fn main() {
                     _ => {}
                 })
                 .build(app)?;
+            if let Some(window) = app.get_webview_window("main") {
+                window.set_always_on_top(true)?;
+            }
             Ok(())
         })
         .run(tauri::generate_context!())

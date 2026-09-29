@@ -8,6 +8,14 @@
 - Verified the frontend production build and Rust formatting.
 - Native packaging is pending the WSL GTK/WebKit development libraries required by Tauri.
 
+## 2026-09-29 — Persistent mission work sessions
+
+- Added Start Mission and End Mission controls to the widget.
+- Added live Mission Elapsed Time display.
+- Added persistent session records under `runtime/mission_sessions.json`.
+- Added mission session API endpoints for start, end, current state, and later review.
+- Verified a complete start → live MET → end → persisted history cycle.
+
 ## 2026-09-29 — Production hardening
 
 - Added explicit `TAI_UTC_OFFSET_NS` handling to live and historical timestamp paths.

@@ -28,6 +28,12 @@ restores and focuses the widget; selecting **Quit ISS Scale** exits the process.
 The window's `×` control only hides the window so the tray process remains
 available.
 
+## Mission sessions
+
+Use **START MISSION** to begin a named work session and **END MISSION** to
+close it. The widget displays live mission elapsed time (MET), and completed
+sessions are persisted in `runtime/mission_sessions.json` for later review.
+
 ## Automatic start and crash recovery
 
 On Linux, install the user-level supervisor after building:

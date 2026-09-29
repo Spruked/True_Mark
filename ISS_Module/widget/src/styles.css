@@ -36,4 +36,11 @@ body { margin: 0; overflow: hidden; }
 .time-grid div, .detail-grid div { min-width: 0; padding: 10px; border: 1px solid rgba(102, 164, 186, .17); border-radius: 9px; background: rgba(8, 22, 31, .65); }
 small { display: block; margin-bottom: 4px; color: #6e9bad; font-size: 8px; letter-spacing: .12em; }
 .time-grid span, .detail-grid span { display: block; overflow: hidden; color: #d8f5ff; font: 11px ui-monospace, SFMono-Regular, monospace; text-overflow: ellipsis; white-space: nowrap; }
+.mission-bar { display: flex; align-items: end; justify-content: space-between; gap: 14px; margin-top: 12px; padding: 10px; border: 1px solid rgba(102, 164, 186, .24); border-radius: 9px; background: rgba(8, 22, 31, .72); }
+.mission-bar strong { display: block; margin-top: 4px; color: #d8f5ff; font: 12px ui-monospace, SFMono-Regular, monospace; }
+.mission-actions { display: flex; gap: 7px; }
+.mission-button { border: 1px solid rgba(119, 214, 235, .36); border-radius: 7px; padding: 8px 10px; color: #dffaff; background: rgba(24, 80, 99, .7); font-size: 9px; font-weight: 800; letter-spacing: .08em; cursor: pointer; }
+.mission-button.start { border-color: rgba(66, 229, 175, .5); }
+.mission-button.end { border-color: rgba(255, 173, 118, .5); }
+.mission-button:disabled { cursor: not-allowed; opacity: .32; }
 footer { justify-content: space-between; margin-top: 14px; color: #52717e; font: 9px ui-monospace, SFMono-Regular, monospace; letter-spacing: .04em; }

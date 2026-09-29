@@ -3,6 +3,7 @@ __pycache__/
 .venv/
 venv/
 .pytest_cache/
+runtime/
 
 widget/node_modules/
 widget/dist/

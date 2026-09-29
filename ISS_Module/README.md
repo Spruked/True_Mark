@@ -144,6 +144,10 @@ The service requires the ISS API to be running. Start the API before the widget,
 - `GET /api/stardate` — display-only stardate.
 - `GET /api/health` — service health and current master time.
 - `GET /api/status` — service state, uptime, and current time envelope.
+- `POST /api/mission/start` — begin a persistent mission/work session.
+- `POST /api/mission/end` — close the active session and preserve its end timestamp.
+- `GET /api/mission/current` — inspect the active session.
+- `GET /api/mission/sessions` — review stored sessions.
 
 ## Python use
 

@@ -29,6 +29,13 @@ app.innerHTML = `
       <div><small>MISSION ELAPSED</small><span id="mission">--</span></div>
       <div><small>LOCAL DISPLAY</small><span id="local">--</span></div>
     </div>
+    <div class="mission-bar">
+      <div><small>MISSION SESSION</small><strong id="mission-label">NO ACTIVE SESSION</strong></div>
+      <div class="mission-actions">
+        <button id="start-mission" class="mission-button start">START MISSION</button>
+        <button id="end-mission" class="mission-button end" disabled>END MISSION</button>
+      </div>
+    </div>
     <footer><span id="frame">SOLAR-SYSTEM BARYCENTRIC</span><span id="hash">ANCHOR --</span></footer>
   </section>
 `;
@@ -50,9 +57,35 @@ function render(data) {
   $('proper').textContent = data.proper_time_ns == null ? 'not supplied' : `${Number(data.proper_time_ns).toLocaleString()} ns`;
   $('mission').textContent = data.mission_elapsed_ns == null ? 'not supplied' : `${Number(data.mission_elapsed_ns).toLocaleString()} ns`;
   $('local').textContent = data.local_display_time || '--';
+  const mission = data.mission;
+  $('mission-label').textContent = mission ? `${mission.label} · MET ${formatElapsed(mission.mission_elapsed_ns)}` : 'NO ACTIVE SESSION';
+  $('start-mission').disabled = Boolean(mission);
+  $('end-mission').disabled = !mission;
   $('frame').textContent = (data.reference_frame || 'solar-system-barycentric').toUpperCase();
   $('hash').textContent = `ANCHOR ${(data.anchor_hash || '').slice(0, 10) || '--'}`;
   setStatus(true);
+}
+
+function formatElapsed(ns) {
+  const totalSeconds = Math.floor(Number(ns || 0) / 1_000_000_000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(days).padStart(3, '0')}/${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+async function missionAction(path, body) {
+  const response = await fetch(`http://127.0.0.1:8000${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || `HTTP ${response.status}`);
+  }
+  await refresh();
 }
 
 async function refresh() {
@@ -67,5 +100,18 @@ async function refresh() {
 }
 
 $('close').addEventListener('click', () => getCurrentWindow().hide());
+document.querySelector('.widget-header').addEventListener('mousedown', async (event) => {
+  if (event.button === 0 && !event.target.closest('button')) {
+    await getCurrentWindow().startDragging();
+  }
+});
+$('start-mission').addEventListener('click', async () => {
+  const label = window.prompt('Mission label', 'Work Session');
+  if (label === null) return;
+  try { await missionAction('/api/mission/start', { label }); } catch (error) { window.alert(error.message); }
+});
+$('end-mission').addEventListener('click', async () => {
+  try { await missionAction('/api/mission/end'); } catch (error) { window.alert(error.message); }
+});
 refresh();
 setInterval(refresh, 250);

@@ -9,6 +9,8 @@ from fastapi.templating import Jinja2Templates
 
 from ..core.ISS import ISS
 from ..core.utils import ISS_REFERENCE_FRAME, canonical_timestamp, current_timecodes, format_iss_time, format_timestamp
+from ..session_store import current_session, end_session, list_sessions, start_session
+from pydantic import BaseModel
 
 
 app = FastAPI(
@@ -28,6 +30,10 @@ app.add_middleware(
 
 iss_instance = ISS()
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
+
+
+class MissionStartRequest(BaseModel):
+    label: str = "Work Session"
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -61,6 +67,13 @@ async def time_formats(reference_frame: str = Query(ISS_REFERENCE_FRAME, min_len
     timecodes = current_timecodes()
     timecodes["reference_frame"] = reference_frame
     canonical = canonical_timestamp(_timecodes=timecodes)
+    mission = current_session()
+    if mission:
+        canonical = canonical_timestamp(
+            mission_epoch_ns=mission["started_iss_time_ns"],
+            reference_frame=reference_frame,
+            _timecodes=timecodes,
+        )
     return {
         "iss_time_ns": canonical["iss_time_ns"],
         "scale_name": canonical["scale_name"],
@@ -84,8 +97,37 @@ async def time_formats(reference_frame: str = Query(ISS_REFERENCE_FRAME, min_len
         "human": format_timestamp(format_type="human"),
         "unix": timecodes["unix_timestamp"],
         "tai_utc_offset_ns": timecodes["tai_utc_offset_ns"],
+        "mission": mission,
         "anchor_hash": timecodes["anchor_hash"],
     }
+
+
+@app.post("/api/mission/start")
+async def mission_start(request: MissionStartRequest):
+    try:
+        return start_session(request.label)
+    except ValueError as error:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+
+@app.post("/api/mission/end")
+async def mission_end():
+    try:
+        return end_session()
+    except ValueError as error:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+
+@app.get("/api/mission/current")
+async def mission_current():
+    return {"active": current_session()}
+
+
+@app.get("/api/mission/sessions")
+async def mission_sessions(limit: int = Query(100, ge=1, le=1000)):
+    return {"sessions": list_sessions(limit)}
 
 
 @app.get("/api/stardate")
