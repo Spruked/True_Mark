@@ -12,7 +12,7 @@ import json
 from datetime import datetime
 from typing import Dict, Optional, List
 import hashlib
-from path_config import get_repo_root, get_temp_vault_dir
+from path_config import get_temp_vault_dir, get_vault_root
 
 
 class MockWorkerVaultWriter:
@@ -58,7 +58,7 @@ class MockFusionQueueEngine:
     """
     
     def __init__(self):
-        self.queue_path = get_repo_root() / "truemark" / "fusion_queue"
+        self.queue_path = get_vault_root() / "runtime" / "fusion_queue"
         self.queue_path.mkdir(parents=True, exist_ok=True)
         
     def enqueue(self, queue_name: str, payload: Dict, routing_key: str):

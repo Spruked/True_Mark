@@ -16,12 +16,16 @@ from reportlab.platypus import (
     TableStyle,
 )
 
+try:
+    from .vault_paths import INVOICES_ROOT, RECEIPTS_ROOT, VAULT_PACKAGES_ROOT, ensure_vault_layout
+except ImportError:
+    from vault_paths import INVOICES_ROOT, RECEIPTS_ROOT, VAULT_PACKAGES_ROOT, ensure_vault_layout
+
 
 BASE_DIR = Path(__file__).resolve().parent
-DATA_DIR = BASE_DIR / "data"
-INVOICE_DIR = DATA_DIR / "invoices"
-VAULT_DIR = DATA_DIR / "vault_packages"
-RECEIPT_DIR = DATA_DIR / "receipts"
+INVOICE_DIR = INVOICES_ROOT
+VAULT_DIR = VAULT_PACKAGES_ROOT
+RECEIPT_DIR = RECEIPTS_ROOT
 
 BRAND_GOLD = colors.HexColor("#C9A227")
 BRAND_NAVY = colors.HexColor("#0B1220")
@@ -29,6 +33,7 @@ BRAND_MUTED = colors.HexColor("#4B5563")
 
 
 def ensure_invoice_directories() -> None:
+    ensure_vault_layout()
     INVOICE_DIR.mkdir(parents=True, exist_ok=True)
     VAULT_DIR.mkdir(parents=True, exist_ok=True)
     RECEIPT_DIR.mkdir(parents=True, exist_ok=True)

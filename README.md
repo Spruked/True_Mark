@@ -30,6 +30,7 @@ Secretum Privatum is private, mutable working space. The Immutable Vault is the 
 - Prime Layer profiles limited to 2, 3, 5, 7, 11, and 13 layers.
 - Canonical manifest generation with a manifest hash; authority remains in the sealed evidence/Vault chain.
 - Human Support escalation channel, hidden by default, signed-session authenticated, account-scoped, and persisted in SQLite.
+- All mutable runtime state and generated artifacts are stored under [True_Mark_Vault_System](True_Mark_Vault_System), the single authoritative local Vault root.
 
 ## Compatibility boundary
 
@@ -61,6 +62,8 @@ cd backend
 pip install -r requirements.txt
 uvicorn main:app --reload --port 13001
 ```
+
+The backend resolves `TRUEMARK_VAULT_ROOT` to `True_Mark_Vault_System` by default. The Vault owns the database, staged uploads, invoices, receipts, sealed packages, exports, support records, certificate artifacts, audit data, and runtime configuration.
 
 The existing frontend build should pass with `npm run build` from `frontend/`. Do not add payment, blockchain, SMTP, or production credential configuration until the core authentication transaction is deterministic and recovery-safe.
 

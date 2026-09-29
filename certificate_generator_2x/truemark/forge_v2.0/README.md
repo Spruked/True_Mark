@@ -48,7 +48,7 @@ python certificate_forge.py mint `
 **Expected Output:**
 ```
 ✅ CERTIFICATE MINTED & ANCHORED
-📄 PDF:        T:/certificate generator 2x/Vault_System_1.0/certificates/issued/DALSKM20251210-8A7B3C2F_OFFICIAL.pdf
+📄 PDF:        T:/certificate generator 2x/True_Mark_Vault_System/certificates/issued/DALSKM20251210-8A7B3C2F_OFFICIAL.pdf
 🏷️  Serial:     DALSKM20251210-8A7B3C2F
 🔒 Vault TXN:  VAULT_TXN_DALSKM20251210-8A7B3C2F_1702224567890
 🐝 Swarm TXN:  SWARM_TXN_DALSKM20251210-8A7B3C2F_1702224567
@@ -187,7 +187,7 @@ Certificates Issued Today: 7
 Swarm Consensus:          True
 Guardians Online:         5/5
 Forge Version:            2.0
-Vault Path:               T:/certificate generator 2x/Vault_System_1.0
+Vault Path:               T:/certificate generator 2x/True_Mark_Vault_System
 ```
 
 ---
@@ -332,10 +332,10 @@ The system generates procedural fallbacks automatically. For production:
 Ensure output directory has write permissions:
 ```powershell
 # Check directory
-Test-Path "T:\certificate generator 2x\Vault_System_1.0\certificates\issued"
+Test-Path "T:\certificate generator 2x\True_Mark_Vault_System\certificates\issued"
 
 # Create if missing
-New-Item -ItemType Directory -Force -Path "T:\certificate generator 2x\Vault_System_1.0\certificates\issued"
+New-Item -ItemType Directory -Force -Path "T:\certificate generator 2x\True_Mark_Vault_System\certificates\issued"
 ```
 
 ---

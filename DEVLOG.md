@@ -44,6 +44,15 @@
 - Restricted the escalation context envelope to approved object/workflow fields.
 - Synchronized the doctrine with `WORKING_COPY → READY_FOR_REVIEW → COMMIT_PENDING → COMMITTED → SEALED`, with Commit defined as the customer-authorized action.
 
+## 2026-09-28 — True Mark Vault System authority migration
+
+- Renamed the added `Vault-Logic-System-Template` directory to `True_Mark_Vault_System` and removed its nested Git metadata.
+- Established `True_Mark_Vault_System` as the single local source of truth for runtime state and generated artifacts.
+- Moved the existing True Mark database and pricing configuration into the Vault runtime.
+- Redirected database, staged uploads, invoices, receipts, sealed packages, mail outbox, exports, pricing, tax, Human Support workspace records, and certificate-forge paths to the Vault.
+- Moved the legacy SKG core under the Vault so certificate intelligence data has one governed root.
+- Replaced browser-local Sanctum workspace persistence with authenticated Vault-backed workspace persistence.
+
 ### Known boundary
 
 The legacy payment/token issuance routes remain available temporarily for compatibility. They must be adapted into the canonical Object → Evidence → Commit → Vault pipeline before they can be treated as an authoritative production path.

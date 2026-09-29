@@ -53,6 +53,8 @@ try:
         update_invoice_delivery,
         update_payment_session_status,
     )
+    from .vault_paths import DALS_EXPORTS_ROOT, PAYMENT_SESSIONS_ROOT, ensure_vault_layout
+    from .workspace_storage import get_workspace, save_workspace
     from .tax import load_tax_table, resolve_tax_rate, save_tax_table
 except ImportError:
     from auth import authenticate_admin, create_user_session, decode_admin_token, decode_user_token, require_admin_session, require_user_session
@@ -93,6 +95,8 @@ except ImportError:
         update_invoice_delivery,
         update_payment_session_status,
     )
+    from vault_paths import DALS_EXPORTS_ROOT, PAYMENT_SESSIONS_ROOT, ensure_vault_layout
+    from workspace_storage import get_workspace, save_workspace
     from tax import load_tax_table, resolve_tax_rate, save_tax_table
 
 
@@ -106,10 +110,9 @@ app.add_middleware(
 
 
 BASE_DIR = Path(__file__).resolve().parent
-STAGED_UPLOADS_DIR = BASE_DIR / "data" / "payment_sessions"
-DALS_EXPORTS_DIR = BASE_DIR / "data" / "dals_exports"
-STAGED_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-DALS_EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
+STAGED_UPLOADS_DIR = PAYMENT_SESSIONS_ROOT
+DALS_EXPORTS_DIR = DALS_EXPORTS_ROOT
+ensure_vault_layout()
 
 
 class QuoteRequest(BaseModel):
@@ -961,6 +964,18 @@ def download_admin_invoice(
 @app.get("/pricing")
 def get_public_pricing():
     return JSONResponse(content=load_pricing())
+
+
+@app.get("/api/workspace")
+def get_private_workspace(session: Dict[str, Any] = Depends(require_user_session)):
+    return get_workspace(session["sub"]) or {}
+
+
+@app.put("/api/workspace")
+def save_private_workspace(payload: Dict[str, Any], session: Dict[str, Any] = Depends(require_user_session)):
+    # Workspace state is private account data; ownership is always session-derived.
+    payload.pop("account_id", None)
+    return save_workspace(session["sub"], payload)
 
 
 @app.get("/mint-standard")

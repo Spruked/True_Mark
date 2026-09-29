@@ -7,9 +7,14 @@ from email.message import EmailMessage
 from pathlib import Path
 from typing import Any, Dict
 
+try:
+    from .vault_paths import MAIL_OUTBOX_ROOT, ensure_vault_layout
+except ImportError:
+    from vault_paths import MAIL_OUTBOX_ROOT, ensure_vault_layout
+
 
 BASE_DIR = Path(__file__).resolve().parent
-OUTBOX_DIR = BASE_DIR / "data" / "mail_outbox"
+OUTBOX_DIR = MAIL_OUTBOX_ROOT
 
 
 def _bool_env(name: str, default: bool = False) -> bool:
@@ -66,7 +71,7 @@ def send_invoice_email(order: Dict[str, Any], invoice_path: Path, invoice_url: s
     message = _build_message(order, invoice_path, invoice_url)
 
     if not config["host"]:
-        OUTBOX_DIR.mkdir(parents=True, exist_ok=True)
+        ensure_vault_layout()
         outbox_path = OUTBOX_DIR / f"{order['invoice_number']}.eml"
         outbox_path.write_bytes(message.as_bytes())
         return {

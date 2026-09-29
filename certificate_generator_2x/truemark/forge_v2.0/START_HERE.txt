@@ -43,7 +43,7 @@ STEP 4: Mint Your First Certificate
     Expected time: 3-4 seconds
     
 STEP 5: View Your Certificate
-    - PDF will be in: T:\certificate generator 2x\Vault_System_1.0\certificates\issued\
+    - PDF will be in: T:\certificate generator 2x\True_Mark_Vault_System\certificates\issued\
     - Open the PDF to see 10-layer forensic rendering
     - Scan QR code to test verification URL
 

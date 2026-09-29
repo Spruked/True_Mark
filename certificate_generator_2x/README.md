@@ -88,7 +88,7 @@ certificate_generator_2x/
 │       ├── integration_bridge.py     # Vault/swarm connector
 │       ├── install.ps1               # Automated setup
 │       └── requirements.txt
-├── Vault_System_1.0/
+├── True_Mark_Vault_System/
 │   ├── certificates/issued/          # Generated PDFs + metadata
 │   ├── vault_logs/                   # Immutable JSONL logs
 │   ├── swarm_queue/                  # FusionQueue broadcasts
@@ -190,10 +190,10 @@ docker-compose down
 ### Volumes
 
 The Docker setup mounts these volumes:
-- `./Vault_System_1.0/certificates/issued` → Generated certificates
-- `./Vault_System_1.0/vault_logs` → Immutable logs
-- `./Vault_System_1.0/swarm_queue` → Swarm broadcasts
-- `./Vault_System_1.0/vault_system/skg_core/skg_data` → Knowledge graph data
+- `./True_Mark_Vault_System/certificates/issued` → Generated certificates
+- `./True_Mark_Vault_System/vault_logs` → Immutable logs
+- `./True_Mark_Vault_System/swarm_queue` → Swarm broadcasts
+- `./True_Mark_Vault_System/vault_system/skg_core/skg_data` → Knowledge graph data
 
 ---
 
@@ -220,7 +220,7 @@ from certificate_forge import TrueMarkForge
 
 async def mint_example():
     forge = TrueMarkForge(
-        vault_base_path=Path("T:/certificate generator 2x/Vault_System_1.0"),
+        vault_base_path=Path("T:/certificate generator 2x/True_Mark_Vault_System"),
         use_mock_vault=True
     )
     
@@ -246,7 +246,7 @@ asyncio.run(mint_example())
 from skg_integration import CertificateSKGBridge
 
 # Get wallet portfolio
-skg = CertificateSKGBridge(Path("T:/certificate generator 2x/Vault_System_1.0"))
+skg = CertificateSKGBridge(Path("T:/certificate generator 2x/True_Mark_Vault_System"))
 portfolio = await skg.get_owner_portfolio("0x742d35Cc6634C0532925a3b844Bc454e4438f44e")
 
 print(f"Total certificates: {portfolio['total_certificates']}")
@@ -267,7 +267,7 @@ for cert in suspicious:
 
 ```bash
 # Vault configuration
-VAULT_BASE_PATH=/app/Vault_System_1.0
+VAULT_BASE_PATH=/app/True_Mark_Vault_System
 VAULT_MODE=mock  # or 'production'
 
 # Certificate settings
@@ -312,7 +312,7 @@ python truemark/forge_v2.0/crypto_anchor.py
 python truemark/forge_v2.0/forensic_renderer.py
 
 # Test SKG engine
-python Vault_System_1.0/vault_system/skg_core/skg_engine.py
+python True_Mark_Vault_System/vault_system/skg_core/skg_engine.py
 ```
 
 ---

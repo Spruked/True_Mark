@@ -113,7 +113,7 @@ $directories = @(
     "T:\certificate generator 2x\truemark\templates",
     "T:\certificate generator 2x\truemark\fonts",
     "T:\certificate generator 2x\truemark\keys",
-    "T:\certificate generator 2x\Vault_System_1.0\certificates\issued"
+    "T:\certificate generator 2x\True_Mark_Vault_System\certificates\issued"
 )
 
 foreach ($dir in $directories) {

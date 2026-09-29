@@ -5,9 +5,14 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict
 
+try:
+    from .vault_paths import RUNTIME_ROOT, ensure_vault_layout
+except ImportError:
+    from vault_paths import RUNTIME_ROOT, ensure_vault_layout
+
 
 BASE_DIR = Path(__file__).resolve().parent
-CONFIG_DIR = BASE_DIR / "config"
+CONFIG_DIR = RUNTIME_ROOT / "config"
 TAX_PATH = CONFIG_DIR / "tax_table.json"
 
 
@@ -36,6 +41,7 @@ def _deep_merge(current: Dict[str, Any], updates: Dict[str, Any]) -> Dict[str, A
 
 
 def ensure_tax_file() -> Path:
+    ensure_vault_layout()
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
     if not TAX_PATH.exists():

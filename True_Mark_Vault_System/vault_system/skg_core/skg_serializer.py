@@ -257,7 +257,7 @@ if __name__ == "__main__":
     print("=" * 60)
     
     # Create temporary vault path
-    test_vault_path = Path("T:/certificate generator 2x/Vault_System_1.0/skg_graph")
+    test_vault_path = Path(__file__).resolve().parents[3] / "runtime" / "skg_graph"
     test_vault_path.mkdir(parents=True, exist_ok=True)
     
     serializer = SKGSerializer(test_vault_path, "test_worker")

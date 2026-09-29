@@ -29,7 +29,7 @@ CertificateSKGBridge = None
 try:
     from pathlib import Path as _Path
 
-    skg_path = _Path(__file__).resolve().parents[2] / "Vault_System_1.0" / "vault_system" / "skg_core"
+    skg_path = _Path(__file__).resolve().parents[3] / "True_Mark_Vault_System" / "vault_system" / "skg_core"
     sys.path.insert(0, str(skg_path))
     from skg_integration import CertificateSKGBridge  # type: ignore
 

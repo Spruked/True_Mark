@@ -38,12 +38,12 @@ docker-compose.yml
 Thumbs.db
 
 # Generated files (will be created in container)
-Vault_System_1.0/certificates/issued/*.pdf
-Vault_System_1.0/certificates/issued/*.json
-Vault_System_1.0/certificates/issued/*.png
-Vault_System_1.0/vault_logs/*.jsonl
-Vault_System_1.0/swarm_queue/*.jsonl
-Vault_System_1.0/vault_system/skg_core/skg_data/*.jsonl
+True_Mark_Vault_System/certificates/issued/*.pdf
+True_Mark_Vault_System/certificates/issued/*.json
+True_Mark_Vault_System/certificates/issued/*.png
+True_Mark_Vault_System/vault_logs/*.jsonl
+True_Mark_Vault_System/swarm_queue/*.jsonl
+True_Mark_Vault_System/vault_system/skg_core/skg_data/*.jsonl
 
 # Test files
 tests/

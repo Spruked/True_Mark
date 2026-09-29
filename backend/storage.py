@@ -13,13 +13,15 @@ from typing import Any, Dict, List, Optional
 
 try:
     from .node_config import get_mint_standard, get_nft_type_code, get_node_code, get_region_code, normalize_code
+    from .vault_paths import DATABASE_PATH, RUNTIME_ROOT, ensure_vault_layout
 except ImportError:
     from node_config import get_mint_standard, get_nft_type_code, get_node_code, get_region_code, normalize_code
+    from vault_paths import DATABASE_PATH, RUNTIME_ROOT, ensure_vault_layout
 
 
 BASE_DIR = Path(__file__).resolve().parent
-DATA_DIR = BASE_DIR / "data"
-DB_PATH = DATA_DIR / "truemark.db"
+DATA_DIR = RUNTIME_ROOT
+DB_PATH = DATABASE_PATH
 
 
 USER_COLUMNS = {
@@ -195,7 +197,7 @@ def normalize_identifier_component(value: str | None, fallback: str) -> str:
 
 
 def get_connection() -> sqlite3.Connection:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    ensure_vault_layout()
     connection = sqlite3.connect(DB_PATH)
     connection.row_factory = sqlite3.Row
     return connection

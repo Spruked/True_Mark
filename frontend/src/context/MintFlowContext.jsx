@@ -1,7 +1,10 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { getActiveUser, getStoredWorkspace, saveStoredWorkspace } from "../authStorage";
+import axios from "axios";
+import { getActiveUser, getUserAuthHeaders, isUserAuthenticated } from "../authStorage";
+import { getBackendApiBase } from "../apiBase";
 
 const MintFlowContext = createContext(null);
+const WORKSPACE_API = `${getBackendApiBase()}/api/workspace`;
 
 const defaultWorkspace = {
   notes: "",
@@ -44,16 +47,22 @@ export function MintFlowProvider({ children }) {
   const [workspace, setWorkspace] = useState(defaultWorkspace);
 
   useEffect(() => {
-    function hydrateWorkspace() {
+    async function hydrateWorkspace() {
       const activeUser = getActiveUser();
 
-      if (!activeUser?.email) {
+      if (!activeUser?.email || !isUserAuthenticated()) {
         setWorkspace(defaultWorkspace);
         setCheckoutDraft(null);
         return;
       }
 
-      const storedWorkspace = getStoredWorkspace(activeUser.email);
+      let storedWorkspace = null;
+      try {
+        const response = await axios.get(WORKSPACE_API, { headers: getUserAuthHeaders() });
+        storedWorkspace = response.data;
+      } catch {
+        storedWorkspace = null;
+      }
 
       if (!storedWorkspace) {
         setWorkspace(defaultWorkspace);
@@ -73,7 +82,7 @@ export function MintFlowProvider({ children }) {
       }
     }
 
-    hydrateWorkspace();
+    void hydrateWorkspace();
     window.addEventListener("tm-auth-changed", hydrateWorkspace);
 
     return () => {
@@ -81,18 +90,22 @@ export function MintFlowProvider({ children }) {
     };
   }, []);
 
-  const persistWorkspace = (nextWorkspace, nextDraft = checkoutDraft) => {
+  const persistWorkspace = async (nextWorkspace, nextDraft = checkoutDraft) => {
     const activeUser = getActiveUser();
 
-    if (!activeUser?.email) {
+    if (!activeUser?.email || !isUserAuthenticated()) {
       return;
     }
 
-    saveStoredWorkspace(activeUser.email, {
-      ...nextWorkspace,
-      draftSummary: buildSerializableDraft(nextDraft),
-      updatedAt: new Date().toISOString(),
-    });
+    try {
+      await axios.put(WORKSPACE_API, {
+        ...nextWorkspace,
+        draftSummary: buildSerializableDraft(nextDraft),
+        updatedAt: new Date().toISOString(),
+      }, { headers: getUserAuthHeaders() });
+    } catch {
+      // The Vault API remains authoritative; callers retain in-memory state until it is available.
+    }
   };
 
   const updateWorkspace = (updater) => {
@@ -104,7 +117,7 @@ export function MintFlowProvider({ children }) {
             ...updater,
           };
 
-      persistWorkspace(nextWorkspace);
+      void persistWorkspace(nextWorkspace);
       return nextWorkspace;
     });
   };
@@ -117,7 +130,7 @@ export function MintFlowProvider({ children }) {
         updatedAt: new Date().toISOString(),
       };
     setWorkspace(nextWorkspace);
-    persistWorkspace(nextWorkspace, draft);
+    void persistWorkspace(nextWorkspace, draft);
   };
 
   const clearDraftAndPersist = () => {
@@ -128,7 +141,7 @@ export function MintFlowProvider({ children }) {
       updatedAt: new Date().toISOString(),
     };
     setWorkspace(nextWorkspace);
-    persistWorkspace(nextWorkspace, null);
+    void persistWorkspace(nextWorkspace, null);
   };
 
   const setPaymentSessionAndPersist = (paymentSession) => {
@@ -138,7 +151,7 @@ export function MintFlowProvider({ children }) {
       updatedAt: new Date().toISOString(),
     };
     setWorkspace(nextWorkspace);
-    persistWorkspace(nextWorkspace);
+    void persistWorkspace(nextWorkspace);
   };
 
   const clearPaymentSessionAndPersist = () => {
@@ -148,7 +161,7 @@ export function MintFlowProvider({ children }) {
       updatedAt: new Date().toISOString(),
     };
     setWorkspace(nextWorkspace);
-    persistWorkspace(nextWorkspace);
+    void persistWorkspace(nextWorkspace);
   };
 
   const value = useMemo(() => ({

@@ -7,12 +7,14 @@ from typing import Any, Dict
 
 try:
     from .certificate_profiles import default_certificate_profiles
+    from .vault_paths import RUNTIME_ROOT, ensure_vault_layout
 except ImportError:
     from certificate_profiles import default_certificate_profiles
+    from vault_paths import RUNTIME_ROOT, ensure_vault_layout
 
 
 BASE_DIR = Path(__file__).resolve().parent
-CONFIG_DIR = BASE_DIR / "config"
+CONFIG_DIR = RUNTIME_ROOT / "config"
 PRICING_PATH = CONFIG_DIR / "pricing.json"
 
 
@@ -102,6 +104,7 @@ def _enforce_certificate_profiles(pricing: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def ensure_pricing_file() -> Path:
+    ensure_vault_layout()
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
     if not PRICING_PATH.exists():

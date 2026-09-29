@@ -33,7 +33,7 @@ T:\certificate generator 2x\
 │   └── fusion_queue\                        🐝 SWARM COMMUNICATION
 │       └── certificate_swarm_broadcast.jsonl (Created on first mint)
 │
-└── Vault_System_1.0\                        🗄️  VAULT STORAGE
+└── True_Mark_Vault_System\                        🗄️  VAULT STORAGE
     │
     ├── certificates\
     │   └── issued\                          📄 MINTED CERTIFICATES
@@ -159,7 +159,7 @@ STEP 4: Verify Certificate
     python certificate_forge.py verify --serial "DALS..."
 
 STEP 5: View Output
-    Open: T:\certificate generator 2x\Vault_System_1.0\certificates\issued\
+    Open: T:\certificate generator 2x\True_Mark_Vault_System\certificates\issued\
 
 
 ═══════════════════════════════════════════════════════════════════════════

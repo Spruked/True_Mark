@@ -246,7 +246,7 @@ def audit_persistence_candidates() -> list[Finding]:
     findings: list[Finding] = []
     candidates: set[str] = set()
 
-    for root in (ROOT / "backend", ROOT / "certificate_generator_2x", ROOT / "vault"):
+    for root in (ROOT / "backend", ROOT / "certificate_generator_2x", ROOT / "True_Mark_Vault_System"):
         for path in _iter_files(root):
             relative = _relative(path)
             if PERSISTENCE_HINT_PATTERN.search(relative):

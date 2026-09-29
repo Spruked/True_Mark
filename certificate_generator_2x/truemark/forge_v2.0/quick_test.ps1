@@ -36,7 +36,7 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "✅ TEST PASSED - Forge is operational!" -ForegroundColor Green
     Write-Host ""
     Write-Host "📁 Check output directory:" -ForegroundColor Cyan
-    Write-Host "   T:\certificate generator 2x\Vault_System_1.0\certificates\issued\" -ForegroundColor Gray
+    Write-Host "   T:\certificate generator 2x\True_Mark_Vault_System\certificates\issued\" -ForegroundColor Gray
 } else {
     Write-Host ""
     Write-Host "❌ TEST FAILED - See errors above" -ForegroundColor Red

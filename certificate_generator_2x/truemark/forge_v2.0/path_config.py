@@ -6,8 +6,8 @@ from pathlib import Path
 
 
 def get_repo_root() -> Path:
-    """Resolve the repository root from this file."""
-    return Path(__file__).resolve().parents[2]
+    """Resolve the True Mark application root from this file."""
+    return Path(__file__).resolve().parents[3]
 
 
 def get_truemark_root() -> Path:
@@ -16,8 +16,8 @@ def get_truemark_root() -> Path:
 
 
 def get_vault_root() -> Path:
-    """Resolve the default Vault_System_1.0 path."""
-    return get_repo_root() / "Vault_System_1.0"
+    """Resolve the single authoritative True Mark Vault System."""
+    return get_repo_root() / "True_Mark_Vault_System"
 
 
 def get_templates_path() -> Path:
@@ -36,8 +36,8 @@ def get_keys_path() -> Path:
 
 
 def get_temp_vault_dir() -> Path:
-    """Resolve the temp_vault directory used by local workflows."""
-    return get_repo_root() / "temp_vault"
+    """Resolve the temporary working area inside the authoritative Vault System."""
+    return get_vault_root() / "runtime" / "temp_vault"
 
 
 def ensure_temp_vault_dir() -> Path:

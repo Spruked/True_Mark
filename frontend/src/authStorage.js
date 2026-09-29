@@ -1,7 +1,6 @@
 const ACCOUNT_KEY = "tm-user-account";
 const SESSION_KEY = "tm-user-session";
 const ADMIN_SESSION_KEY = "tm-admin-session";
-const WORKSPACE_PREFIX = "tm-user-workspace";
 
 export function getStoredAccount() {
   const rawAccount = window.localStorage.getItem(ACCOUNT_KEY);
@@ -127,34 +126,4 @@ export function getAdminAuthHeaders() {
   return {
     Authorization: `Bearer ${adminSession.token}`,
   };
-}
-
-function getWorkspaceKey(email) {
-  return `${WORKSPACE_PREFIX}:${email}`;
-}
-
-export function getStoredWorkspace(email) {
-  if (!email) {
-    return null;
-  }
-
-  const rawWorkspace = window.localStorage.getItem(getWorkspaceKey(email));
-
-  if (!rawWorkspace) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(rawWorkspace);
-  } catch {
-    return null;
-  }
-}
-
-export function saveStoredWorkspace(email, workspace) {
-  if (!email) {
-    return;
-  }
-
-  window.localStorage.setItem(getWorkspaceKey(email), JSON.stringify(workspace));
 }

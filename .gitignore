@@ -28,12 +28,16 @@ backend/data/
 *.db
 backend/config/tax_table.json
 
-# Canonical Vault runtime state
-# Structure and migration manifests may be tracked, but customer/runtime data must not be committed.
-vault_system/runtime/
-vault_system/backups/
-vault_system/exports/
-vault_system/secrets/
+# Canonical True Mark Vault runtime state
+# The Vault structure is tracked; customer/runtime data remains local to the Vault.
+True_Mark_Vault_System/runtime/
+True_Mark_Vault_System/backups/
+True_Mark_Vault_System/exports/
+True_Mark_Vault_System/secrets/
+True_Mark_Vault_System/certificates/
+True_Mark_Vault_System/vault_logs/
+True_Mark_Vault_System/swarm_queue/
+True_Mark_Vault_System/**/skg_data/
 
 # OS
 .DS_Store
