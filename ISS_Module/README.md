@@ -157,3 +157,14 @@ print(current_timecodes()["stardate"])
 ## Relativistic boundary
 
 There is no physically universal simultaneous “now” across the solar system. ISS therefore uses a shared coordinate-time reference and stores local proper time, clock uncertainty, reference frame, and relativistic corrections alongside events when those measurements are available. Delayed packets remain chronologically comparable because their canonical `iss_time_ns` values are never rewritten.
+
+## True Mark Vault integration
+
+ISS is the canonical timekeeping layer for the True Mark Vault System. The Vault records authoritative events and auditable file activity under `True_Mark_Vault_System/audit/`; its audit adapter attaches the ISS timestamp envelope without moving authority out of the Vault.
+
+```text
+ISS Scale → canonical time envelope
+Vault     → authoritative event, payload, seal, and audit record
+```
+
+The desktop widget is read-only. It displays the same ISS values used by Vault audit records.

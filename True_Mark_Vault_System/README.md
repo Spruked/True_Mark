@@ -28,6 +28,18 @@ True_Mark_Vault_System/
 
 The backend uses `TRUEMARK_VAULT_ROOT` when configured and otherwise resolves this directory relative to the True Mark project root. Runtime data is intentionally ignored by the parent repository.
 
+## ISS audit timekeeping
+
+The Vault and the Interplanetary Stardate Syncrometer are one coordinated system:
+
+```text
+Vault mutation → backend/vault_audit.py → ISS canonical timestamp → audit/events.jsonl
+```
+
+Audited order, mint-event, and Perpetuum workspace writes receive the complete ISS timestamp envelope: authoritative `iss_time_ns`, Epoch, Standard, Julian, ISS display, reference frame, and clock metadata. The Vault remains authoritative for the event and payload; ISS supplies the canonical time used to order and correlate it. Each JSONL event also carries a previous-event hash and its own event hash.
+
+The audit stream is created at `True_Mark_Vault_System/audit/events.jsonl` on the first audited mutation. See [audit/README.md](audit/README.md) for the record contract.
+
 *Universal, modular blueprint now with cognitive tracing, persistent memory, and observability layers. Inspired by emergent AI symbol systems (glyphs for latent space mapping), memory-augmented architectures (e.g., Neural Turing Machines with external matrices), and telemetry patterns for modular AI (e.g., MCP for prompt optimization and agent traces).*
 
 > **What's New:**

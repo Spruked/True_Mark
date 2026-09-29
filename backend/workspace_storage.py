@@ -1,14 +1,17 @@
-"""Persistent Secretum Privatum workspace records in the True Mark Vault DB."""
+"""Persistent Perpetuum workspace records in the True Mark Vault DB."""
 
 from __future__ import annotations
 
 import json
+import hashlib
 from typing import Any, Dict
 
 try:
     from .storage import get_connection, utc_now_iso
+    from .vault_audit import record_vault_audit_event
 except ImportError:
     from storage import get_connection, utc_now_iso
+    from vault_audit import record_vault_audit_event
 
 
 def init_workspaces() -> None:
@@ -51,4 +54,5 @@ def save_workspace(account_id: str, workspace: Dict[str, Any]) -> Dict[str, Any]
             """,
             (account_id, payload, now),
         )
+    record_vault_audit_event("WORKSPACE_SAVED", account_id, {"workspace_hash": hashlib.sha256(payload.encode()).hexdigest()}, account_id)
     return {**workspace, "updatedAt": now}

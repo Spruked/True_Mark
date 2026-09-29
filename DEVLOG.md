@@ -1,5 +1,41 @@
 # True Mark Development Log
 
+## 2026-09-28 — ISS and Vault audit integration
+
+- Connected the ISS Scale to the authoritative Vault audit boundary.
+- Added `backend/vault_audit.py` with append-only JSONL events under `True_Mark_Vault_System/audit/events.jsonl`.
+- Audited order records, mint-event records, and Perpetuum workspace saves now receive the complete ISS timestamp envelope.
+- Added sequential `previous_event_hash` and `event_hash` tamper evidence to each audit event.
+- Kept the authority boundary explicit: the Vault owns the event and payload; ISS owns canonical timekeeping.
+- Verified the audit chain with a two-event isolated test.
+
+## 2026-09-28 — Perpetuum relocation wiring check
+
+- Verified `GOAT/Secretum Privatum` no longer exists.
+- Confirmed `Perpetuum/` is the standalone root-level organizer application.
+- Confirmed Perpetuum TypeScript imports resolve and its production build passes.
+- Confirmed the main frontend production build passes.
+- Confirmed backend and tooling Python modules compile successfully.
+- Remaining old-name matches are historical DEVLOG entries only; no active code, package, or import wiring targets the deleted path.
+
+## 2026-09-28 — Perpetuum workspace relocation and terminology cleanup
+
+- Moved the Perpetuum application out of `GOAT` and placed it at the repository root: `Perpetuum/`.
+- Removed the former `GOAT/Secretum Privatum` application files; only an ignored Vite cache remains there from the previous local run.
+- Standardized the customer-facing workspace name as `Perpetuum`.
+- Removed the deprecated `Private Sanctum` product wording from the README, UI, procedures, user guide, doctrine, and branding language.
+- Confirmed the relocated Perpetuum application builds successfully with `npm run build`.
+- Refreshed `true_mark_tree.txt` to reflect the root-level Perpetuum location.
+
+## 2026-09-28 — Perpetuum organizer rename and repository map
+
+- Renamed the local parsing/object-organizer application from `Secretum Privatum` to `Perpetuum`.
+- Updated the Perpetuum package name, schema identifier, UI labels, component name, title, and local README.
+- Confirmed the application build passes with `npm run build` from `Perpetuum`.
+- Regenerated `true_mark_tree.txt` from the current repository state.
+- Updated the root README to identify Perpetuum as the account-holder private archive room and local organizer tool.
+- The repository tree excludes generated dependencies, build output, caches, virtual environments, and Python bytecode.
+
 ## 2026-09-28 — Product revision and human escalation boundary
 
 ### Completed

@@ -14,9 +14,11 @@ from typing import Any, Dict, List, Optional
 try:
     from .node_config import get_mint_standard, get_nft_type_code, get_node_code, get_region_code, normalize_code
     from .vault_paths import DATABASE_PATH, RUNTIME_ROOT, ensure_vault_layout
+    from .vault_audit import record_vault_audit_event
 except ImportError:
     from node_config import get_mint_standard, get_nft_type_code, get_node_code, get_region_code, normalize_code
     from vault_paths import DATABASE_PATH, RUNTIME_ROOT, ensure_vault_layout
+    from vault_audit import record_vault_audit_event
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -898,6 +900,7 @@ def record_order(order: Dict[str, Any]) -> Dict[str, Any]:
     with get_connection() as connection:
         _insert_order(connection, row)
 
+    record_vault_audit_event("ORDER_RECORDED", row["id"], {"serial": row.get("serial"), "file_name": row.get("file_name")}, row.get("user_id"))
     return row
 
 
@@ -913,6 +916,12 @@ def record_order_and_mint_event(order: Dict[str, Any], mint_event: Dict[str, Any
         _insert_order(connection, order_row)
         _insert_mint_event(connection, mint_event_row)
 
+    record_vault_audit_event(
+        "MINT_EVENT_RECORDED",
+        order_row["id"],
+        {"serial": mint_event_row.get("serial"), "nft_identifier": mint_event_row.get("nft_identifier")},
+        order_row.get("user_id"),
+    )
     return order_row
 
 

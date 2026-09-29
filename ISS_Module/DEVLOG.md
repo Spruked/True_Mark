@@ -15,3 +15,5 @@
 ## Authority
 
 The widget is a read-only display client. `iss_time_ns`, derived from the fixed 2000-01-01 TAI epoch, remains the sole authoritative ordering value.
+
+The True Mark Vault System is the authoritative storage and audit system. ISS provides its canonical timestamp envelope; the Vault retains ownership of the event, payload, hash chain, and sealed record.
