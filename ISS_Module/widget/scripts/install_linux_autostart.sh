@@ -5,6 +5,7 @@ WIDGET_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BINARY="$WIDGET_ROOT/src-tauri/target/release/iss-scale-widget"
 SERVICE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
 SERVICE_FILE="$SERVICE_DIR/iss-scale-widget.service"
+API_SERVICE_FILE="$SERVICE_DIR/iss-scale-api.service"
 
 if [[ ! -x "$BINARY" ]]; then
   echo "Release binary not found: $BINARY" >&2
@@ -15,7 +16,10 @@ fi
 mkdir -p "$SERVICE_DIR"
 sed "s|__ISS_WIDGET_ROOT__|$WIDGET_ROOT|g; s|__ISS_WIDGET_BINARY__|$BINARY|g" \
   "$WIDGET_ROOT/scripts/iss-scale-widget.service.in" > "$SERVICE_FILE"
+sed "s|__ISS_MODULE_ROOT__|$(cd "$WIDGET_ROOT/.." && pwd)|g" \
+  "$WIDGET_ROOT/scripts/iss-scale-api.service.in" > "$API_SERVICE_FILE"
 
 systemctl --user daemon-reload
+systemctl --user enable --now iss-scale-api.service
 systemctl --user enable --now iss-scale-widget.service
-echo "Installed and started $SERVICE_FILE"
+echo "Installed and started $API_SERVICE_FILE and $SERVICE_FILE"

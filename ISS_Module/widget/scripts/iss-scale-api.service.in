@@ -1,0 +1,17 @@
+[Unit]
+Description=ISS Scale timekeeping API
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+WorkingDirectory=__ISS_MODULE_ROOT__
+Environment=PYTHONPATH=__ISS_MODULE_ROOT__
+Environment=ISS_HOST=127.0.0.1
+Environment=ISS_PORT=8000
+ExecStart=/usr/bin/python3 -m iss_module.service
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target

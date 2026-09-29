@@ -36,4 +36,4 @@ On Linux, install the user-level supervisor after building:
 ./scripts/install_linux_autostart.sh
 ```
 
-It starts the widget after login/reboot and restarts it indefinitely after a crash. Remove it with `./scripts/uninstall_linux_autostart.sh`.
+It starts both the ISS API and widget after login/reboot and restarts each indefinitely after a crash. Remove them with `./scripts/uninstall_linux_autostart.sh`.
