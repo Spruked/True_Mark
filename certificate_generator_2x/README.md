@@ -18,7 +18,8 @@ A production-grade certificate generation system combining forensic-quality PDF 
 - **📦 Immutable Vault**: JSONL append-only ledger compatible with WorkerVaultWriter architecture
 - **🌐 Swarm Broadcasting**: FusionQueue integration for distributed asset awareness
 - **🧠 Knowledge Graph Learning**: SKG v1.0 learns patterns from every certificate (wallet behavior, IPFS clustering, drift detection)
-- **🖼️ 50 Governed Presentation Frames**: SVG-ready 8.5×11 frame library with optional frame selection
+- **🖼️ 50 Governed Presentation Frames**: SVG-ready horizontal US Letter frame library with optional frame selection
+- **🏷️ Approved TrueMark Branding**: uses the shared TM logo, tree watermark, and TrueMark seal from `frontend/assets/`
 - **🔢 Prime Forensic Depths**: only 2, 3, 5, 7, 11, and 13-layer certificate profiles are accepted
 
 ### Certificate depth rule
@@ -81,6 +82,35 @@ QR codes and verification links use the canonical public registry route
 `https://certsig.com/verify/{verification_id}`. The registry must return only
 the approved public verification view, never raw private security configuration.
 
+### Certificate orientation and brand assets
+
+Certificates are rendered horizontally on US Letter landscape pages
+(`11 × 8.5 inches`). At 300 DPI, the PNG/JPEG companions are `3300 × 2550`
+pixels. The renderer uses these shared repository assets as the authoritative
+visual brand elements:
+
+- `frontend/assets/TMlogotrans512 - Copy.png` — header logo
+- `frontend/assets/tree_watermark_512.png` — central watermark
+- `frontend/assets/truemarkseal.png` — TrueMark seal
+
+The older template-local logo, watermark, and seal files remain only as
+compatibility fallbacks.
+
+### NFT color profiles and Tree of Life signature
+
+Every NFT-backed certificate receives the shared Tree of Life watermark from
+`frontend/assets/tree_watermark_512.png`, regardless of its selected prime
+forensic depth. This is a mandatory TrueMark brand signature treatment; it does
+not change the evidence-layer count.
+
+NFT certificates are deterministically color-coded by category:
+
+- `TM-NFT-KNOWLEDGE-BLUE` — Knowledge / blue-teal
+- `TM-NFT-ASSET-AMBER` — Asset / gold-amber
+- `TM-NFT-IDENTITY-VIOLET` — Identity / violet
+
+The selected color profile is included in the signed payload and NFT metadata.
+
 ### Printable forensic module library
 
 The generator also registers 30 original, brand-neutral, printer-safe
@@ -91,13 +121,13 @@ other deterministic markers. They are cataloged in
 `truemark/forge_v2.0/forensic_modules.py` and activated progressively by the
 prime depth profile. The selected module IDs are stored with the certificate
 configuration privately and are not published as certificate metadata. Public
-certificate output is limited to the forensic security profile, profile
-version, verification status, certificate hash, True Mark verification ID,
-and—where required by the verification protocol—the security manifest hash.
+certificate output is limited to verification status, certificate hash, and
+the True Mark verification ID. Profile and renderer details remain signed
+metadata and are not printed on the certificate face.
 The authoritative record remains the sealed Vault evidence chain.
 
 ### Security & Compliance
-- DALS-001 compliant serial numbers with checksums
+- TrueMark registry numbers in `TM-XXXX-XXXX-XX-XXXXX-X` format with checksums
 - Stardate temporal anchoring
 - QR code verification integration
 - Duplicate detection via pattern learning
@@ -187,7 +217,7 @@ certificate_generator_2x/
 
 #### 1. **Certificate Forge (`certificate_forge.py`)**
 Main orchestrator that coordinates the 7-step minting process:
-1. Generate DALS serial with checksum
+1. Generate TrueMark certificate number with registry check character
 2. Create cryptographic payload
 3. Sign with Ed25519 root authority
 4. Render forensic PDF with embedded signature
@@ -319,7 +349,7 @@ async def mint_example():
     })
     
     print(f"Certificate: {result['certificate_pdf']}")
-    print(f"DALS Serial: {result['dals_serial']}")
+    print(f"Certificate Number: {result['certificate_number']}")
     print(f"Verify: {result['verification_url']}")
 
 asyncio.run(mint_example())
@@ -341,7 +371,7 @@ print(f"Chains: {portfolio['chains']}")
 # Detect suspicious activity
 suspicious = await skg.detect_suspicious_certificates(drift_threshold=0.7)
 for cert in suspicious:
-    print(f"⚠️  {cert['dals_serial']}: drift={cert['drift_score']:.2f}")
+    print(f"⚠️  {cert['certificate_number']}: drift={cert['drift_score']:.2f}")
 ```
 
 ---
@@ -406,16 +436,16 @@ python True_Mark_Vault_System/vault_system/skg_core/skg_engine.py
 
 Each minted certificate generates:
 
-1. **Certificate PDF** (`DALS{serial}.pdf`)
+1. **Certificate PDF** (`TM-XXXX-XXXX-XX-XXXXX-X_OFFICIAL.pdf`)
    - 300 DPI forensic-quality document
    - 10-layer anti-AI artifacts
    - Embedded cryptographic signature
    
-2. **Verification QR Code** (`DALS{serial}_qr.png`)
+2. **Verification QR Code** (`verification_qr_TM-XXXX-XXXX-XX-XXXXX-X.png`)
    - Links to verification URL
-   - Embedded DALS serial
+   - Embedded TrueMark registry number
    
-3. **Result Metadata** (`DALS{serial}_result.json`)
+3. **Result Metadata** (`TM-XXXX-XXXX-XX-XXXXX-X_result.json`)
    - Complete certificate package
    - Vault transaction ID
    - Swarm broadcast ID
@@ -445,7 +475,7 @@ Each minted certificate generates:
 - **Quantum-Resistant**: Future-proof cryptography
 
 ### Anti-Forgery Measures
-- DALS serial checksums (collision-resistant)
+- TrueMark registry check characters (collision-resistant format validation)
 - Embedded signatures in PDF metadata
 - Microprint and guilloché patterns
 - Holographic gradient backgrounds

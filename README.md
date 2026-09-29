@@ -4,6 +4,21 @@ Copyright © 2026 Spruked / True Mark. All rights reserved. This repository is p
 
 True Mark is an object-authentication, evidence-preservation, certification, and optional digital-extension platform. It is not primarily an NFT storefront.
 
+## Canonical True Mark NFT taxonomy
+
+The governed NFT type set is `H`, `K`, `L`, `B`, `HL`, `KL`, `LL`, `BL`, and `C`.
+The trailing `L` means licensable and does not create a new color family:
+
+| Types | Shared color family |
+| --- | --- |
+| `H`, `HL` | H / Emerald |
+| `K`, `KL` | K / Blue-Teal |
+| `L`, `LL` | L / Violet |
+| `B`, `BL` | B / Blue-Gold |
+| `C` | Custom / Gold-Amber |
+
+Issuance metadata records `nft_type`, `base_type`, `licensable`, and `color_profile` separately. Enterprise is an Alpha CertSig Mint licensing model, not a True Mark NFT type. Legacy `K-NFT`-style inputs are accepted only at compatibility boundaries and are normalized to the canonical codes above.
+
 ## Product model
 
 ```text

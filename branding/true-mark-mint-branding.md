@@ -6,7 +6,7 @@ True Mark is an object-authentication and evidence-preservation platform. It iss
 
 ## Primary concepts
 
-- Secretum Privatum / Private Sanctum: private, mutable working space.
+- Perpetuum: private, mutable working space.
 - Object Workbench: project workspace for identity, ownership, provenance, evidence, and certificate configuration.
 - Immutable Vault: authoritative append-only record.
 - Prime Layer Certificate: derived certificate with governed 2/3/5/7/11/13 evidence depth.

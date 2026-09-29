@@ -29,6 +29,7 @@ function buildSerializableDraft(draft) {
     prefix: draft.prefix || "",
     industry: draft.industry || "",
     nft_type: draft.nft_type || "",
+    frame_id: draft.frame_id || "frame-01-engraved-single-line",
     package_tier: draft.package_tier || "p2",
     encryption: draft.encryption || "none",
     chain: draft.chain || "polygon",

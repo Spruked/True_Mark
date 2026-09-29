@@ -188,7 +188,7 @@ const UseCases = () => (
         Example identifier:
       </Typography>
       <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 700 }}>
-        HL-NFT-SMITHFAM-CUL-2026-000008
+        HL-SMITHFAM-CUL-2026-000008
       </Typography>
       <Typography paragraph>
         This creates a verified, inheritable knowledge archive rather than a simple document repository.

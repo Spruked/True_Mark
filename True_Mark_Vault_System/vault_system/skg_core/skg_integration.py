@@ -39,7 +39,7 @@ class CertificateSKGBridge:
         skg_txn_id = self.skg.ingest_certificate(certificate_data, vault_txn_id)
         
         # Get drift score for monitoring
-        cert_details = self.skg.get_certificate_details(certificate_data['dals_serial'])
+        cert_details = self.skg.get_certificate_details(certificate_data['certificate_number'])
         drift_score = cert_details['drift_score'] if cert_details else 0.0
         
         # Prepare FusionQueue payload for swarm broadcast
@@ -47,7 +47,7 @@ class CertificateSKGBridge:
             "event_type": "SKG_CERTIFICATE_INGESTED",
             "skg_transaction_id": skg_txn_id,
             "vault_transaction_id": vault_txn_id,
-            "dals_serial": certificate_data['dals_serial'],
+            "certificate_number": certificate_data['certificate_number'],
             "drift_score": drift_score,
             "pattern_clusters": self.skg.pattern_learner.get_cluster_count(),
             "requires_swarm_sync": True,
@@ -162,7 +162,7 @@ class CertificateSKGBridge:
             
             if cert_details:
                 suspicious.append({
-                    "dals_serial": cert_details['certificate']['properties'].get('dals_serial'),
+                    "certificate_number": cert_details['certificate']['properties'].get('certificate_number'),
                     "drift_score": anomaly['drift_score'],
                     "components": anomaly['components'],
                     "owner": cert_details['owner']['properties'].get('wallet_address') if cert_details['owner'] else 'Unknown',

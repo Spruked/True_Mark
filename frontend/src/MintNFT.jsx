@@ -20,10 +20,15 @@ import { getBackendApiBase } from "./apiBase";
 const API_BASE = getBackendApiBase();
 
 const NFT_TYPES = [
-  { value: "K-NFT", label: "Knowledge NFT" },
-  { value: "H-NFT", label: "Heirloom NFT" },
-  { value: "L-NFT", label: "Legacy NFT" },
-  { value: "C-NFT", label: "Custom NFT" },
+  { value: "H", label: "H — Heirloom NFT", color: "Emerald" },
+  { value: "K", label: "K — Knowledge NFT", color: "Blue-Teal" },
+  { value: "L", label: "L — Legacy NFT", color: "Violet" },
+  { value: "B", label: "B — Bespoke NFT", color: "Blue-Gold" },
+  { value: "HL", label: "HL — Licensable Heirloom NFT", color: "Emerald" },
+  { value: "KL", label: "KL — Licensable Knowledge NFT", color: "Blue-Teal" },
+  { value: "LL", label: "LL — Licensable Legacy NFT", color: "Violet" },
+  { value: "BL", label: "BL — Licensable Bespoke NFT", color: "Blue-Gold" },
+  { value: "C", label: "C — Custom Contract NFT", color: "Gold-Amber" },
 ];
 
 export default function MintNFT() {
@@ -42,7 +47,8 @@ export default function MintNFT() {
     node_id: "TMK",
     region_code: "US",
     registrant_code: "",
-    nft_type: "K-NFT",
+    nft_type: "K",
+    frame_id: "frame-01-engraved-single-line",
     package_tier: "p2",
     encryption: "none",
     chain: "polygon",
@@ -56,6 +62,7 @@ export default function MintNFT() {
     identifier_format: "TYPE-NODE-REGION-YEAR-USER-SEQ",
     type_codes: {},
   });
+  const [frames, setFrames] = useState([]);
   const [progress, setProgress] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -83,18 +90,22 @@ export default function MintNFT() {
 
     async function loadMintStandard() {
       try {
-        const response = await axios.get(`${API_BASE}/mint-standard`);
+        const [standardResponse, framesResponse] = await Promise.all([
+          axios.get(`${API_BASE}/mint-standard`),
+          axios.get(`${API_BASE}/certificate-frames`),
+        ]);
         if (!active) {
           return;
         }
 
-        setMintStandard(response.data);
+        setMintStandard(standardResponse.data);
+        setFrames(framesResponse.data || []);
         setForm((previous) => ({
           ...previous,
-          node_id: response.data.node_id || previous.node_id || "TMK",
+          node_id: standardResponse.data.node_id || previous.node_id || "TMK",
           region_code: previous.region_code === "US"
-            ? (response.data.region_code || previous.region_code || "US")
-            : (previous.region_code || response.data.region_code || "US"),
+            ? (standardResponse.data.region_code || previous.region_code || "US")
+            : (previous.region_code || standardResponse.data.region_code || "US"),
         }));
       } catch {
         if (active) {
@@ -125,6 +136,7 @@ export default function MintNFT() {
       region_code: checkoutDraft.region_code || checkoutDraft.industry || previous.region_code || mintStandard.region_code,
       registrant_code: checkoutDraft.registrant_code || checkoutDraft.prefix || previous.registrant_code,
       nft_type: checkoutDraft.nft_type || previous.nft_type,
+      frame_id: checkoutDraft.frame_id || previous.frame_id,
       package_tier: checkoutDraft.package_tier || previous.package_tier,
       encryption: checkoutDraft.encryption || previous.encryption,
       chain: checkoutDraft.chain || previous.chain,
@@ -242,7 +254,7 @@ export default function MintNFT() {
           Build a private object record. Upload evidence, add provenance and ownership context, choose a certificate profile, and review the record before any authoritative commitment.
         </Typography>
         <Alert severity="info" sx={{ mb: 2 }}>
-          This is your working copy inside Secretum Privatum. Uploads remain mutable until you explicitly commit and seal the object record.
+          This is your working copy inside Perpetuum. Uploads remain mutable until you explicitly commit and seal the object record.
         </Alert>
         {progress && <LinearProgress sx={{ mb: 2 }} />}
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -420,7 +432,26 @@ export default function MintNFT() {
               >
                 {NFT_TYPES.map((option) => (
                   <MenuItem key={option.value} value={option.value}>
-                    {option.label}
+                    {option.label} · {option.color}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                select
+                label="Certificate Frame"
+                name="frame_id"
+                value={form.frame_id}
+                onChange={handleChange}
+                fullWidth
+                required
+                helperText="Presentation frame only. It does not change the selected prime evidence depth."
+                InputLabelProps={{ style: { color: "#C8CCD0" } }}
+                FormHelperTextProps={{ style: { color: "#C8CCD0" } }}
+                InputProps={{ style: { color: "#F4F7F8" } }}
+              >
+                {(frames.length ? frames : [{ frame_id: form.frame_id, name: "Engraved Single-Line", group_label: "Classic Forensic" }]).map((frame) => (
+                  <MenuItem key={frame.frame_id} value={frame.frame_id}>
+                    {frame.number ? `${frame.number}. ` : ""}{frame.name} · {frame.group_label}
                   </MenuItem>
                 ))}
               </TextField>

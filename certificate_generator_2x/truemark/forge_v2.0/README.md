@@ -8,6 +8,28 @@
 
 ## 🎯 Overview
 
+Certificates are rendered as horizontal US Letter documents (`11 × 8.5
+inches`). NFT-backed PNG/JPEG companions are rasterized from the final PDF at
+300 DPI (`3300 × 2550` pixels), preserving the exact certificate layout.
+
+The renderer uses the shared TrueMark assets from the repository frontend:
+
+- `frontend/assets/TMlogotrans512 - Copy.png` — header logo
+- `frontend/assets/tree_watermark_512.png` — central watermark
+- `frontend/assets/truemarkseal.png` — TrueMark seal
+
+Template-local artwork is retained only as a compatibility fallback.
+
+Every NFT-backed certificate also receives the shared Tree of Life watermark,
+even when the selected forensic depth is below the watermark evidence layer.
+This is a mandatory NFT brand signature and does not alter the governed prime
+layer count. NFT color profiles are deterministic and recorded in the signed
+payload and NFT metadata:
+
+- `TM-NFT-KNOWLEDGE-BLUE` — Knowledge / blue-teal
+- `TM-NFT-ASSET-AMBER` — Asset / gold-amber
+- `TM-NFT-IDENTITY-VIOLET` — Identity / violet
+
 The TrueMark Certificate Forge is a production-ready system for generating **cryptographically-verifiable, forensically-perfect certificates** that combine:
 
 - ✅ **Visual Authority**: 10-layer PDF rendering with anti-AI forensic artifacts
@@ -48,12 +70,12 @@ python certificate_forge.py mint `
 **Expected Output:**
 ```
 ✅ CERTIFICATE MINTED & ANCHORED
-📄 PDF:        T:/certificate generator 2x/True_Mark_Vault_System/certificates/issued/DALSKM20251210-8A7B3C2F_OFFICIAL.pdf
-🏷️  Serial:     DALSKM20251210-8A7B3C2F
-🔒 Vault TXN:  VAULT_TXN_DALSKM20251210-8A7B3C2F_1702224567890
-🐝 Swarm TXN:  SWARM_TXN_DALSKM20251210-8A7B3C2F_1702224567
-🔗 Verify URL: https://certsig.com/verify/DALSKM20251210-8A7B3C2F
-📱 QR Code:    T:/certificate generator 2x/truemark/verification_qr_DALSKM20251210-8A7B3C2F.png
+📄 PDF:        T:/certificate generator 2x/True_Mark_Vault_System/certificates/issued/TM-AB12-34CD-EF-56789-X_OFFICIAL.pdf
+🏷️  Certificate: TM-AB12-34CD-EF-56789-X
+🔒 Vault TXN:  VAULT_TXN_TM-AB12-34CD-EF-56789-X_1702224567890
+🐝 Swarm TXN:  SWARM_TXN_TM-AB12-34CD-EF-56789-X_1702224567
+🔗 Verify URL: https://certsig.com/verify/TM-AB12-34CD-EF-56789-X
+📱 QR Code:    T:/certificate generator 2x/truemark/verification_qr_TM-AB12-34CD-EF-56789-X.png
 ```
 
 ---
@@ -148,7 +170,7 @@ python certificate_forge.py mint `
 ### Verify a Certificate
 
 ```powershell
-python certificate_forge.py verify --serial DALSKM20251210-8A7B3C2F
+python certificate_forge.py verify --serial TM-AB12-34CD-EF-56789-X
 ```
 
 **Output:**
@@ -162,12 +184,12 @@ python certificate_forge.py verify --serial DALSKM20251210-8A7B3C2F
 ### Get Audit Trail
 
 ```powershell
-python certificate_forge.py audit --serial DALSKM20251210-8A7B3C2F
+python certificate_forge.py audit --serial TM-AB12-34CD-EF-56789-X
 ```
 
 **Output:**
 ```
-📋 Retrieving audit trail: DALSKM20251210-8A7B3C2F
+📋 Retrieving audit trail: TM-AB12-34CD-EF-56789-X
    Found 3 events
    1. 2025-12-10T15:30:45Z - CERTIFICATE_MINTED
    2. 2025-12-10T15:30:46Z - VAULT_RECORDED

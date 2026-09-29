@@ -13,7 +13,7 @@ class DojoCertificateAdapter:
     """
 
     def generate_social_formats(self, cert_data: Dict) -> Dict[str, Dict[str, str]]:
-        serial = cert_data.get("dals_serial", "UNKNOWN")
+        serial = cert_data.get("certificate_number", "UNKNOWN")
         title = cert_data.get("asset_title", "TrueMark Certificate")
         return {
             "linkedin": {

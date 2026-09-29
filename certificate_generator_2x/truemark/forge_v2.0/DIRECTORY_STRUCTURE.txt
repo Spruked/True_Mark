@@ -37,9 +37,9 @@ T:\certificate generator 2x\
     │
     ├── certificates\
     │   └── issued\                          📄 MINTED CERTIFICATES
-    │       ├── DALSKM20251210-XXXXXXXX_OFFICIAL.pdf
-    │       ├── DALSKM20251210-XXXXXXXX_summary.json
-    │       ├── DALSKM20251210-XXXXXXXX_result.json
+    │       ├── TM-XXXX-XXXX-XX-XXXXX-X_OFFICIAL.pdf
+    │       ├── TM-XXXX-XXXX-XX-XXXXX-X_summary.json
+    │       ├── TM-XXXX-XXXX-XX-XXXXX-X_result.json
     │       └── (additional certificates...)
     │
     └── worker_events\                       📋 AUDIT LOGS
@@ -82,10 +82,10 @@ CRYPTOGRAPHIC KEYS (auto-generated)
 └── truemark\keys\caleon_root.pub         Ed25519 public key (32 bytes)
 
 CERTIFICATES (per mint operation)
-├── DALS{X}M{DATE}-{UNIQUE}_OFFICIAL.pdf  Main certificate PDF
-├── DALS{X}M{DATE}-{UNIQUE}_summary.json  Vault summary record
-├── DALS{X}M{DATE}-{UNIQUE}_result.json   Minting result package
-└── verification_qr_DALS{...}.png         Standalone QR code
+├── TM-XXXX-XXXX-XX-XXXXX-X_OFFICIAL.pdf  Main certificate PDF
+├── TM-XXXX-XXXX-XX-XXXXX-X_summary.json  Vault summary record
+├── TM-XXXX-XXXX-XX-XXXXX-X_result.json   Issuance result package
+└── verification_qr_TM-....png            Standalone QR code
 
 AUDIT LOGS (continuous)
 ├── worker_events\certificate_forge_worker_001_events.jsonl
@@ -128,7 +128,7 @@ AUDIT LOGS (continuous)
                     ┌───────────────────────┐
                     │ VERIFICATION PACKAGE  │
                     │ - PDF Path            │
-                    │ - DALS Serial         │
+                    │ - TrueMark Number     │
                     │ - Vault TXN           │
                     │ - Swarm TXN           │
                     │ - QR Code             │
@@ -156,7 +156,7 @@ STEP 3: Mint First Certificate
       --category "Knowledge"
 
 STEP 4: Verify Certificate
-    python certificate_forge.py verify --serial "DALS..."
+    python certificate_forge.py verify --serial "TM-XXXX-XXXX-XX-XXXXX-X"
 
 STEP 5: View Output
     Open: T:\certificate generator 2x\True_Mark_Vault_System\certificates\issued\

@@ -1,11 +1,11 @@
-# Secretum Privatum — Account Holder Workspace
+# Perpetuum — Account Holder Workspace
 
 An isolated desktop application for a signed-in account holder to organize, parse, encrypt, and package knowledge and heirloom material locally. This workspace does not mint tokens, generate certificates, pin to a decentralized network, or duplicate any downstream issuance system.
 
 ## Architecture
 
 - **Tauri + Rust**: account-scoped local encryption, content hashing, and SQLite ledger operations.
-- **React + TypeScript + Vite**: Secretum ingestion timeline and package review UI.
+- **React + TypeScript + Vite**: Perpetuum ingestion timeline and package review UI.
 - **ChaCha20-Poly1305**: authenticated encryption. The output format is `12-byte nonce || ciphertext || Poly1305 tag`.
 - **SQLite**: local audit ledger with asset type and storage-provider constraints.
 - **Optional local parser**: `processor/organizer.py` extracts document structure and media metadata before encryption.

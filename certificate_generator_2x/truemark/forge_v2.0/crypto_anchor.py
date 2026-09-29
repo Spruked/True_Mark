@@ -236,11 +236,11 @@ class CryptoAnchorEngine:
             Compact blockchain metadata structure
         """
         return {
-            "dals_serial": certificate_data['dals_serial'],
+            "certificate_number": certificate_data['certificate_number'],
             "payload_hash": certificate_data['payload_hash'],
             "signature_fragment": certificate_data['ed25519_signature'][:64],
             "minted_at": certificate_data['signed_at'],
-            "verification_url": verification_url(certificate_data['dals_serial'])
+            "verification_url": verification_url(certificate_data['certificate_number'])
         }
 
 
@@ -253,7 +253,7 @@ if __name__ == "__main__":
     
     # Test payload
     test_payload = {
-        "dals_serial": "DALSTEST-12345678",
+        "certificate_number": "TM-TEST-0001-13-00001-A",
         "owner": "Test User",
         "wallet": "0xTESTADDRESS",
         "ipfs_hash": "ipfs://QmTEST12345"

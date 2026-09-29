@@ -16,7 +16,7 @@
 - Main orchestrator with CLI interface
 - Complete 7-step minting workflow
 - Command system: mint, verify, audit, stats
-- DALS serial generation with category encoding
+- TrueMark registry number generation with check character
 - Full error handling and logging
 
 ✅ **forensic_renderer.py** (550 lines)
@@ -155,7 +155,7 @@ TrueMark Forge v2.0
 │
 ├── Certificate Forge (Main Orchestrator)
 │   ├── CLI Interface (4 commands)
-│   ├── DALS Serial Generator
+│   ├── TrueMark Registry Number Generator
 │   └── Workflow Coordinator
 │
 ├── Forensic Renderer
@@ -220,7 +220,7 @@ TrueMark Forge v2.0
 ### Immediate Use (Standalone Mode)
 - ✅ Full PDF generation with forensic features
 - ✅ Ed25519 cryptographic signing
-- ✅ DALS serial generation
+- ✅ TrueMark registry number generation
 - ✅ Local vault logging (mock)
 - ✅ QR code generation
 - ✅ Complete CLI interface

@@ -28,7 +28,8 @@ True Mark Certificates are encrypted, license-bound, forensically traceable, mul
 - **K-Series — Knowledge & Expertise:** for instructors and specialists.
 - **H-Series — Heirloom & Inheritance:** for private family archives.
 - **L-Series — Legacy & Business:** for commercial systems and scalable IP.
-- **KL / HL / LL licensable variants:** expertise, heirloom/inheritance, and commercial legacy rights.
+- **HL / KL / LL / BL licensable variants:** H, K, L, and B retain their base color family; the `L` suffix records licensing and does not create a new type family.
+- **C:** Custom Contract NFT. Enterprise is an Alpha CertSig Mint licensing model, not a True Mark NFT type.
 
 ### Why True Mark?
 

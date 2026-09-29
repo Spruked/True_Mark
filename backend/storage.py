@@ -185,6 +185,21 @@ MINT_EVENT_COLUMNS = {
     "created_at": "TEXT",
 }
 
+ORB_CERTIFICATION_REQUEST_COLUMNS = {
+    "request_id": "TEXT",
+    "orb_serial_number": "TEXT",
+    "orb_product_edition": "TEXT",
+    "site_id": "TEXT",
+    "domain": "TEXT",
+    "status": "TEXT",
+    "issuance_fee_usd": "REAL",
+    "payload_json": "TEXT",
+    "timestamp_envelope_json": "TEXT",
+    "external_artifacts_json": "TEXT",
+    "created_at": "TEXT",
+    "updated_at": "TEXT",
+}
+
 
 def utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -270,6 +285,9 @@ def _ensure_indexes(connection: sqlite3.Connection) -> None:
     )
     connection.execute(
         "CREATE INDEX IF NOT EXISTS idx_mint_events_registry_components ON mint_events(node_id, region_code, registrant_code, identifier_year, identifier_sequence)"
+    )
+    connection.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_orb_certification_serial ON orb_certification_requests(orb_serial_number)"
     )
 
 
@@ -446,10 +464,29 @@ def init_db() -> None:
             )
             """
         )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS orb_certification_requests (
+                request_id TEXT PRIMARY KEY,
+                orb_serial_number TEXT NOT NULL UNIQUE,
+                orb_product_edition TEXT,
+                site_id TEXT,
+                domain TEXT,
+                status TEXT NOT NULL,
+                issuance_fee_usd REAL NOT NULL,
+                payload_json TEXT NOT NULL,
+                timestamp_envelope_json TEXT,
+                external_artifacts_json TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
         _ensure_columns(connection, "users", USER_COLUMNS)
         _ensure_columns(connection, "orders", ORDER_COLUMNS)
         _ensure_columns(connection, "payment_sessions", PAYMENT_SESSION_COLUMNS)
         _ensure_columns(connection, "mint_events", MINT_EVENT_COLUMNS)
+        _ensure_columns(connection, "orb_certification_requests", ORB_CERTIFICATION_REQUEST_COLUMNS)
         _ensure_indexes(connection)
 
 
@@ -522,6 +559,64 @@ def _public_mint_event(row: sqlite3.Row) -> Dict[str, Any]:
 
     mint_event.pop("metadata_json", None)
     return mint_event
+
+
+def _public_orb_certification_request(row: sqlite3.Row) -> Dict[str, Any]:
+    request = dict(row)
+    for column, output in (
+        ("payload_json", "payload"),
+        ("timestamp_envelope_json", "timestamp_envelope"),
+        ("external_artifacts_json", "external_artifacts"),
+    ):
+        raw = request.pop(column, None)
+        try:
+            request[output] = json.loads(raw) if raw else None
+        except json.JSONDecodeError:
+            request[output] = raw
+    return request
+
+
+def get_orb_certification_request(request_id: str) -> Dict[str, Any] | None:
+    with get_connection() as connection:
+        row = connection.execute(
+            "SELECT * FROM orb_certification_requests WHERE request_id = ?",
+            (request_id,),
+        ).fetchone()
+    return _public_orb_certification_request(row) if row else None
+
+
+def create_or_get_orb_certification_request(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Idempotently accept an ORB request; issuance is a separate action."""
+    request_id = str(payload["request_id"])
+    serial = str(payload["orb_serial_number"])
+    now = utc_now_iso()
+    with get_connection() as connection:
+        existing = connection.execute(
+            "SELECT * FROM orb_certification_requests WHERE request_id = ? OR orb_serial_number = ?",
+            (request_id, serial),
+        ).fetchone()
+        if existing:
+            return _public_orb_certification_request(existing)
+        connection.execute(
+            """INSERT INTO orb_certification_requests
+            (request_id, orb_serial_number, orb_product_edition, site_id, domain,
+             status, issuance_fee_usd, payload_json, timestamp_envelope_json,
+             external_artifacts_json, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                request_id, serial, payload.get("orb_product_edition"),
+                payload.get("site_id"), payload.get("domain"),
+                "PENDING_EXTERNAL_ISSUANCE", float(payload.get("issuance_fee_usd", 0)),
+                json.dumps(payload, sort_keys=True),
+                json.dumps(payload.get("timestamp_envelope"), sort_keys=True),
+                json.dumps(None), now, now,
+            ),
+        )
+        row = connection.execute(
+            "SELECT * FROM orb_certification_requests WHERE request_id = ?",
+            (request_id,),
+        ).fetchone()
+    return _public_orb_certification_request(row)
 
 
 def hash_password(password: str, salt: str | None = None) -> str:

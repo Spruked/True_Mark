@@ -6,7 +6,7 @@ This document freezes the revised product boundary for True Mark.
 
 ```text
 Account
-  → Secretum Privatum / Private Sanctum
+  → Perpetuum
   → Project / Object Workspace
   → Evidence Staging
   → Authentication Record
@@ -16,7 +16,7 @@ Account
   → Optional NFT / Digital Object Extension
 ```
 
-Secretum Privatum is the private, mutable preparation layer. It is not the Immutable Vault. Draft files, notes, replacement uploads, and uncommitted work belong in the Sanctum. Only committed evidence enters the append-only authoritative record.
+Perpetuum is the private, mutable preparation layer and Sanctum/archive room. It is not the Immutable Vault. Draft files, notes, replacement uploads, and uncommitted work belong in Perpetuum. Only committed evidence enters the append-only authoritative record.
 
 ## Authority boundary
 
@@ -31,7 +31,7 @@ Upload alone never creates authority. Commit is the customer-authorized action t
 ```text
 True Mark Account
   └── Identity
-       └── Secretum Privatum
+       └── Perpetuum
             ├── Projects
             ├── Temporary Evidence
             ├── Authenticated Objects
@@ -61,7 +61,7 @@ Prime Layer profiles are exactly 2, 3, 5, 7, 11, and 13 layers. Forensic depth a
 | Mint an NFT | Authenticate an Object |
 | Mint | Commit / Seal / Issue |
 | NFT | Object |
-| NFT Dashboard | My Objects / Secretum Privatum |
+| NFT Dashboard | My Objects / Perpetuum |
 | NFT Category | Object Type |
 | Mint Package | Certificate Profile |
 | Wallet Address | Optional Digital Extension Wallet |

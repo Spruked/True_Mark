@@ -3,10 +3,15 @@ Local knowledge base for the public TrueMark assistant.
 """
 
 NFT_TYPES = {
-    "K-NFT": "Knowledge NFTs for research, methods, proofs, and intellectual property records.",
-    "H-NFT": "Heirloom NFTs for family, lineage, memory, and intergenerational preservation.",
-    "L-NFT": "Legacy NFTs for institutional frameworks, operational systems, and governance records.",
-    "C-NFT": "Custom NFTs for specialized certification and tailored issuance workflows.",
+    "H": "Heirloom NFTs for family, lineage, memory, and intergenerational preservation.",
+    "K": "Knowledge NFTs for research, methods, proofs, and intellectual property records.",
+    "L": "Legacy NFTs for institutional frameworks, operational systems, and governance records.",
+    "B": "Bespoke NFTs for specialized True Mark object and certificate workflows.",
+    "HL": "Licensable Heirloom NFTs; HL keeps the H color family and adds licensing.",
+    "KL": "Licensable Knowledge NFTs; KL keeps the K color family and adds licensing.",
+    "LL": "Licensable Legacy NFTs; LL keeps the L color family and adds licensing.",
+    "BL": "Licensable Bespoke NFTs; BL keeps the B color family and adds licensing.",
+    "C": "Custom Contract NFTs for specialized contract-based issuance workflows.",
 }
 
 COMMON_TOPICS = {

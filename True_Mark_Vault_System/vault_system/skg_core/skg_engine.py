@@ -61,10 +61,10 @@ class SwarmKnowledgeGraphEngine:
         
         # Create certificate node (immutable anchor point)
         cert_node = SKGNode(
-            node_id=f"cert:{certificate_data['dals_serial']}",
+            node_id=f"cert:{certificate_data['certificate_number']}",
             node_type=SKGNodeType.CERTIFICATE,
             properties={
-                "dals_serial": certificate_data['dals_serial'],
+                "certificate_number": certificate_data['certificate_number'],
                 "asset_title": certificate_data.get('asset_title', 'Unknown'),
                 "ipfs_hash": certificate_data.get('ipfs_hash', ''),
                 "minted_at": certificate_data.get('stardate', datetime.utcnow().isoformat() + "Z"),
@@ -236,17 +236,17 @@ class SwarmKnowledgeGraphEngine:
             "vault_statistics": self.serializer.get_vault_statistics()
         }
     
-    def get_certificate_details(self, dals_serial: str) -> Optional[Dict]:
+    def get_certificate_details(self, certificate_number: str) -> Optional[Dict]:
         """
         Get complete details for a specific certificate.
         
         Args:
-            dals_serial: DALS serial number
+            certificate_number: TrueMark certificate number
             
         Returns:
             Certificate details or None if not found
         """
-        cert_node_id = f"cert:{dals_serial}"
+        cert_node_id = f"cert:{certificate_number}"
         cert_node = self.nodes.get(cert_node_id)
         
         if not cert_node:

@@ -17,7 +17,7 @@ from layer_profiles import ALLOWED_LAYER_COUNTS, get_layer_profile
 from registry import verification_url as registry_verification_url
 
 try:
-    from forensic_renderer import ForensicCertificateRenderer
+    from forensic_renderer import ForensicCertificateRenderer, NFT_COLOR_PROFILES
     from crypto_anchor import CryptoAnchorEngine
     from integration_bridge import VaultFusionBridge
     from crypto_vault import ChaChaVault
@@ -84,9 +84,9 @@ class TrueMarkForge:
         print("⚙️  MINTING CERTIFICATE")
         print("=" * 70)
 
-        print("1️⃣  Generating DALS serial...")
-        dals_serial = self._generate_dals_serial(metadata.get("kep_category", "Knowledge"))
-        print(f"    ✅ Serial: {dals_serial}")
+        print("1️⃣  Generating TrueMark certificate number...")
+        certificate_number = self._generate_certificate_number()
+        print(f"    ✅ Certificate number: {certificate_number}")
 
         print("2️⃣  Creating cryptographic payload...")
         layer_count = get_layer_profile(metadata.get("layer_count", 13))["layer_count"]
@@ -103,12 +103,13 @@ class TrueMarkForge:
         ).hexdigest()
 
         payload = {
-            "dals_serial": dals_serial,
+            "certificate_number": certificate_number,
             "owner": metadata["owner_name"],
             "wallet": metadata["wallet_address"],
             "ipfs_hash": metadata["ipfs_hash"],
             **self._iss_evidence(),
             "kep_category": metadata.get("kep_category", "Knowledge"),
+            "nft_type": metadata.get("nft_type"),
             "chain_id": metadata.get("chain_id", "Polygon"),
             "asset_title": metadata["asset_title"],
             "security_profile": f"TM-FSP-{layer_count}",
@@ -116,6 +117,14 @@ class TrueMarkForge:
             "security_manifest_hash": security_manifest_hash,
             "renderer_version": "TM-CERT-RENDERER-2.1",
             "nft_backed": bool(metadata.get("nft_backed")),
+            "nft_color_profile": (
+                NFT_COLOR_PROFILES.get(
+                    str(metadata.get("nft_type") or metadata.get("kep_category", "Knowledge")).lower(),
+                    NFT_COLOR_PROFILES["knowledge"],
+                )["id"]
+                if metadata.get("nft_backed")
+                else None
+            ),
         }
         print(f"    ✅ Payload created ({len(json.dumps(payload))} bytes)")
 
@@ -149,12 +158,13 @@ class TrueMarkForge:
                 "name": metadata["asset_title"],
                 "description": "True Mark forensic certificate image.",
                 "image": metadata.get("nft_image_uri", "ipfs://PENDING"),
-                "external_url": registry_verification_url(dals_serial),
+                "external_url": registry_verification_url(certificate_number),
                 "attributes": [
                     {"trait_type": "Forensic Security Profile", "value": payload["security_profile"]},
                     {"trait_type": "Security Profile Version", "value": f"{payload['security_profile']}/{payload['security_profile_version']}"},
                     {"trait_type": "Verification Status", "value": "Valid"},
-                    {"trait_type": "True Mark Verification ID", "value": dals_serial},
+                    {"trait_type": "True Mark Verification ID", "value": certificate_number},
+                    {"trait_type": "NFT Color Profile", "value": payload["nft_color_profile"]},
                 ],
                 "true_mark": {
                     "certificate_hash": signature_bundle["payload_hash"],
@@ -170,7 +180,7 @@ class TrueMarkForge:
             nft_metadata["true_mark"]["nft_metadata_hash"] = hashlib.sha256(
                 metadata_hash_input.encode("utf-8")
             ).hexdigest()
-            nft_metadata_path = self.vault.certificates_path / f"{dals_serial}_nft_metadata.json"
+            nft_metadata_path = self.vault.certificates_path / f"{certificate_number}_nft_metadata.json"
             with open(nft_metadata_path, "w", encoding="utf-8") as handle:
                 json.dump(nft_metadata, handle, indent=2)
             artifact_paths["nft_metadata"] = nft_metadata_path
@@ -180,7 +190,7 @@ class TrueMarkForge:
         encryption_package = None
         if metadata.get("encrypt_artifacts"):
             print("4.5️⃣ Encrypting PDF for off-chain storage...")
-            associated_data = dals_serial.encode("utf-8")
+            associated_data = certificate_number.encode("utf-8")
             vault = ChaChaVault()
             encrypted_path = pdf_path.with_suffix(".encrypted.json")
             vault.encrypt_file_to_json(pdf_path, encrypted_path, associated_data=associated_data)
@@ -188,14 +198,14 @@ class TrueMarkForge:
                 "encrypted_file": str(encrypted_path),
                 "algorithm": vault.algorithm,
                 "key_hex": vault.export_key_hex(),
-                "associated_data": dals_serial,
+                "associated_data": certificate_number,
             }
             print(f"    ✅ Encrypted package: {encrypted_path}")
 
         print("5️⃣  Recording to vault...")
         vault_txn = await self.vault.record_certificate_issuance(
             worker_id="certificate_forge_worker_001",
-            dals_serial=dals_serial,
+            certificate_number=certificate_number,
             pdf_path=pdf_path,
             payload=payload,
             signature=signature_bundle["ed25519_signature"],
@@ -209,7 +219,7 @@ class TrueMarkForge:
             try:
                 skg_payload = await self.skg_bridge.on_certificate_minted(
                     certificate_data={
-                        "dals_serial": dals_serial,
+                        "certificate_number": certificate_number,
                         "owner_wallet": metadata["wallet_address"],
                         "owner_name": metadata["owner_name"],
                         "ipfs_hash": metadata["ipfs_hash"],
@@ -227,7 +237,7 @@ class TrueMarkForge:
 
         print("7️⃣  Broadcasting to swarm...")
         swarm_payload = {
-            "dals_serial": dals_serial,
+            "certificate_number": certificate_number,
             "event_type": "CERTIFICATE_MINTED",
             "payload_hash": signature_bundle["payload_hash"],
             "signature_id": signature_bundle["sig_id"],
@@ -245,13 +255,13 @@ class TrueMarkForge:
         print(f"    ✅ Swarm TXN: {swarm_txn}")
 
         print("8️⃣  Generating verification QR code...")
-        qr_code_path = self.renderer.generate_verification_qr(dals_serial)
+        qr_code_path = self.renderer.generate_verification_qr(certificate_number)
         print(f"    ✅ QR Code: {qr_code_path}")
 
-        verification_url = registry_verification_url(dals_serial)
+        verification_url = registry_verification_url(certificate_number)
         result = {
             "certificate_pdf": str(pdf_path),
-            "dals_serial": dals_serial,
+            "certificate_number": certificate_number,
             "vault_transaction_id": vault_txn,
             "swarm_broadcast_id": swarm_txn,
             "verification_url": verification_url,
@@ -264,7 +274,7 @@ class TrueMarkForge:
             "security_manifest_hash": payload["security_manifest_hash"],
             "renderer_version": payload["renderer_version"],
             "verification_status": "VALID",
-            "true_mark_verification_id": dals_serial,
+            "true_mark_verification_id": certificate_number,
             "nft_backed": bool(metadata.get("nft_backed")),
             "minted_at": datetime.utcnow().isoformat() + "Z",
         }
@@ -281,7 +291,7 @@ class TrueMarkForge:
             result["skg_transaction_id"] = skg_payload["skg_transaction_id"]
             result["drift_score"] = skg_payload["drift_score"]
 
-        result_path = self.vault.certificates_path / f"{dals_serial}_result.json"
+        result_path = self.vault.certificates_path / f"{certificate_number}_result.json"
         with open(result_path, "w", encoding="utf-8") as handle:
             json.dump(result, handle, indent=2)
 
@@ -317,15 +327,18 @@ class TrueMarkForge:
             records[artifact_type] = record
         return records
 
-    def _generate_dals_serial(self, category: str) -> str:
-        category_code = {
-            "Knowledge": "K",
-            "Asset": "A",
-            "Identity": "I",
-        }.get(category, "X")
-        timestamp = datetime.utcnow().strftime("%Y%m%d")
-        unique = uuid.uuid4().hex[:8].upper()
-        return f"DALS{category_code}M{timestamp}-{unique}"
+    @staticmethod
+    def _generate_certificate_number() -> str:
+        """Allocate a TrueMark registry number with a check character.
+
+        Format: TM-XXXX-XXXX-XX-XXXXX-X
+        The final character is calculated from the fifteen-character registry
+        body so a registry can reject malformed or mistyped identifiers.
+        """
+        alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        body = uuid.uuid4().hex[:15].upper()
+        check = alphabet[sum(alphabet.index(character) for character in body) % len(alphabet)]
+        return f"TM-{body[:4]}-{body[4:8]}-{body[8:10]}-{body[10:15]}-{check}"
 
     def _iss_evidence(self) -> Dict[str, object]:
         """Attach the official ISS timestamp envelope to the signed payload."""
@@ -354,10 +367,10 @@ class TrueMarkForge:
     def _calculate_stardate(self) -> str:
         return datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
 
-    async def verify_certificate(self, dals_serial: str) -> Dict:
-        print(f"🔍 Verifying certificate: {dals_serial}")
+    async def verify_certificate(self, certificate_number: str) -> Dict:
+        print(f"🔍 Verifying certificate: {certificate_number}")
         print("=" * 70)
-        verification = await self.vault.verify_certificate_integrity(dals_serial)
+        verification = await self.vault.verify_certificate_integrity(certificate_number)
         if verification["valid"]:
             print("✅ CERTIFICATE VALID")
             print(f"   Minted: {verification['minted_at']}")
@@ -369,9 +382,9 @@ class TrueMarkForge:
         print("=" * 70)
         return verification
 
-    async def get_certificate_audit_trail(self, dals_serial: str) -> list:
-        print(f"📋 Retrieving audit trail: {dals_serial}")
-        audit_trail = await self.vault.get_certificate_audit_trail(dals_serial)
+    async def get_certificate_audit_trail(self, certificate_number: str) -> list:
+        print(f"📋 Retrieving audit trail: {certificate_number}")
+        audit_trail = await self.vault.get_certificate_audit_trail(certificate_number)
         print(f"   Found {len(audit_trail)} events")
         for index, event in enumerate(audit_trail, start=1):
             event_type = event.get("event", {}).get("event_type", "Unknown")
@@ -427,6 +440,17 @@ async def main() -> None:
     )
     mint_parser.add_argument("--chain", default="Polygon", help="Blockchain ID")
     mint_parser.add_argument(
+        "--officer",
+        default="Bryan A Spruk, President and CEO",
+        help="Authorized officer printed on the certificate",
+    )
+    mint_parser.add_argument(
+        "--nft-type",
+        default=None,
+        choices=["H", "K", "L", "B", "HL", "KL", "LL", "BL", "C"],
+        help="NFT type used for deterministic color coding",
+    )
+    mint_parser.add_argument(
         "--encrypt",
         action="store_true",
         help="Encrypt the rendered certificate before storage handoff",
@@ -454,10 +478,10 @@ async def main() -> None:
     mint_parser.add_argument("--nft-token-id", default=None, help="Confirmed NFT token ID, when available")
 
     verify_parser = subparsers.add_parser("verify", help="Verify a certificate")
-    verify_parser.add_argument("--serial", required=True, help="DALS serial number")
+    verify_parser.add_argument("--serial", required=True, help="TrueMark certificate number")
 
     audit_parser = subparsers.add_parser("audit", help="Get certificate audit trail")
-    audit_parser.add_argument("--serial", required=True, help="DALS serial number")
+    audit_parser.add_argument("--serial", required=True, help="TrueMark certificate number")
 
     subparsers.add_parser("stats", help="Get forge statistics")
 
@@ -478,6 +502,8 @@ async def main() -> None:
             "ipfs_hash": args.ipfs,
             "kep_category": args.category,
             "chain_id": args.chain,
+            "officer": args.officer,
+            "nft_type": args.nft_type,
             "encrypt_artifacts": args.encrypt,
             "layer_count": args.layer_count,
             "frame_id": args.frame_id,
@@ -489,7 +515,7 @@ async def main() -> None:
         print("📊 MINTING RESULT")
         print("=" * 70)
         print(f"📄 PDF:        {result['certificate_pdf']}")
-        print(f"🏷️  Serial:     {result['dals_serial']}")
+        print(f"🏷️  Certificate: {result['certificate_number']}")
         print(f"🔒 Vault TXN:  {result['vault_transaction_id']}")
         print(f"🐝 Swarm TXN:  {result['swarm_broadcast_id']}")
         print(f"🔗 Verify URL: {result['verification_url']}")

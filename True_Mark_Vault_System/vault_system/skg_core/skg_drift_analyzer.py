@@ -170,9 +170,9 @@ class SKGDriftAnalyzer:
             if len(cid_part) < 40:  # Minimum CID length
                 drift_score += 0.1
         
-        # Check 2: DALS serial format
-        dals_serial = cert_node.properties.get('dals_serial', '')
-        if not dals_serial or not dals_serial.startswith('DALS'):
+        # Check 2: TrueMark registry number format
+        certificate_number = cert_node.properties.get('certificate_number', '')
+        if not certificate_number or not certificate_number.startswith('TM-'):
             drift_score += 0.2
         
         # Check 3: Asset title presence

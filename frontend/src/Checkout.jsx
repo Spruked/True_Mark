@@ -169,7 +169,7 @@ export default function Checkout() {
 
       try {
         const response = await axios.post(`${API_BASE}/quote`, {
-          nft_type: checkoutDraft.nft_type || "K-NFT",
+          nft_type: checkoutDraft.nft_type || "K",
           package_tier: selections.package_tier,
           encryption: selections.encryption,
           chain: selections.chain,
@@ -250,6 +250,7 @@ export default function Checkout() {
       data.append("chain", selections.chain);
       data.append("quantity", String(selections.quantity));
       data.append("payment_method", paymentMethod);
+      data.append("frame_id", checkoutDraft.frame_id || "frame-01-engraved-single-line");
 
       const response = await axios.post(`${API_BASE}/payments/process`, data);
       setPaymentSession(response.data);

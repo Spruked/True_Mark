@@ -198,7 +198,7 @@ Write-Host "   # Get forge statistics:" -ForegroundColor White
 Write-Host "   python certificate_forge.py stats" -ForegroundColor Gray
 Write-Host ""
 Write-Host "   # Verify a certificate:" -ForegroundColor White
-Write-Host '   python certificate_forge.py verify --serial "DALSKM20251210-12345678"' -ForegroundColor Gray
+Write-Host '   python certificate_forge.py verify --serial "TM-AB12-34CD-EF-56789-X"' -ForegroundColor Gray
 Write-Host ""
 
 Write-Host "📖 Documentation: README.md" -ForegroundColor Cyan

@@ -29,7 +29,7 @@ function App() {
           <Paper sx={{ ...styles.panel, p: { xs: 3, md: 4 }, borderTop: `4px solid ${colors.gold}` }}>
             <Typography variant="overline" sx={{ color: colors.gold, letterSpacing: 1.8 }}>THE AUTHORITY BOUNDARY</Typography>
             <Typography variant="h4" sx={{ fontWeight: 800, mt: 1 }}>Draft privately. Commit deliberately.</Typography>
-            <Typography sx={{ color: colors.mutedText, lineHeight: 1.75, mt: 1.5 }}>Secretum Privatum is your mutable preparation space. Nothing becomes authoritative until you review the evidence and authorize Commit.</Typography>
+            <Typography sx={{ color: colors.mutedText, lineHeight: 1.75, mt: 1.5 }}>Perpetuum is your private, mutable preparation space. Nothing becomes authoritative until you review the evidence and authorize Commit.</Typography>
             <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 2 }}>{["Working Copy", "Ready for Review", "Commit", "Sealed"].map((label, index) => <Chip key={label} label={`${index + 1} · ${label}`} size="small" sx={{ color: index === 0 ? colors.gold : colors.mutedText, borderColor: colors.border, background: "transparent" }} variant="outlined" />)}</Stack>
           </Paper>
         </Grid>
@@ -37,7 +37,7 @@ function App() {
 
       <Paper sx={{ ...styles.panel, p: { xs: 2.5, md: 4 }, mb: 4 }}>
         <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" spacing={2} sx={{ mb: 3 }}>
-          <Box><Typography variant="overline" sx={{ color: colors.mutedText, letterSpacing: 1.6 }}>PRIVATE WORKSPACE</Typography><Typography variant="h4" sx={{ fontWeight: 800, mt: 0.5 }}>Secretum Privatum</Typography></Box>
+          <Box><Typography variant="overline" sx={{ color: colors.mutedText, letterSpacing: 1.6 }}>PRIVATE WORKSPACE</Typography><Typography variant="h4" sx={{ fontWeight: 800, mt: 0.5 }}>Perpetuum</Typography></Box>
           <Button component={RouterLink} to="/sanctum" variant="outlined" sx={styles.secondaryButton}>Open My Sanctum</Button>
         </Stack>
         <Typography sx={{ color: colors.mutedText, maxWidth: 820, lineHeight: 1.75 }}>Prepare evidence, organize provenance, upload supporting material, and build the record privately before anything becomes authoritative. Every object type belongs in the same governed workflow.</Typography>

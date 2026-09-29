@@ -2,12 +2,12 @@
 
 ## Product boundary
 
-True Mark authenticates objects and preserves evidence before offering certificates or optional digital extensions. Secretum Privatum is the private preparation layer. The Immutable Vault is the authoritative record.
+True Mark authenticates objects and preserves evidence before offering certificates or optional digital extensions. Perpetuum is the private preparation layer and archive room. The Immutable Vault is the authoritative record.
 
 ## Customer procedure
 
 1. Create or access an account.
-2. Enter Secretum Privatum.
+2. Enter Perpetuum.
 3. Create an Object Project.
 4. Stage evidence, provenance, ownership information, images, documents, and notes.
 5. Move the project to **Ready for Review**.

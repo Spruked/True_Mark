@@ -2,7 +2,7 @@
 """
 TrueMark Vault & Swarm Integration Bridge.
 
-DALS tool principle:
+    TrueMark execution-surface principle:
 This bridge is an execution surface only. It has no cognition, identity,
 or decision rights and operates solely through delegated authority.
 """
@@ -114,7 +114,7 @@ class VaultFusionBridge:
     async def record_certificate_issuance(
         self,
         worker_id: str,
-        dals_serial: str,
+        certificate_number: str,
         pdf_path: Path,
         payload: Dict,
         signature: str,
@@ -125,7 +125,7 @@ class VaultFusionBridge:
         
         Args:
             worker_id: Worker identifier (e.g., certificate_forge_worker_001)
-            dals_serial: DALS serial number
+            certificate_number: TrueMark certificate number
             pdf_path: Path to generated PDF
             payload: Certificate payload data
             signature: Ed25519 signature
@@ -138,7 +138,7 @@ class VaultFusionBridge:
         event_record = {
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "event_type": "CERTIFICATE_MINTED",
-            "dals_serial": dals_serial,
+            "certificate_number": certificate_number,
             "worker_id": worker_id,
             "payload_hash": payload.get('payload_hash', hashlib.sha256(json.dumps(payload).encode()).hexdigest()),
             "signature_fragment": signature[:32] + "..." if len(signature) > 32 else signature,
@@ -150,29 +150,29 @@ class VaultFusionBridge:
         self.vault_writer.record_event(
             worker_id=worker_id,
             event_data=event_record,
-            pattern={"certificate": "minted", "serial": dals_serial},
-            skg_update={"asset_registry": dals_serial}
+            pattern={"certificate": "minted", "serial": certificate_number},
+            skg_update={"asset_registry": certificate_number}
         )
         
         # Create certificate summary file
         summary = {
-            "dals_serial": dals_serial,
+            "certificate_number": certificate_number,
             "minted_at": datetime.utcnow().isoformat() + "Z",
             "pdf_path": str(pdf_path),
             "payload": payload,
-            "verification_url": verification_url(dals_serial),
+            "verification_url": verification_url(certificate_number),
             "vault_integrity_hash": self._calculate_vault_hash(),
             "worker_id": worker_id,
             "signature": signature,
             "encryption_package": encryption_package,
         }
         
-        summary_path = self.certificates_path / f"{dals_serial}_summary.json"
+        summary_path = self.certificates_path / f"{certificate_number}_summary.json"
         with open(summary_path, "w") as f:
             json.dump(summary, f, indent=2)
         
         # Generate transaction ID
-        txn_id = f"VAULT_TXN_{dals_serial}_{int(datetime.utcnow().timestamp() * 1000)}"
+        txn_id = f"VAULT_TXN_{certificate_number}_{int(datetime.utcnow().timestamp() * 1000)}"
         
         print(f"✅ Vault record created: {txn_id}")
         print(f"   Event log: {self.vault_writer.events_path / f'{worker_id}_events.jsonl'}")
@@ -200,7 +200,7 @@ class VaultFusionBridge:
             "update_worker_skgs": True,
             "priority": "high",
             "broadcast_id": hashlib.sha256(
-                f"{certificate_data.get('dals_serial', 'unknown')}:{datetime.utcnow().timestamp()}".encode()
+                f"{certificate_data.get('certificate_number', 'unknown')}:{datetime.utcnow().timestamp()}".encode()
             ).hexdigest()[:16].upper()
         }
         
@@ -211,7 +211,7 @@ class VaultFusionBridge:
             routing_key="certificates.new"
         )
         
-        swarm_txn_id = f"SWARM_TXN_{certificate_data.get('dals_serial', 'UNKNOWN')}_{int(datetime.utcnow().timestamp())}"
+        swarm_txn_id = f"SWARM_TXN_{certificate_data.get('certificate_number', 'UNKNOWN')}_{int(datetime.utcnow().timestamp())}"
         
         print(f"✅ Swarm broadcast queued: {swarm_txn_id}")
         
@@ -229,23 +229,23 @@ class VaultFusionBridge:
         
         return hashlib.sha256(vault_state.encode()).hexdigest()[:16]
     
-    async def verify_certificate_integrity(self, dals_serial: str) -> Dict:
+    async def verify_certificate_integrity(self, certificate_number: str) -> Dict:
         """
         Verify certificate integrity against vault records.
         
         Args:
-            dals_serial: DALS serial number to verify
+            certificate_number: TrueMark certificate number to verify
             
         Returns:
             Verification result dictionary
         """
-        summary_path = self.certificates_path / f"{dals_serial}_summary.json"
+        summary_path = self.certificates_path / f"{certificate_number}_summary.json"
         
         if not summary_path.exists():
             return {
                 "valid": False,
                 "error": "Certificate not found in vault",
-                "dals_serial": dals_serial
+                "certificate_number": certificate_number
             }
         
         with open(summary_path, "r") as f:
@@ -260,7 +260,7 @@ class VaultFusionBridge:
         
         return {
             "valid": True,
-            "dals_serial": dals_serial,
+            "certificate_number": certificate_number,
             "minted_at": summary['minted_at'],
             "pdf_exists": pdf_exists,
             "pdf_path": summary['pdf_path'],
@@ -270,12 +270,12 @@ class VaultFusionBridge:
             "signature": summary.get('signature', 'N/A')[:32] + "..."
         }
     
-    async def get_certificate_audit_trail(self, dals_serial: str) -> List[Dict]:
+    async def get_certificate_audit_trail(self, certificate_number: str) -> List[Dict]:
         """
         Retrieve complete audit trail for a certificate.
         
         Args:
-            dals_serial: DALS serial number
+            certificate_number: TrueMark certificate number
             
         Returns:
             List of audit events
@@ -288,7 +288,7 @@ class VaultFusionBridge:
                 for line in f:
                     try:
                         event = json.loads(line)
-                        if event.get('event', {}).get('dals_serial') == dals_serial:
+                        if event.get('event', {}).get('certificate_number') == certificate_number:
                             audit_trail.append(event)
                     except:
                         continue
@@ -340,9 +340,9 @@ if __name__ == "__main__":
     bridge = VaultFusionBridge(vault_path, use_mock=True)
     
     # Test data
-    test_serial = f"DALSTEST-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+    test_serial = "TM-TEST-0001-13-00001-A"
     test_payload = {
-        "dals_serial": test_serial,
+        "certificate_number": test_serial,
         "owner": "Test User",
         "wallet": "0xTEST123",
         "payload_hash": hashlib.sha256(b"test").hexdigest()
@@ -354,7 +354,7 @@ if __name__ == "__main__":
         print("\n📝 Test 1: Record certificate issuance...")
         vault_txn = await bridge.record_certificate_issuance(
             worker_id="certificate_forge_worker_001",
-            dals_serial=test_serial,
+            certificate_number=test_serial,
             pdf_path=test_pdf_path,
             payload=test_payload,
             signature="a" * 128
@@ -363,7 +363,7 @@ if __name__ == "__main__":
         
         print("\n🐝 Test 2: Broadcast to swarm...")
         swarm_txn = await bridge.broadcast_to_swarm({
-            "dals_serial": test_serial,
+            "certificate_number": test_serial,
             "event_type": "CERTIFICATE_MINTED"
         })
         print(f"   Swarm TXN: {swarm_txn}")

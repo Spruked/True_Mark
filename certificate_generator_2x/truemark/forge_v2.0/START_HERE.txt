@@ -129,10 +129,10 @@ SWARM NETWORK
 python certificate_forge.py mint --owner "Name" --wallet "0x..." --title "Title" --ipfs "ipfs://..." --category "Knowledge"
 
 # Verify certificate
-python certificate_forge.py verify --serial "DALSKM20251210-12345678"
+python certificate_forge.py verify --serial "TM-AB12-34CD-EF-56789-X"
 
 # Get audit trail
-python certificate_forge.py audit --serial "DALSKM20251210-12345678"
+python certificate_forge.py audit --serial "TM-AB12-34CD-EF-56789-X"
 
 # Get statistics
 python certificate_forge.py stats

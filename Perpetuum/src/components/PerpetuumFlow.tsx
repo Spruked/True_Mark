@@ -21,7 +21,7 @@ function iconFor(block: AssetBlock) {
   return <FileArchive size={18} />;
 }
 
-export function SecretumFlow() {
+export function PerpetuumFlow() {
   const [blocks, setBlocks] = useState(initialBlocks);
   const [dragging, setDragging] = useState(false);
   const [notice, setNotice] = useState("Drop a source file to build an ingestion block.");
@@ -57,7 +57,7 @@ export function SecretumFlow() {
 
   return <section className="flow-layout">
     <div className="panel ingest-panel">
-      <div className="section-heading"><div><div className="eyebrow accent">01 / INGESTION LEDGER</div><h3>Secretum Flow</h3></div><span className="counter">{blocks.length.toString().padStart(2, "0")} BLOCKS</span></div>
+      <div className="section-heading"><div><div className="eyebrow accent">01 / INGESTION LEDGER</div><h3>Perpetuum Flow</h3></div><span className="counter">{blocks.length.toString().padStart(2, "0")} BLOCKS</span></div>
       <p className="muted">Map syntax, chapters, timeline markers, and media metadata before the asset is sealed.</p>
       <label className={dragging ? "drop-zone dragging" : "drop-zone"} onDragOver={(event) => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={handleDrop}>
         <UploadCloud size={30} /><strong>DRAG SOURCE MATERIAL HERE</strong><span>PDF, text, image, video, or archive</span><input type="file" multiple onChange={handleInput} />

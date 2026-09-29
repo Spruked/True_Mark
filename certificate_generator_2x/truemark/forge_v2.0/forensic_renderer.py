@@ -6,9 +6,10 @@ Anti-AI forensic markers + micro-artifacts for authenticity
 """
 
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.pagesizes import letter, landscape
 from reportlab.lib.units import inch
 from reportlab.lib.colors import HexColor, Color
+from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import Paragraph
@@ -25,7 +26,7 @@ from io import BytesIO
 import io
 import sys
 
-from path_config import get_templates_path, get_fonts_path, ensure_temp_vault_dir
+from path_config import get_repo_root, get_templates_path, get_fonts_path, ensure_temp_vault_dir
 from registry import verification_url
 from layer_profiles import get_layer_profile
 
@@ -34,6 +35,18 @@ try:
 except ModuleNotFoundError:
     sys.path.insert(0, str(get_templates_path()))
     from frame_catalog import get_frame, get_frame_asset_path
+
+
+NFT_COLOR_PROFILES = {
+    "knowledge": {"id": "TM-NFT-KNOWLEDGE-BLUE", "label": "Knowledge / Blue-Teal"},
+    "asset": {"id": "TM-NFT-ASSET-AMBER", "label": "Asset / Gold-Amber"},
+    "identity": {"id": "TM-NFT-IDENTITY-VIOLET", "label": "Identity / Violet"},
+    "k": {"id": "TM-NFT-KNOWLEDGE-BLUE", "label": "Knowledge / Blue-Teal"},
+    "h": {"id": "TM-NFT-HEIRLOOM-GREEN", "label": "Heirloom / Emerald"},
+    "l": {"id": "TM-NFT-LEGACY-VIOLET", "label": "Legacy / Violet"},
+    "b": {"id": "TM-NFT-BLUE-GOLD", "label": "Bespoke / Blue-Gold"},
+    "c": {"id": "TM-NFT-CUSTOM-AMBER", "label": "Custom / Gold-Amber"},
+}
 
 
 class ForensicCertificateRenderer:
@@ -47,6 +60,9 @@ class ForensicCertificateRenderer:
         self.frame_id = frame_id
         self.last_artifacts: Dict[str, Path] = {}
         self.font_dir = get_fonts_path()
+        # These are the approved TrueMark brand assets used by the product UI.
+        # Template-local artwork remains available only as a compatibility fallback.
+        self.brand_assets_path = get_repo_root() / "frontend" / "assets"
         
         # Initialize fonts with fallbacks
         self._load_forensic_fonts()
@@ -57,8 +73,68 @@ class ForensicCertificateRenderer:
             'gold': HexColor("#DAA520"),
             'dark_slate': HexColor("#2F4F4F"),
             'brown': HexColor("#8B4513"),
-            'parchment': HexColor("#F5F5DC")
+            'parchment': HexColor("#F5F5DC"),
+            'watermark': HexColor("#6B8E23"),
         }
+
+    def _resolve_nft_colors(self, data: Dict) -> Dict[str, Color]:
+        """Return the governed visual palette for an NFT-backed certificate."""
+        base = {
+            'primary_blue': HexColor("#0F2E74"),
+            'gold': HexColor("#DAA520"),
+            'dark_slate': HexColor("#2F4F4F"),
+            'brown': HexColor("#8B4513"),
+            'parchment': HexColor("#F5F5DC"),
+            'watermark': HexColor("#6B8E23"),
+        }
+        if not data.get("nft_backed"):
+            return base
+
+        palettes = {
+            "knowledge": {
+                "primary_blue": "#155E9A",
+                "gold": "#1B9AAA",
+                "dark_slate": "#16425B",
+                "brown": "#155E75",
+                "parchment": "#F1FAFC",
+                "watermark": "#147D92",
+            },
+            "asset": {
+                "primary_blue": "#7A4E00",
+                "gold": "#C58A12",
+                "dark_slate": "#4A3410",
+                "brown": "#7A3E00",
+                "parchment": "#FFF8E6",
+                "watermark": "#A66A00",
+            },
+            "identity": {
+                "primary_blue": "#542A78",
+                "gold": "#A979D1",
+                "dark_slate": "#38204F",
+                "brown": "#542A78",
+                "parchment": "#FAF3FF",
+                "watermark": "#7541A3",
+            },
+            "heirloom": {
+                "primary_blue": "#166534",
+                "gold": "#2F9E68",
+                "dark_slate": "#174B32",
+                "brown": "#166534",
+                "parchment": "#F1FBF4",
+                "watermark": "#21864B",
+            },
+        }
+        type_palette = {
+            "k": "knowledge", "kl": "knowledge",
+            "h": "heirloom", "hl": "heirloom",
+            "l": "identity", "ll": "identity",
+            "b": "asset", "bl": "asset",
+            "c": "asset",
+        }
+        requested_type = str(data.get("nft_type", "")).lower().replace("-nft", "")
+        palette_key = type_palette.get(requested_type, str(data.get("kep_category", "Knowledge")).lower())
+        selected = palettes.get(palette_key, palettes["knowledge"])
+        return {name: HexColor(value) for name, value in selected.items()}
     
     def _load_forensic_fonts(self):
         """Load fonts with embedded forensic markers (fallback to built-ins)."""
@@ -100,23 +176,25 @@ class ForensicCertificateRenderer:
         Creates 300 DPI forensic PDF with anti-AI micro-artifacts.
         
         Args:
-            data: Certificate data including DALS serial, owner, signatures, etc.
+            data: Certificate data including the TrueMark certificate number, owner, signatures, etc.
             output_dir: Directory to save the PDF
             
         Returns:
             Path to generated PDF
         """
-        output_path = output_dir / f"{data['dals_serial']}_OFFICIAL.pdf"
+        certificate_number = data["certificate_number"]
+        output_path = output_dir / f"{certificate_number}_OFFICIAL.pdf"
         output_path.parent.mkdir(parents=True, exist_ok=True)
         
         selected_frame = get_frame(data.get("frame_id", self.frame_id))
         layer_profile = get_layer_profile(data.get("layer_count", 13))
         data["layer_profile"] = layer_profile
-        c = canvas.Canvas(str(output_path), pagesize=letter)
-        c.setTitle(f"TrueMark Certificate {data['dals_serial']}")
+        self.colors = self._resolve_nft_colors(data)
+        c = canvas.Canvas(str(output_path), pagesize=landscape(letter))
+        c.setTitle(f"TrueMark Certificate {certificate_number}")
         c.setAuthor("TrueMark Forge v2.0")
         c.setSubject(
-            f"Official Certificate of Authenticity - {data['dals_serial']} - "
+            f"Official Certificate of Authenticity - {certificate_number} - "
             f"{selected_frame['frame_id']}"
         )
         
@@ -129,16 +207,28 @@ class ForensicCertificateRenderer:
             self._draw_public_security_metadata(c, data, layer_profile)
         if "frame" in layer_ids:
             self._draw_guilloche_border(c, selected_frame["frame_id"])
-        if "watermark" in layer_ids:
-            self._draw_watermark(c, opacity=0.12, rotation_variation=True)
+        self._draw_corner_serials(c, certificate_number)
+        # The Tree of Life watermark is mandatory brand signature treatment on
+        # every NFT-backed certificate, independent of the forensic depth.
+        if "watermark" in layer_ids or data.get("nft_backed"):
+            watermark_opacity = 0.28 if data.get("nft_backed") else 0.12
+            self._draw_watermark(
+                c,
+                opacity=watermark_opacity,
+                rotation_variation=True,
+                tint_nft=bool(data.get("nft_backed")),
+            )
         if "timestamp" in layer_ids:
             self._draw_timestamp_block(c, data)
         if "seal" in layer_ids:
-            self._draw_embossed_seal(c, data['dals_serial'])
+            self._draw_embossed_seal(c, certificate_number)
         if "verification_qr" in layer_ids:
-            self._draw_verification_qr(c, data['dals_serial'])
+            self._draw_verification_qr(c, certificate_number)
         if "signature" in layer_ids:
-            self._draw_officer_signature(c, officer=data.get("officer", "Authorized Officer"))
+            self._draw_officer_signature(
+                c,
+                officer=data.get("officer", "Bryan A Spruk, President and CEO"),
+            )
         if "micro_pattern" in layer_ids:
             self._draw_micro_pattern(c)
         if "micro_noise" in layer_ids:
@@ -191,7 +281,7 @@ class ForensicCertificateRenderer:
     
     def _draw_parchment_base(self, c: canvas.Canvas):
         """Real scanned parchment or procedurally generated texture."""
-        w, h = letter
+        w, h = landscape(letter)
         
         parchment_file = self.template_path / "parchment_base_600dpi.jpg"
         
@@ -216,7 +306,7 @@ class ForensicCertificateRenderer:
     
     def _draw_guilloche_border(self, c: canvas.Canvas, frame_id: Optional[str] = None):
         """Draw the selected governed SVG frame, with a safe fallback."""
-        w, h = letter
+        w, h = landscape(letter)
 
         guilloche_file = get_frame_asset_path(self.template_path, frame_id)
         
@@ -238,7 +328,7 @@ class ForensicCertificateRenderer:
 
     def _draw_simple_border(self, c: canvas.Canvas, frame_id: Optional[str] = None):
         """Simple fallback preserving the selected frame's visual family."""
-        w, h = letter
+        w, h = landscape(letter)
         frame = get_frame(frame_id)
         margin = 0.5 * inch
         
@@ -268,11 +358,13 @@ class ForensicCertificateRenderer:
         
         c.restoreState()
     
-    def _draw_watermark(self, c: canvas.Canvas, opacity: float, rotation_variation: bool):
+    def _draw_watermark(self, c: canvas.Canvas, opacity: float, rotation_variation: bool, tint_nft: bool = False):
         """TrueMark Tree with slight rotational variance (anti-AI)."""
-        w, h = letter
+        w, h = landscape(letter)
         
-        tree_file = self.template_path / "truemark_tree_watermark.png"
+        tree_file = self.brand_assets_path / "tree_watermark_512.png"
+        if not tree_file.exists():
+            tree_file = self.template_path / "truemark_tree_watermark.png"
         
         if tree_file.exists():
             rotation = random.uniform(-1.5, 1.5) if rotation_variation else 0
@@ -284,8 +376,27 @@ class ForensicCertificateRenderer:
             
             # Center the watermark
             img_width = w * 0.4
-            c.drawImage(str(tree_file), -img_width/2, -img_width/2, 
-                       width=img_width, preserveAspectRatio=True, mask='auto')
+            if tint_nft and tree_file.name == "tree_watermark_512.png":
+                # The supplied Tree of Life asset is white-on-transparent. Tint
+                # only its visible pixels while preserving the original asset.
+                with Image.open(tree_file).convert("RGBA") as tree_image:
+                    watermark = self.colors["watermark"]
+                    red = int(watermark.red * 255)
+                    green = int(watermark.green * 255)
+                    blue = int(watermark.blue * 255)
+                    pixels = tree_image.load()
+                    for py in range(tree_image.height):
+                        for px in range(tree_image.width):
+                            _, _, _, alpha = pixels[px, py]
+                            if alpha:
+                                pixels[px, py] = (red, green, blue, alpha)
+                    c.drawImage(
+                        ImageReader(tree_image), -img_width / 2, -img_width / 2,
+                        width=img_width, preserveAspectRatio=True, mask="auto"
+                    )
+            else:
+                c.drawImage(str(tree_file), -img_width/2, -img_width/2,
+                           width=img_width, preserveAspectRatio=True, mask='auto')
             c.restoreState()
         else:
             # Draw simple tree watermark
@@ -293,7 +404,7 @@ class ForensicCertificateRenderer:
     
     def _draw_simple_watermark(self, c: canvas.Canvas, opacity: float):
         """Simple tree watermark fallback."""
-        w, h = letter
+        w, h = landscape(letter)
         
         c.saveState()
         c.setStrokeColorRGB(0.3, 0.5, 0.3, alpha=opacity)
@@ -319,7 +430,21 @@ class ForensicCertificateRenderer:
     
     def _draw_forensic_header(self, c: canvas.Canvas, title: str):
         """Header with micro-kerning and baseline shift."""
-        w, h = letter
+        w, h = landscape(letter)
+
+        # Use the supplied TrueMark logo as the header mark.
+        logo_file = self.brand_assets_path / "TMlogotrans512 - Copy.png"
+        if logo_file.exists():
+            logo_size = 0.62 * inch
+            c.drawImage(
+                str(logo_file),
+                0.78 * inch,
+                h - 1.08 * inch,
+                width=logo_size,
+                height=logo_size,
+                preserveAspectRatio=True,
+                mask="auto",
+            )
         
         # TRUEMARK® with slight kerning variation
         c.setFont("Times-Bold", 52)
@@ -356,8 +481,8 @@ class ForensicCertificateRenderer:
     
     def _draw_data_grid(self, c: canvas.Canvas, data: Dict):
         """Data fields with intentional misalignment (physical typing simulation)."""
-        w, h = letter
-        y_start = h - 3.8*inch
+        w, h = landscape(letter)
+        y_start = h - 3.25*inch
         left_margin = 1.2*inch
         label_width = 2.2*inch
         
@@ -366,16 +491,16 @@ class ForensicCertificateRenderer:
             ("Web3 Wallet:", data.get('wallet', 'N/A')[:42] + "..." if len(data.get('wallet', '')) > 42 else data.get('wallet', 'N/A')),
             ("NFT Category:", data.get('kep_category', 'Knowledge')),
             ("Chain ID:", data.get('chain_id', 'Polygon')),
-            ("IPFS Hash:", data.get('ipfs_hash', 'N/A')[:30] + "..." if len(data.get('ipfs_hash', '')) > 30 else data.get('ipfs_hash', 'N/A')),
+            ("IPFS Hash:", data.get('ipfs_hash', 'N/A')[:20] + "..." if len(data.get('ipfs_hash', '')) > 20 else data.get('ipfs_hash', 'N/A')),
             ("Issue Date:", self._format_issue_date(data)),
-            ("DALS Serial:", data.get('dals_serial', 'UNKNOWN')),
+            ("True Mark Certificate No:", data.get('certificate_number', 'UNKNOWN')),
             ("Signature ID:", data.get('sig_id', 'N/A')),
         ]
         
         c.setFont("Times-Bold", 11)
         
         for i, (label, value) in enumerate(fields):
-            y_pos = y_start - i * 0.42*inch
+            y_pos = y_start - i * 0.36*inch
             
             # Label (bold, dark)
             c.setFillColor(self.colors['primary_blue'])
@@ -394,16 +519,33 @@ class ForensicCertificateRenderer:
     
     def _draw_embossed_seal(self, c: canvas.Canvas, serial: str):
         """Gold foil seal with specular highlight simulation."""
-        w, h = letter
+        w, h = landscape(letter)
         
-        seal_file = self.template_path / "seal_gold_embossed_600dpi.png"
+        seal_file = self.brand_assets_path / "truemarkseal.png"
+        if not seal_file.exists():
+            seal_file = self.template_path / "seal_gold_embossed_600dpi.png"
         seal_size = 1.7 * inch
         seal_x = w - seal_size - 0.8*inch
         seal_y = 0.55*inch
         
         if seal_file.exists():
-            c.drawImage(str(seal_file), seal_x, seal_y, 
-                       width=seal_size, height=seal_size, mask='auto')
+            if seal_file.name == "truemarkseal.png":
+                # The supplied seal is RGB with a dark presentation background.
+                # Remove only that near-black background without modifying the source asset.
+                with Image.open(seal_file).convert("RGBA") as seal_image:
+                    pixels = seal_image.load()
+                    for py in range(seal_image.height):
+                        for px in range(seal_image.width):
+                            red, green, blue, alpha = pixels[px, py]
+                            if max(red, green, blue) < 90:
+                                pixels[px, py] = (red, green, blue, 0)
+                    c.drawImage(
+                        ImageReader(seal_image), seal_x, seal_y,
+                        width=seal_size, height=seal_size, mask="auto"
+                    )
+            else:
+                c.drawImage(str(seal_file), seal_x, seal_y,
+                            width=seal_size, height=seal_size, mask="auto")
         else:
             # Draw procedural seal
             self._draw_procedural_seal(c, seal_x + seal_size/2, seal_y + seal_size/2, seal_size/2)
@@ -451,7 +593,7 @@ class ForensicCertificateRenderer:
     
     def _draw_verification_qr(self, c: canvas.Canvas, serial: str) -> Path:
         """QR code containing verification URL + signature fragment."""
-        w, h = letter
+        w, h = landscape(letter)
         
         verification_link = verification_url(serial)
         
@@ -472,72 +614,82 @@ class ForensicCertificateRenderer:
         
         # Draw QR code
         qr_size = 1.3 * inch
-        c.drawImage(str(qr_path), 1.0*inch, 0.65*inch, 
+        c.drawImage(str(qr_path), 1.0*inch, 0.55*inch,
                    width=qr_size, height=qr_size, mask='auto')
         
         # QR label
         c.setFont("Courier-Bold", 8)
         c.setFillColor(Color(0, 0, 0))
-        c.drawCentredString(1.0*inch + qr_size/2, 0.45*inch, "Scan to Verify")
+        c.drawCentredString(1.0*inch + qr_size/2, 0.37*inch, "Scan to Verify")
         
         return qr_path
     
     def _draw_officer_signature(self, c: canvas.Canvas, officer: str):
         """Simulated wet signature with pressure variance."""
-        w, h = letter
+        w, h = landscape(letter)
         
         # Signature line
         c.setFont("Times-Roman", 10)
         c.setFillColor(Color(0, 0, 0))
         
-        sig_y = 2.2*inch
-        c.line(1.2*inch, sig_y, 3.5*inch, sig_y)
-        c.line(4.5*inch, sig_y, 6.0*inch, sig_y)
+        sig_y = 1.15*inch
+        c.line(2.2*inch, sig_y, 5.0*inch, sig_y)
+        c.line(5.5*inch, sig_y, 7.2*inch, sig_y)
         
         # Labels under lines
         c.setFont("Times-Roman", 9)
-        c.drawCentredString(2.35*inch, sig_y - 0.2*inch, "Authorized Officer")
-        c.drawCentredString(5.25*inch, sig_y - 0.2*inch, "Date")
+        c.drawCentredString(3.6*inch, sig_y - 0.2*inch, "Authorized Officer")
+        c.drawCentredString(6.35*inch, sig_y - 0.2*inch, "Date")
         
         # Simulated signature (script-like)
-        c.setFont("Helvetica-Oblique", 14)
+        c.setFont("Helvetica-Oblique", 10)
         c.setFillColor(self.colors['dark_slate'])
-        c.drawString(1.3*inch, sig_y + 0.05*inch, officer)
+        c.drawCentredString(3.6*inch, sig_y + 0.05*inch, officer)
         
         # Date stamp
         c.setFont("Courier-Bold", 10)
         issue_date = datetime.utcnow().strftime("%Y-%m-%d")
-        c.drawString(4.6*inch, sig_y + 0.05*inch, issue_date)
+        c.drawString(5.65*inch, sig_y + 0.05*inch, issue_date)
     
     def _draw_timestamp_block(self, c: canvas.Canvas, data: Dict):
         """Draw canonical time representations without changing their authority."""
-        w, h = letter
+        w, h = landscape(letter)
         timestamp = data.get("iss_timestamp") or data.get("stardate", "ISS timestamp pending")
         c.saveState()
         c.setFillColor(self.colors["dark_slate"])
         c.setFont("Courier-Bold", 8)
-        c.drawString(1.2 * inch, h - 7.35 * inch, f"ISS SCALE: {timestamp}")
-        c.drawString(1.2 * inch, h - 7.55 * inch, f"ISS_TIME_NS: {data.get('iss_time_ns', 'pending')}")
+        x = 6.1 * inch
+        c.drawString(x, h - 4.25 * inch, f"ISS SCALE: {timestamp}")
+        c.drawString(x, h - 4.45 * inch, f"ISS_TIME_NS: {data.get('iss_time_ns', 'pending')}")
+        c.restoreState()
+
+    def _draw_corner_serials(self, c: canvas.Canvas, certificate_number: str) -> None:
+        """Repeat the TrueMark registry number in all four certificate corners."""
+        w, h = landscape(letter)
+        c.saveState()
+        c.setFillColor(self.colors["primary_blue"])
+        c.setFont("Courier-Bold", 6.5)
+        margin = 0.68 * inch
+        c.drawString(margin, h - margin, certificate_number)
+        c.drawRightString(w - margin, h - margin, certificate_number)
+        c.drawString(margin, 0.20 * inch, certificate_number)
+        c.drawRightString(w - margin, 0.20 * inch, certificate_number)
         c.restoreState()
 
     def _draw_public_security_metadata(self, c: canvas.Canvas, data: Dict, layer_profile: Dict):
         """Draw only the approved public security fields."""
-        w, h = letter
-        count = int(layer_profile["layer_count"])
-        profile = str(data.get("security_profile") or f"TM-FSP-{count}")
-        version = str(data.get("security_profile_version") or "1.0")
+        w, h = landscape(letter)
         certificate_hash = str(data.get("payload_hash") or "PENDING")
-        verification_id = str(data.get("dals_serial") or "PENDING")
+        verification_id = str(data.get("certificate_number") or "PENDING")
         status = str(data.get("verification_status") or ("VALID" if data.get("ed25519_signature") else "PENDING"))
 
         c.saveState()
         c.setFillColor(self.colors["dark_slate"])
         c.setFont("Courier-Bold", 7)
-        c.drawString(1.2 * inch, h - 7.45 * inch, f"FORENSIC SECURITY PROFILE: {count}-LAYER")
-        c.drawString(1.2 * inch, h - 7.65 * inch, f"SECURITY PROFILE VERSION: {profile}/{version}")
-        c.drawString(1.2 * inch, h - 7.85 * inch, f"VERIFICATION STATUS: {status}")
-        c.drawString(1.2 * inch, h - 8.05 * inch, f"CERTIFICATE HASH: {certificate_hash[:48]}")
-        c.drawString(1.2 * inch, h - 8.25 * inch, f"TRUE MARK VERIFICATION ID: {verification_id}")
+        x = 6.1 * inch
+        c.drawString(x, h - 4.72 * inch, f"VERIFICATION STATUS: {status}")
+        c.drawString(x, h - 4.92 * inch, f"CERTIFICATE HASH: {certificate_hash[:48]}")
+        c.drawString(x, h - 5.12 * inch, f"TRUE MARK VERIFICATION ID: {verification_id}")
         c.restoreState()
 
     @staticmethod
@@ -549,7 +701,7 @@ class ForensicCertificateRenderer:
 
     def _draw_micro_pattern(self, c: canvas.Canvas):
         """Draw a deterministic micro-pattern inside the selected presentation."""
-        w, h = letter
+        w, h = landscape(letter)
         c.saveState()
         c.setStrokeColorRGB(0.06, 0.18, 0.45, alpha=0.22)
         c.setLineWidth(0.25)
@@ -564,26 +716,29 @@ class ForensicCertificateRenderer:
         c.setFillColor(self.colors["dark_slate"])
         c.setFont("Courier", 6)
         manifest = data.get("manifest_hash") or data.get("payload_hash", "pending")
-        c.drawString(1.0 * inch, 0.38 * inch, f"MANIFEST HASH: {str(manifest)[:48]}")
+        c.drawString(4.0 * inch, 0.38 * inch, f"MANIFEST HASH: {str(manifest)[:48]}")
         c.restoreState()
 
     def _draw_verification_block(self, c: canvas.Canvas, data: Dict):
         """Add a visible independent-verification instruction for elite profiles."""
-        w, h = letter
+        w, h = landscape(letter)
         c.saveState()
         c.setStrokeColor(self.colors["gold"])
         c.setLineWidth(1)
-        c.roundRect(w - 3.0 * inch, 2.65 * inch, 1.9 * inch, 0.55 * inch, 5, stroke=1, fill=0)
+        box_x = 5.35 * inch
+        box_y = 1.55 * inch
+        box_width = 2.2 * inch
+        c.roundRect(box_x, box_y, box_width, 0.62 * inch, 5, stroke=1, fill=0)
         c.setFillColor(self.colors["primary_blue"])
         c.setFont("Helvetica-Bold", 7)
-        c.drawCentredString(w - 2.05 * inch, 2.97 * inch, "INDEPENDENT VERIFICATION")
+        c.drawCentredString(box_x + box_width / 2, box_y + 0.39 * inch, "INDEPENDENT VERIFICATION")
         c.setFont("Courier", 6)
-        c.drawCentredString(w - 2.05 * inch, 2.78 * inch, str(data.get("dals_serial", "PENDING"))[:24])
+        c.drawCentredString(box_x + box_width / 2, box_y + 0.19 * inch, str(data.get("certificate_number", "PENDING"))[:24])
         c.restoreState()
 
     def _add_micro_noise(self, c: canvas.Canvas, intensity: float):
         """Imperceptible scanner sensor noise pattern."""
-        w, h = letter
+        w, h = landscape(letter)
         
         c.saveState()
         c.setLineWidth(0.005)
@@ -643,7 +798,7 @@ if __name__ == "__main__":
     
     # Test data
     test_data = {
-        'dals_serial': 'DALSTEST-12345678',
+        'certificate_number': 'TM-TEST-0001-13-00001-A',
         'asset_title': 'Test Certificate - Visual Forensics Demo',
         'owner': 'Test User',
         'wallet': '0xTESTWALLETADDRESS1234567890ABCDEF',
@@ -653,7 +808,8 @@ if __name__ == "__main__":
         'stardate': datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
         'sig_id': 'TEST8A7B3C2F',
         'ed25519_signature': 'a' * 128,  # Mock signature
-        'payload_hash': hashlib.sha256(b'test').hexdigest()
+        'payload_hash': hashlib.sha256(b'test').hexdigest(),
+        'officer': 'Bryan A Spruk, President and CEO',
     }
     
     output_dir = ensure_temp_vault_dir() / "test_output"
@@ -667,7 +823,7 @@ if __name__ == "__main__":
     print(f"   Size: {pdf_path.stat().st_size / 1024:.2f} KB")
     
     print("\n🔍 Generating verification QR...")
-    qr_path = renderer.generate_verification_qr(test_data['dals_serial'])
+    qr_path = renderer.generate_verification_qr(test_data['certificate_number'])
     print(f"   QR Code: {qr_path}")
     
     print("\n" + "=" * 60)

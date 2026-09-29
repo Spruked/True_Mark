@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { KeyRound, LockKeyhole, ShieldCheck, Vault } from "lucide-react";
 import { PackageReview } from "./components/PackageReview";
-import { SecretumFlow } from "./components/SecretumFlow";
+import { PerpetuumFlow } from "./components/PerpetuumFlow";
 
-const navItems = ["Secretum Flow", "Package Review", "Local Ledger"];
+const navItems = ["Perpetuum Flow", "Package Review", "Local Ledger"];
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState("Secretum Flow");
+  const [activeTab, setActiveTab] = useState("Perpetuum Flow");
 
   return (
     <main className="app-shell">
@@ -14,8 +14,8 @@ export default function App() {
         <div className="brand-lockup">
           <div className="brand-mark"><Vault size={20} /></div>
           <div>
-          <div className="eyebrow">SECRETUM / LOCAL ORGANIZER</div>
-            <h1>SECRETUM</h1>
+          <div className="eyebrow">PERPETUUM / LOCAL ORGANIZER</div>
+            <h1>PERPETUUM</h1>
           </div>
         </div>
         <div className="security-badge"><ShieldCheck size={15} /> LOCAL-FIRST / ENCRYPTION READY</div>
@@ -38,17 +38,17 @@ export default function App() {
         {navItems.map((item) => <button className={activeTab === item ? "tab active" : "tab"} key={item} onClick={() => setActiveTab(item)}>{item}</button>)}
       </nav>
 
-      {activeTab === "Secretum Flow" && <SecretumFlow />}
+      {activeTab === "Perpetuum Flow" && <PerpetuumFlow />}
       {activeTab === "Package Review" && <PackageReview />}
       {activeTab === "Local Ledger" && (
         <section className="panel ledger-panel">
-          <div className="section-heading"><div><div className="eyebrow accent">PERSISTENT LOCAL STATE</div><h3>Secretum Ledger</h3></div><KeyRound size={22} /></div>
+          <div className="section-heading"><div><div className="eyebrow accent">PERSISTENT LOCAL STATE</div><h3>Perpetuum Ledger</h3></div><KeyRound size={22} /></div>
           <p>The SQLite ledger is created in the Tauri application data directory. It records asset identity, local encrypted path, content-addressed hash, nonce, and eventual storage reference. Encryption keys are never written to this database.</p>
           <div className="ledger-row"><LockKeyhole size={18} /><span>Ledger initialization occurs on first native staging operation.</span><span className="status-pill">READY</span></div>
         </section>
       )}
 
-      <footer><span>SECRETUM ORGANIZER / GOAT ISOLATED REPOSITORY</span><span>THE ORGANIZED PACKAGE STAYS LOCAL UNTIL YOU EXPORT IT.</span></footer>
+      <footer><span>PERPETUUM ORGANIZER / GOAT ISOLATED REPOSITORY</span><span>THE ORGANIZED PACKAGE STAYS LOCAL UNTIL YOU EXPORT IT.</span></footer>
     </main>
   );
 }

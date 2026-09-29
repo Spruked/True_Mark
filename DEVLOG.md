@@ -104,3 +104,23 @@ The legacy payment/token issuance routes remain available temporarily for compat
 
 - Built the initial React/FastAPI mint workflow, invoices, vault packages, admin tooling, and certificate support.
 - Added sitemap and robots configuration for public routes.
+## 2026-09-29 — Canonical True Mark NFT taxonomy
+
+### Completed
+
+- Established the governed NFT type set as `H`, `K`, `L`, `B`, `HL`, `KL`, `LL`, `BL`, and `C`.
+- Defined the `L` suffix as a licensable flag rather than a new color family.
+- Mapped `HL` to H, `KL` to K, `LL` to L, and `BL` to B color profiles.
+- Reserved `C` for Custom Contract NFT.
+- Kept Enterprise as an Alpha CertSig Mint licensing model, separate from the True Mark NFT taxonomy.
+- Added normalized metadata fields: `nft_type`, `base_type`, `licensable`, and `nft_color_profile`.
+- Preserved legacy `*-NFT` values only as compatibility inputs; new records use canonical plain codes.
+- Updated the mint UI, pricing, backend routes, certificate forge, assistant knowledge base, README, product documentation, and repository tree.
+
+### Validation
+
+- Taxonomy normalization passed for all nine governed types.
+- Legacy `K-NFT` input correctly normalizes to `K`.
+- Python compilation passed for the updated backend and forge modules.
+- Frontend production build passed.
+- `git diff --check` passed.

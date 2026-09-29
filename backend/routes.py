@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import hmac
 import os
 import shutil
 import uuid
@@ -14,6 +15,11 @@ from fastapi import Body, Depends, File, Form, HTTPException, Request, UploadFil
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
+
+try:
+    from .node_config import get_nft_taxonomy, normalize_nft_type
+except ImportError:
+    from node_config import get_nft_taxonomy, normalize_nft_type
 
 try:
     from .auth import authenticate_admin, create_user_session, decode_admin_token, decode_user_token, require_admin_session, require_user_session
@@ -41,6 +47,7 @@ try:
         get_next_payment_reference,
         get_next_receipt_number,
         get_next_truemark_serial,
+        create_or_get_orb_certification_request,
         get_order_by_invoice_number,
         get_order_by_invoice_token,
         get_order_by_vault_token,
@@ -83,6 +90,7 @@ except ImportError:
         get_next_payment_reference,
         get_next_receipt_number,
         get_next_truemark_serial,
+        create_or_get_orb_certification_request,
         get_order_by_invoice_number,
         get_order_by_invoice_token,
         get_order_by_vault_token,
@@ -113,6 +121,19 @@ app.add_middleware(
 BASE_DIR = Path(__file__).resolve().parent
 STAGED_UPLOADS_DIR = PAYMENT_SESSIONS_ROOT
 DALS_EXPORTS_DIR = DALS_EXPORTS_ROOT
+FRAME_CATALOG_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "certificate_generator_2x"
+    / "truemark"
+    / "templates"
+    / "FRAME_CATALOG.json"
+)
+NFT_COLOR_PROFILE_BY_TYPE = {
+    code: details["color_profile"]
+    for code, details in {
+        code: get_nft_taxonomy(code) for code in ("H", "K", "L", "B", "HL", "KL", "LL", "BL", "C")
+    }.items()
+}
 ensure_vault_layout()
 
 
@@ -152,6 +173,30 @@ class AccountLoginRequest(BaseModel):
 
 class MintFinalizeRequest(BaseModel):
     payment_token: str
+
+
+class OrbCertificationRequest(BaseModel):
+    schema: str
+    request_id: str = Field(min_length=8, max_length=160)
+    status: str
+    orb_serial_number: str = Field(pattern=r"^ORB-SN-[0-9]{4}-[0-9]{6}$")
+    orb_product_edition: str | None = None
+    site_id: str | None = None
+    domain: str | None = None
+    issuance_fee_usd: float = Field(gt=0, le=10000)
+    requested_artifacts: list[str] = Field(default_factory=list)
+    timestamp_envelope: Dict[str, Any] | None = None
+    orb_runtime_dependency: bool = False
+
+
+def _require_orb_weaver_signature(request: Request, body: bytes) -> None:
+    secret = os.environ.get("TRUEMARK_ORB_INTEGRATION_SECRET", "").strip()
+    if not secret:
+        raise HTTPException(status_code=503, detail="True Mark ORB integration is not configured.")
+    supplied = request.headers.get("X-ORB-Weaver-Signature", "")
+    expected = hmac.new(secret.encode("utf-8"), body, hashlib.sha256).hexdigest()
+    if not supplied or not hmac.compare_digest(supplied, expected):
+        raise HTTPException(status_code=401, detail="Invalid ORB Weaver integration signature.")
 
 
 class EscalationRequest(BaseModel):
@@ -208,6 +253,29 @@ def build_quote_response(quote_payload: QuoteRequest) -> Dict[str, Any]:
     quote["grand_total"] = grand_total
     quote["tax_state"] = user.get("state") if user else ""
     return quote
+
+
+@app.post("/api/integrations/orb-weaver/certification-requests")
+async def accept_orb_certification_request(request: Request, payload: OrbCertificationRequest):
+    """Accept a signed ORB certification request without issuing artifacts."""
+    body = await request.body()
+    _require_orb_weaver_signature(request, body)
+    if payload.schema != "orb_weaver.true_mark.orb_certification_request.v1":
+        raise HTTPException(status_code=422, detail="Unsupported ORB certification request schema.")
+    if payload.status != "PENDING_EXTERNAL_ISSUANCE" or payload.orb_runtime_dependency:
+        raise HTTPException(status_code=422, detail="ORB certification intake accepts pending, non-runtime requests only.")
+    accepted = create_or_get_orb_certification_request(payload.model_dump())
+    if accepted["request_id"] != payload.request_id:
+        raise HTTPException(status_code=409, detail="ORB serial is already bound to another certification request.")
+    return {
+        "request_id": accepted["request_id"],
+        "orb_serial_number": accepted["orb_serial_number"],
+        "status": accepted["status"],
+        "idempotent": True,
+        "issuance_authority": "True Mark",
+        "artifacts_issued": False,
+        "message": "Request accepted for True Mark review; no certificate or NFT has been issued.",
+    }
 
 
 def _public_url(request: Request, relative_path: str) -> str:
@@ -395,8 +463,11 @@ def process_payment(
     chain: str = Form("polygon"),
     quantity: int = Form(1),
     payment_method: str = Form("fiat"),
+    frame_id: str = Form(""),
 ):
     mint_standard = get_mint_standard()
+    resolved_nft_type = normalize_nft_type(nft_type)
+    nft_taxonomy = get_nft_taxonomy(resolved_nft_type)
     resolved_registrant_code = (registrant_code or prefix).strip().upper() or "PUBLIC"
     resolved_region_code = (region_code or industry).strip().upper() or mint_standard["region_code"]
     payment_reference = get_next_payment_reference()
@@ -417,7 +488,7 @@ def process_payment(
         file_size_gb = staged_file_path.stat().st_size / (1024 * 1024 * 1024)
         quote = build_quote_response(
             QuoteRequest(
-                nft_type=nft_type,
+                nft_type=resolved_nft_type,
                 package_tier=package_tier,
                 encryption=encryption,
                 chain=chain,
@@ -430,6 +501,14 @@ def process_payment(
         user = get_user_by_email(email)
         customer_name = name.strip() or (user.get("name") if user else "") or "Customer"
         metadata_payload = _metadata_payload(metadata)
+        metadata_payload.update({
+            "nft_type": nft_taxonomy["nft_type"],
+            "base_type": nft_taxonomy["base_type"],
+            "licensable": nft_taxonomy["licensable"],
+            "nft_color_profile": nft_taxonomy["color_profile"],
+        })
+        if frame_id.strip():
+            metadata_payload["frame_id"] = frame_id.strip()
         market_snapshot = get_market_snapshot() if payment_method == "crypto" else None
         crypto_token = None
         crypto_spot_price = None
@@ -443,7 +522,7 @@ def process_payment(
             "payment_public_token": payment_public_token,
             "receipt_number": receipt_number,
             "receipt_public_token": receipt_public_token,
-            "type_code": mint_standard["type_codes"].get(nft_type, nft_type),
+            "type_code": mint_standard["type_codes"].get(resolved_nft_type, resolved_nft_type),
             "node_id": mint_standard["node_id"],
             "region_code": resolved_region_code,
             "registrant_code": resolved_registrant_code,
@@ -459,7 +538,10 @@ def process_payment(
             "billing_dob": user.get("dob", "") if user else "",
             "prefix": resolved_registrant_code,
             "industry": resolved_region_code,
-            "nft_type": nft_type,
+            "nft_type": resolved_nft_type,
+            "base_type": nft_taxonomy["base_type"],
+            "licensable": nft_taxonomy["licensable"],
+            "nft_color_profile": nft_taxonomy["color_profile"],
             "package_tier": package_tier,
             "encryption": encryption,
             "chain": chain,
@@ -712,6 +794,8 @@ def mint_nft(request: Request, payload: MintFinalizeRequest):
             "certificate_name": certificate_profile["name"],
             "certificate_layer_count": certificate_profile["layers"],
             "certificate_layer_inventory": certificate_profile["layer_inventory"],
+            "certificate_frame_id": metadata_payload.get("frame_id"),
+            "nft_color_profile": metadata_payload.get("nft_color_profile"),
             "certificate_manifest": certificate_manifest,
             "certificate_manifest_hash": certificate_manifest_digest,
             "certificate_hash": certificate_manifest_digest,
@@ -975,6 +1059,14 @@ def download_admin_invoice(
 @app.get("/pricing")
 def get_public_pricing():
     return JSONResponse(content=load_pricing())
+
+
+@app.get("/certificate-frames")
+def get_certificate_frames():
+    """Return the governed presentation frames available to certificate users."""
+    if not FRAME_CATALOG_PATH.exists():
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Certificate frame catalog unavailable.")
+    return JSONResponse(content=json.loads(FRAME_CATALOG_PATH.read_text(encoding="utf-8")))
 
 
 @app.get("/api/workspace")

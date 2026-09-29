@@ -1,8 +1,8 @@
 # True Mark User Guide
 
-## 1. Start in Secretum Privatum
+## 1. Start in Perpetuum
 
-Sign in to open your private Sanctum. The Sanctum is a mutable working space for projects, notes, evidence staging, images, provenance, ownership information, and supporting documents.
+Sign in to open Perpetuum. It is a mutable working space for projects, notes, evidence staging, images, provenance, ownership information, and supporting documents.
 
 The Sanctum is not the Immutable Vault. Draft uploads can be replaced or deleted according to policy and are not authoritative merely because they exist.
 

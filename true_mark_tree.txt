@@ -1,15 +1,174 @@
-./
-├── .github/
+# True Mark repository tree
+
+Generated from the current working tree. Dependency, build, cache, virtual-environment, runtime-artifact, and Python bytecode directories are omitted.
+
+```text
+.
+├── .github
 │   └── copilot-instructions.md
-├── .gitignore
-├── ProceduresOverview.md
-├── README.md
-├── UserGuide.md
-├── backend/
+├── ISS_Module
+│   ├── docs
+│   │   └── RELATIVISTIC_TIME_MODEL.md
+│   ├── iss_module
+│   │   ├── api
+│   │   │   ├── __init__.py
+│   │   │   └── api.py
+│   │   ├── core
+│   │   │   ├── ISS.py
+│   │   │   ├── __init__.py
+│   │   │   └── utils.py
+│   │   ├── templates
+│   │   │   └── dashboard.html
+│   │   ├── __init__.py
+│   │   ├── service.py
+│   │   └── session_store.py
+│   ├── widget
+│   │   ├── scripts
+│   │   │   ├── install_linux_autostart.sh
+│   │   │   ├── iss-scale-api.service.in
+│   │   │   ├── iss-scale-widget.service.in
+│   │   │   └── uninstall_linux_autostart.sh
+│   │   ├── src
+│   │   │   ├── main.js
+│   │   │   └── styles.css
+│   │   ├── src-tauri
+│   │   │   ├── capabilities
+│   │   │   │   └── default.json
+│   │   │   ├── icons
+│   │   │   │   ├── icon.png
+│   │   │   │   └── icon.svg
+│   │   │   ├── src
+│   │   │   │   └── main.rs
+│   │   │   ├── Cargo.toml
+│   │   │   ├── build.rs
+│   │   │   └── tauri.conf.json
+│   │   ├── README.md
+│   │   ├── index.html
+│   │   ├── package-lock.json
+│   │   └── package.json
+│   ├── .gitignore
+│   ├── COPYRIGHT.md
+│   ├── DEVLOG.md
+│   ├── LICENSE
+│   ├── PROJECT_TREE.txt
+│   ├── README.md
+│   ├── SITE_MAP.md
+│   ├── requirements.txt
+│   └── setup.py
+├── Perpetuum
+│   ├── src
+│   │   ├── components
+│   │   │   ├── PackageReview.tsx
+│   │   │   └── PerpetuumFlow.tsx
+│   │   ├── App.tsx
+│   │   ├── main.tsx
+│   │   ├── styles.css
+│   │   └── types.ts
+│   ├── .gitignore
+│   ├── README.md
+│   ├── index.html
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── vite.config.ts
+├── True_Mark_Vault_System
+│   ├── audit
+│   │   └── README.md
+│   ├── config
+│   │   ├── environments
+│   │   │   ├── dev.yaml
+│   │   │   ├── prod.yaml
+│   │   │   └── test.yaml
+│   │   ├── telemetry.yaml
+│   │   └── vault_config.yaml
+│   ├── docs
+│   │   ├── architecture.md
+│   │   ├── glyph_guide.md
+│   │   ├── memory_matrix.md
+│   │   ├── migration_guide.md
+│   │   ├── telemetry_best_practices.md
+│   │   └── vault_types.md
+│   ├── engine
+│   │   ├── integration_hooks
+│   │   │   ├── on_vault_apply.py
+│   │   │   └── post_resolution.yaml
+│   │   ├── evaluator.py
+│   │   ├── resolver.js
+│   │   └── signal_map.json
+│   ├── examples
+│   │   ├── input_career_change.json
+│   │   ├── input_game_quest.json
+│   │   └── input_medical_triage.json
+│   ├── glyphs
+│   │   ├── _template
+│   │   │   └── custom_glyph.json
+│   │   ├── glyph_map.json
+│   │   └── trace_engine.js
+│   ├── interfaces
+│   │   ├── api
+│   │   │   └── openapi.yaml
+│   │   └── cli
+│   │       └── commands.md
+│   ├── memory
+│   │   ├── _template
+│   │   │   └── custom_matrix.json
+│   │   ├── domains
+│   │   │   ├── long_term.json
+│   │   │   ├── sensory.json
+│   │   │   └── short_term.json
+│   │   ├── consolidation.py
+│   │   └── matrix_store.yaml
+│   ├── scripts
+│   │   ├── consolidate_memory.py
+│   │   ├── export_telemetry.js
+│   │   ├── export_to_json.lua
+│   │   ├── generate_glyph_report.py
+│   │   └── validate_vaults.sh
+│   ├── secrets
+│   ├── telemetry
+│   │   ├── dashboard
+│   │   │   ├── anomaly_detector.js
+│   │   │   └── metrics_dashboard.md
+│   │   ├── traces
+│   │   │   ├── agent_decisions.json
+│   │   │   └── latency_buckets.json
+│   │   ├── alerts.yaml
+│   │   ├── collector.py
+│   │   └── telemetry.yaml
+│   ├── tests
+│   │   ├── integration
+│   │   │   ├── test_ethical_dilemma.json
+│   │   │   ├── test_glyph_drift.json
+│   │   │   ├── test_memory_consolidation.json
+│   │   │   └── test_pricing_edge_case.json
+│   │   └── unit
+│   │       ├── test_telemetry_alerts.json
+│   │       └── vault_template_test.json
+│   ├── vault_system
+│   │   └── skg_core
+│   │       ├── skg_cleaner.py
+│   │       ├── skg_drift_analyzer.py
+│   │       ├── skg_engine.py
+│   │       ├── skg_integration.py
+│   │       ├── skg_node.py
+│   │       ├── skg_pattern_learner.py
+│   │       ├── skg_pruner.py
+│   │       └── skg_serializer.py
+│   ├── vaults
+│   │   └── _template
+│   │       ├── rules
+│   │       │   └── condition.js
+│   │       ├── logic.md
+│   │       └── vault.json
+│   ├── .gitignore
+│   ├── README.md
+│   └── tree.txt
+├── backend
+│   ├── config
 │   ├── .env.example
 │   ├── auth.py
-│   ├── config/
-│   │   └── pricing.json
+│   ├── certificate_profiles.py
+│   ├── escalation_storage.py
 │   ├── index.js
 │   ├── invoices.py
 │   ├── mailer.py
@@ -21,80 +180,131 @@
 │   ├── pricing.py
 │   ├── requirements.txt
 │   ├── routes.py
+│   ├── secretum_models.py
 │   ├── storage.py
-│   └── tax.py
-├── branding/
+│   ├── tax.py
+│   ├── vault_audit.py
+│   ├── vault_paths.py
+│   └── workspace_storage.py
+├── branding
 │   └── true-mark-mint-branding.md
-├── certificate_generator_2x/
+├── certificate_generator_2x
+│   ├── adapter
+│   │   └── certificate_adapter.py
+│   ├── truemark
+│   │   ├── assistant
+│   │   │   ├── chat_bubble.py
+│   │   │   ├── encryption_advisor.py
+│   │   │   ├── knowledge_base.py
+│   │   │   └── truemark_skg.py
+│   │   ├── forge_v2.0
+│   │   │   ├── DIRECTORY_STRUCTURE.txt
+│   │   │   ├── PROJECT_SUMMARY.md
+│   │   │   ├── README.md
+│   │   │   ├── START_HERE.txt
+│   │   │   ├── certificate_forge.py
+│   │   │   ├── crypto_anchor.py
+│   │   │   ├── crypto_vault.py
+│   │   │   ├── forensic_modules.py
+│   │   │   ├── forensic_renderer.py
+│   │   │   ├── install.ps1
+│   │   │   ├── integration_bridge.py
+│   │   │   ├── layer_profiles.py
+│   │   │   ├── path_config.py
+│   │   │   ├── quick_test.ps1
+│   │   │   ├── registry.py
+│   │   │   └── requirements.txt
+│   │   ├── keys
+│   │   └── templates
+│   │       ├── frames
+│   │       │   ├── frame-01-engraved-single-line.svg
+│   │       │   ├── frame-02-engraved-double-line.svg
+│   │       │   ├── frame-03-heavy-forensic-border.svg
+│   │       │   ├── frame-04-micro-engraved-pattern.svg
+│   │       │   ├── frame-05-triple-layer-forensic-border.svg
+│   │       │   ├── frame-06-archival-document-border.svg
+│   │       │   ├── frame-07-antiquarian-scroll-border.svg
+│   │       │   ├── frame-08-diplomatic-border.svg
+│   │       │   ├── frame-09-federal-style-block-border.svg
+│   │       │   ├── frame-10-ornate-corner-flourish.svg
+│   │       │   ├── frame-11-minimal-tech-border.svg
+│   │       │   ├── frame-12-thin-line-precision-border.svg
+│   │       │   ├── frame-13-geometric-lattice.svg
+│   │       │   ├── frame-14-circuit-style-border.svg
+│   │       │   ├── frame-15-hex-grid-border.svg
+│   │       │   ├── frame-16-matrix-style-border.svg
+│   │       │   ├── frame-17-precision-dot-grid.svg
+│   │       │   ├── frame-18-angular-tech-frame.svg
+│   │       │   ├── frame-19-minimal-double-tech.svg
+│   │       │   ├── frame-20-orb-style-glyph-border.svg
+│   │       │   ├── frame-21-floral-corners.svg
+│   │       │   ├── frame-22-victorian-border.svg
+│   │       │   ├── frame-23-scrollwork-border.svg
+│   │       │   ├── frame-24-art-deco-border.svg
+│   │       │   ├── frame-25-filigree-border.svg
+│   │       │   ├── frame-26-royal-crest-border.svg
+│   │       │   ├── frame-27-laurel-border.svg
+│   │       │   ├── frame-28-ribbon-border.svg
+│   │       │   ├── frame-29-crest-corner-border.svg
+│   │       │   ├── frame-30-decorative-diamond-border.svg
+│   │       │   ├── frame-31-heavy-double-frame.svg
+│   │       │   ├── frame-32-thick-engraved-border.svg
+│   │       │   ├── frame-33-institutional-border.svg
+│   │       │   ├── frame-34-gothic-border.svg
+│   │       │   ├── frame-35-royal-heavy-border.svg
+│   │       │   ├── frame-36-elite-crest-border.svg
+│   │       │   ├── frame-37-heavy-ribbon-border.svg
+│   │       │   ├── frame-38-thick-lattice-border.svg
+│   │       │   ├── frame-39-heavy-diamond-border.svg
+│   │       │   ├── frame-40-elite-micro-engraved-border.svg
+│   │       │   ├── frame-41-ultra-thin-border.svg
+│   │       │   ├── frame-42-minimal-corners.svg
+│   │       │   ├── frame-43-dot-corner-border.svg
+│   │       │   ├── frame-44-line-break-border.svg
+│   │       │   ├── frame-45-soft-corner-border.svg
+│   │       │   ├── frame-46-thin-double-line.svg
+│   │       │   ├── frame-47-minimal-box.svg
+│   │       │   ├── frame-48-light-grid.svg
+│   │       │   ├── frame-49-soft-lattice.svg
+│   │       │   └── frame-50-minimal-glyph-border.svg
+│   │       ├── FRAME_CATALOG.json
+│   │       ├── border_guilloche_vector.svg.placeholder
+│   │       ├── frame_catalog.py
+│   │       ├── generate_frame_assets.py
+│   │       ├── parchment_base_600dpi.jpg.placeholder
+│   │       ├── seal_gold_embossed_600dpi.png.placeholder
+│   │       └── truemark_tree_watermark.png.placeholder
 │   ├── .dockerignore
 │   ├── .gitattributes
 │   ├── .gitignore
 │   ├── Dockerfile
 │   ├── LICENSE
 │   ├── README.md
-│   ├── True_Mark_Vault_System/
-│   │   └── vault_system/
-│   │       └── skg_core/
-│   │           ├── skg_cleaner.py
-│   │           ├── skg_drift_analyzer.py
-│   │           ├── skg_engine.py
-│   │           ├── skg_integration.py
-│   │           ├── skg_node.py
-│   │           ├── skg_pattern_learner.py
-│   │           ├── skg_pruner.py
-│   │           └── skg_serializer.py
-│   ├── adapter/
-│   │   └── certificate_adapter.py
-│   ├── docker-compose.yml
-│   └── truemark/
-│       ├── assistant/
-│       │   ├── chat_bubble.py
-│       │   ├── encryption_advisor.py
-│       │   ├── knowledge_base.py
-│       │   └── truemark_skg.py
-│       ├── forge_v2.0/
-│       │   ├── DIRECTORY_STRUCTURE.txt
-│       │   ├── PROJECT_SUMMARY.md
-│       │   ├── README.md
-│       │   ├── START_HERE.txt
-│       │   ├── certificate_forge.py
-│       │   ├── crypto_anchor.py
-│       │   ├── crypto_vault.py
-│       │   ├── forensic_renderer.py
-│       │   ├── install.ps1
-│       │   ├── integration_bridge.py
-│       │   ├── path_config.py
-│       │   ├── quick_test.ps1
-│       │   └── requirements.txt
-│       └── templates/
-│           ├── border_guilloche_vector.svg.placeholder
-│           ├── parchment_base_600dpi.jpg.placeholder
-│           ├── seal_gold_embossed_600dpi.png.placeholder
-│           └── truemark_tree_watermark.png.placeholder
-├── contracts/
+│   └── docker-compose.yml
+├── contracts
 │   └── TrueMarkMintEngine.sol
-├── docs/
-│   └── TRUE_MARK_LAUNCH_READINESS.md
-├── frontend/
-│   ├── App.js
-│   ├── assets/
+├── docs
+│   ├── PRIME_LAYER_ARCHITECTURE.md
+│   ├── TRUE_MARK_LAUNCH_READINESS.md
+│   ├── TRUE_MARK_PRODUCT_BROCHURE_AND_DASHBOARD_MANUAL.md
+│   └── TRUE_MARK_REVISION_DOCTRINE.md
+├── frontend
+│   ├── assets
 │   │   ├── CertificateKNFTsample.png
 │   │   ├── Newassetclass.mp4
 │   │   ├── TMlogotrans512 - Copy.png
 │   │   ├── TMlogotrans86.ico
 │   │   ├── Video_Script_Correction_and_Generation.mp4
-│   │   ├── service-3.jpg
 │   │   ├── tree_watermark_1200.png
 │   │   ├── tree_watermark_512.png
 │   │   ├── truemark launch in 2026.mp4
 │   │   └── truemarkseal.png
-│   ├── index.html
-│   ├── package-lock.json
-│   ├── package.json
-│   ├── public/
+│   ├── public
 │   │   ├── robots.txt
 │   │   └── sitemap.xml
-│   ├── src/
+│   ├── src
+│   │   ├── context
+│   │   │   └── MintFlowContext.jsx
 │   │   ├── About.jsx
 │   │   ├── AdminDashboard.jsx
 │   │   ├── AdminLogin.jsx
@@ -102,52 +312,65 @@
 │   │   ├── AlphaCertSig.jsx
 │   │   ├── App.jsx
 │   │   ├── Cart.jsx
-│   │   ├── ChatBubble.jsx
 │   │   ├── Checkout.jsx
 │   │   ├── Contact.jsx
 │   │   ├── DemoMint.jsx
+│   │   ├── HumanSupportBubble.jsx
 │   │   ├── InvestorInquiry.jsx
 │   │   ├── Login.jsx
 │   │   ├── MintNFT.jsx
+│   │   ├── ObjectWorkbench.jsx
 │   │   ├── Policies.jsx
 │   │   ├── PrivacyPolicy.jsx
 │   │   ├── ProtectedRoute.jsx
+│   │   ├── SanctumDashboard.jsx
 │   │   ├── Signup.jsx
 │   │   ├── SiteFooter.jsx
 │   │   ├── SiteNav.jsx
 │   │   ├── UseCases.jsx
 │   │   ├── UserAgreement.jsx
+│   │   ├── Verify.jsx
 │   │   ├── WhyNow.jsx
 │   │   ├── apiBase.js
-│   │   ├── assistantApi.js
 │   │   ├── authStorage.js
-│   │   ├── context/
-│   │   │   └── MintFlowContext.jsx
 │   │   ├── designTokens.js
+│   │   ├── escalationApi.js
 │   │   ├── main.jsx
 │   │   └── siteLinks.js
+│   ├── App.js
+│   ├── index.html
+│   ├── package-lock.json
+│   ├── package.json
 │   └── vite.config.js
-├── package-lock.json
-├── tools/
+├── tools
 │   └── truemark_readiness_audit.py
-├── true_mark_tree.txt
-└── truemark-human-support/
-    ├── README.md
-    ├── api/
-    │   ├── fastapi_server.py
-    │   └── package-lock.json
-    ├── core/
-    │   ├── improvement_loop.py
-    │   ├── inference_engine.py
-    │   └── knowledge_graph.py
-    ├── frontend/
-    │   ├── ChatBubble.jsx
-    │   ├── index.html
-    │   ├── main.jsx
-    │   ├── package-lock.json
-    │   ├── package.json
-    │   ├── styles.css
-    │   └── vite.config.js
-    └── requirements.txt
+├── truemark-human-support
+│   ├── api
+│   │   ├── fastapi_server.py
+│   │   └── package-lock.json
+│   ├── core
+│   │   ├── improvement_loop.py
+│   │   ├── inference_engine.py
+│   │   └── knowledge_graph.py
+│   ├── frontend
+│   │   ├── HumanSupportBubble.jsx
+│   │   ├── index.html
+│   │   ├── main.jsx
+│   │   ├── package-lock.json
+│   │   ├── package.json
+│   │   ├── styles.css
+│   │   └── vite.config.js
+│   ├── README.md
+│   └── requirements.txt
+├── .gitignore
+├── COPYRIGHT.md
+├── DEVLOG.md
+├── LICENSE
+├── ProceduresOverview.md
+├── README.md
+├── UserGuide.md
+├── package-lock.json
+└── true_mark_tree.txt
 
-26 directories, 125 files
+70 directories, 298 files
+```

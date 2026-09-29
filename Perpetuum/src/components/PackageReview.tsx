@@ -2,7 +2,7 @@ import { useState } from "react";
 import { CheckCircle2, ClipboardCopy, FileJson, LockKeyhole, PackageCheck } from "lucide-react";
 
 const organizedPackage = {
-  schema_version: "secretum.organizer.v1",
+  schema_version: "perpetuum.organizer.v1",
   package_type: "structured_archive",
   source_classes: ["course_study", "family_memory", "media_asset"],
   encryption: "ChaCha20-Poly1305",

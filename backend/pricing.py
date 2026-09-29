@@ -7,9 +7,11 @@ from typing import Any, Dict
 
 try:
     from .certificate_profiles import default_certificate_profiles
+    from .node_config import NFT_TAXONOMY, normalize_nft_type
     from .vault_paths import RUNTIME_ROOT, ensure_vault_layout
 except ImportError:
     from certificate_profiles import default_certificate_profiles
+    from node_config import NFT_TAXONOMY, normalize_nft_type
     from vault_paths import RUNTIME_ROOT, ensure_vault_layout
 
 
@@ -31,10 +33,15 @@ DEFAULT_PRICING: Dict[str, Any] = {
         "mint_execution_note": "True Mark executes minting through the platform MetaMask account and Alchemy infrastructure.",
     },
     "nft_types": {
-        "K-NFT": {"name": "Knowledge NFT", "price": 4.99, "enabled": True},
-        "H-NFT": {"name": "Heirloom NFT", "price": 9.99, "enabled": True},
-        "L-NFT": {"name": "Legacy NFT", "price": 19.99, "enabled": True},
-        "C-NFT": {"name": "Custom NFT", "price": 14.99, "enabled": True},
+        "H": {"name": "Heirloom NFT", "price": 9.99, "enabled": True},
+        "K": {"name": "Knowledge NFT", "price": 4.99, "enabled": True},
+        "L": {"name": "Legacy NFT", "price": 19.99, "enabled": True},
+        "B": {"name": "Bespoke NFT", "price": 14.99, "enabled": True},
+        "HL": {"name": "Licensable Heirloom NFT", "price": 9.99, "enabled": True},
+        "KL": {"name": "Licensable Knowledge NFT", "price": 4.99, "enabled": True},
+        "LL": {"name": "Licensable Legacy NFT", "price": 19.99, "enabled": True},
+        "BL": {"name": "Licensable Bespoke NFT", "price": 14.99, "enabled": True},
+        "C": {"name": "Custom Contract NFT", "price": 14.99, "enabled": True},
     },
     "package_tiers": {
         "p2": {**default_certificate_profiles()["p2"], "price": 12.0},
@@ -133,7 +140,7 @@ def save_pricing(updates: Dict[str, Any]) -> Dict[str, Any]:
 def calculate_quote(cart: Dict[str, Any], pricing: Dict[str, Any] | None = None) -> Dict[str, Any]:
     active_pricing = pricing or load_pricing()
 
-    nft_type = cart.get("nft_type", "K-NFT")
+    nft_type = normalize_nft_type(cart.get("nft_type", "K"))
     package_tier = cart.get("package_tier", "p2")
     encryption = cart.get("encryption", "none")
     chain = cart.get("chain", "polygon")

@@ -71,7 +71,7 @@ export default function Login() {
           User Login
         </Typography>
         <Typography variant="body1" sx={{ mb: 3, opacity: 0.84 }}>
-          Sign in to open your Secretum Privatum workspace and continue preparing authenticated objects.
+          Sign in to open your Perpetuum workspace and continue preparing authenticated objects.
         </Typography>
         {location.state?.from && (
           <Alert severity="warning" sx={{ mb: 2 }}>
