@@ -28,7 +28,7 @@
 ## 2026-09-28 — Tauri desktop widget and supervision
 
 - Added a compact Tauri 2/Rust widget under `widget/`.
-- Set the window to 360×190, borderless, draggable, non-resizable, and always-on-top.
+- Set the window to 560×320, borderless, draggable, non-resizable, and always-on-top so the full timestamp envelope is readable.
 - Added live rendering of Epoch, Standard, Julian, ISS, raw nanoseconds, reference frame, and anchor hash.
 - Added 250 ms polling against `http://127.0.0.1:8000/api/time`.
 - Added Linux user-systemd installation scripts for start-after-login/reboot and indefinite `Restart=always` crash recovery.

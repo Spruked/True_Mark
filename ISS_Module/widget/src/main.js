@@ -19,9 +19,15 @@ app.innerHTML = `
       <span id="ns" class="raw">-- ns since 2000 epoch</span>
     </div>
     <div class="time-grid">
-      <div><small>EPOCH</small><span id="epoch">--</span></div>
+      <div><small>EPOCH / UNIX NS</small><span id="epoch">--</span></div>
       <div><small>STANDARD</small><span id="standard">--</span></div>
       <div><small>JULIAN</small><span id="julian">--</span></div>
+      <div><small>ISS RAW NS</small><span id="iss-raw">--</span></div>
+    </div>
+    <div class="detail-grid">
+      <div><small>PROPER TIME</small><span id="proper">--</span></div>
+      <div><small>MISSION ELAPSED</small><span id="mission">--</span></div>
+      <div><small>LOCAL DISPLAY</small><span id="local">--</span></div>
     </div>
     <footer><span id="frame">SOLAR-SYSTEM BARYCENTRIC</span><span id="hash">ANCHOR --</span></footer>
   </section>
@@ -40,6 +46,10 @@ function render(data) {
   $('epoch').textContent = Number(data.epoch).toLocaleString();
   $('standard').textContent = data.standard || '--';
   $('julian').textContent = data.julian || '--';
+  $('iss-raw').textContent = Number(data.iss_time_ns).toLocaleString();
+  $('proper').textContent = data.proper_time_ns == null ? 'not supplied' : `${Number(data.proper_time_ns).toLocaleString()} ns`;
+  $('mission').textContent = data.mission_elapsed_ns == null ? 'not supplied' : `${Number(data.mission_elapsed_ns).toLocaleString()} ns`;
+  $('local').textContent = data.local_display_time || '--';
   $('frame').textContent = (data.reference_frame || 'solar-system-barycentric').toUpperCase();
   $('hash').textContent = `ANCHOR ${(data.anchor_hash || '').slice(0, 10) || '--'}`;
   setStatus(true);

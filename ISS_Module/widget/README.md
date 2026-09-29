@@ -1,6 +1,6 @@
 # ISS Scale desktop widget
 
-This is the compact Tauri 2/Rust desktop and system-tray surface for the Interplanetary Stardate Syncrometer Scale. It stays always-on-top, can be dragged by its header, and polls the local ISS service for the four required representations: Epoch, Standard, Julian, and ISS. Hiding the window leaves the tray process running; use the tray menu to show it or quit.
+This is the compact 560×320 Tauri 2/Rust desktop and system-tray surface for the Interplanetary Stardate Syncrometer Scale. It stays always-on-top, can be dragged by its header, and shows the full timestamp envelope: Epoch, Standard, Julian, ISS, raw nanoseconds, proper time, mission elapsed time, and local display time. Hiding the window leaves the tray process running; use the tray menu to show it or quit.
 
 ## Run
 
