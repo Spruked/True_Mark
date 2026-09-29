@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import Dict, List
 
+from forensic_modules import list_forensic_modules
+
 
 ALLOWED_LAYER_COUNTS = (2, 3, 5, 7, 11, 13)
 
@@ -61,6 +63,7 @@ def get_layer_profile(layer_count: int = 13) -> Dict[str, object]:
         "layer_count": count,
         "label": labels[count],
         "layers": layers,
+        "forensic_modules": list_forensic_modules(count),
         "pricing": None,
         "pricing_status": "not established",
     }

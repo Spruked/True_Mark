@@ -57,6 +57,18 @@ python truemark/forge_v2.0/certificate_forge.py mint \
 `--layers` accepts only `2 3 5 7 11 13`. `--frame` changes visual treatment
 only; it never changes the evidence depth or authoritative Vault record.
 
+### Printable forensic module library
+
+The generator also registers 30 original, brand-neutral, printer-safe
+forensic modules modeled on geometric security-document techniques: guilloché
+fields, microtext, seeded glyphs, serial-derived variations, coordinate marks,
+micro-QR fragments, watermark fields, lattice systems, foil simulations, and
+other deterministic markers. They are cataloged in
+`truemark/forge_v2.0/forensic_modules.py` and activated progressively by the
+prime depth profile. The selected module IDs are stored with the certificate
+payload for later inspection. They are presentation and forensic annotations;
+the authoritative record remains the sealed Vault evidence chain.
+
 ### Security & Compliance
 - DALS-001 compliant serial numbers with checksums
 - Stardate temporal anchoring

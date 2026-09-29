@@ -87,6 +87,10 @@ class TrueMarkForge:
             "layer_count": get_layer_profile(metadata.get("layer_count", 13))["layer_count"],
             "frame_id": metadata.get("frame_id"),
         }
+        payload["forensic_module_ids"] = [
+            module["module_id"]
+            for module in get_layer_profile(payload["layer_count"])["forensic_modules"]
+        ]
         print(f"    ✅ Payload created ({len(json.dumps(payload))} bytes)")
 
         print("3️⃣  Signing with Ed25519 root authority...")
