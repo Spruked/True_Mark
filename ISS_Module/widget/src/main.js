@@ -100,7 +100,7 @@ async function refresh() {
 }
 
 $('close').addEventListener('click', () => getCurrentWindow().hide());
-document.querySelector('.widget-header').addEventListener('mousedown', async (event) => {
+document.querySelector('.widget-shell').addEventListener('mousedown', async (event) => {
   if (event.button === 0 && !event.target.closest('button')) {
     await getCurrentWindow().startDragging();
   }

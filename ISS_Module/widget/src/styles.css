@@ -39,7 +39,7 @@ small { display: block; margin-bottom: 4px; color: #6e9bad; font-size: 8px; lett
 .mission-bar { display: flex; align-items: end; justify-content: space-between; gap: 14px; margin-top: 12px; padding: 10px; border: 1px solid rgba(102, 164, 186, .24); border-radius: 9px; background: rgba(8, 22, 31, .72); }
 .mission-bar strong { display: block; margin-top: 4px; color: #d8f5ff; font: 12px ui-monospace, SFMono-Regular, monospace; }
 .mission-actions { display: flex; gap: 7px; }
-.mission-button { border: 1px solid rgba(119, 214, 235, .36); border-radius: 7px; padding: 8px 10px; color: #dffaff; background: rgba(24, 80, 99, .7); font-size: 9px; font-weight: 800; letter-spacing: .08em; cursor: pointer; }
+.mission-button { border: 1px solid rgba(119, 214, 235, .36); border-radius: 6px; padding: 5px 7px; color: #dffaff; background: rgba(24, 80, 99, .7); font-size: 8px; font-weight: 800; letter-spacing: .06em; cursor: pointer; }
 .mission-button.start { border-color: rgba(66, 229, 175, .5); }
 .mission-button.end { border-color: rgba(255, 173, 118, .5); }
 .mission-button:disabled { cursor: not-allowed; opacity: .32; }
