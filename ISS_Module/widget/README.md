@@ -1,6 +1,6 @@
 # ISS Scale desktop widget
 
-This is the compact Tauri 2/Rust desktop surface for the Interplanetary Stardate Syncrometer Scale. It stays always-on-top, can be dragged by its header, and polls the local ISS service for the four required representations: Epoch, Standard, Julian, and ISS.
+This is the compact Tauri 2/Rust desktop and system-tray surface for the Interplanetary Stardate Syncrometer Scale. It stays always-on-top, can be dragged by its header, and polls the local ISS service for the four required representations: Epoch, Standard, Julian, and ISS. Hiding the window leaves the tray process running; use the tray menu to show it or quit.
 
 ## Run
 
@@ -22,6 +22,11 @@ npm run tauri:dev
 For a distributable build, run `npm run tauri:build`.
 
 The widget expects the service at `http://127.0.0.1:8000/api/time`.
+
+The Tauri shell also registers a system-tray icon. Selecting **Show ISS Scale**
+restores and focuses the widget; selecting **Quit ISS Scale** exits the process.
+The window's `×` control only hides the window so the tray process remains
+available.
 
 ## Automatic start and crash recovery
 

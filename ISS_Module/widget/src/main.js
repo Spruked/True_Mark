@@ -56,6 +56,6 @@ async function refresh() {
   }
 }
 
-$('close').addEventListener('click', () => getCurrentWindow().close());
+$('close').addEventListener('click', () => getCurrentWindow().hide());
 refresh();
 setInterval(refresh, 250);

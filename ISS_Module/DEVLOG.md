@@ -1,5 +1,13 @@
 # ISS Module development log
 
+## 2026-09-29 — WSL substrate deployment and system tray surface
+
+- Copied the complete ISS module to `/home/bryan/substrate/services/ISS_Module` as the WSL services deployment copy.
+- Added a native Tauri system tray icon with Show ISS Scale and Quit ISS Scale actions.
+- Changed the widget close control to hide the window while leaving the tray process available.
+- Verified the frontend production build and Rust formatting.
+- Native packaging is pending the WSL GTK/WebKit development libraries required by Tauri.
+
 ## 2026-09-29 — Production hardening
 
 - Added explicit `TAI_UTC_OFFSET_NS` handling to live and historical timestamp paths.

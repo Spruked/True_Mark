@@ -21,7 +21,8 @@ ISS Module
     ├── widget/src/main.js         Polls /api/time every 250 ms
     ├── widget/src/styles.css      Small visual display
     ├── widget/src-tauri           Tauri 2/Rust native shell
-    └── widget/scripts              Login start + indefinite crash restart
+    ├── widget/scripts              Login start + indefinite crash restart
+    └── system tray                 Show/hide and quit controls
 ```
 
 ## Data path
