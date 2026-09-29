@@ -1,5 +1,7 @@
 # ISS Module — Interplanetary Stardate Syncrometer
 
+Copyright © 2026 Spruked / True Mark. All rights reserved. This module is proprietary; see [LICENSE](LICENSE) and [COPYRIGHT.md](COPYRIGHT.md).
+
 A standalone, calendar-free timekeeping service.
 
 The official scale name is **Interplanetary Stardate Syncrometer Scale**. Its short designation is **ISS**.

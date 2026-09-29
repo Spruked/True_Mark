@@ -1,14 +1,16 @@
 # True Mark
 
+Copyright © 2026 Spruked / True Mark. All rights reserved. This repository is proprietary; see [LICENSE](LICENSE) and [COPYRIGHT.md](COPYRIGHT.md).
+
 True Mark is an object-authentication, evidence-preservation, certification, and optional digital-extension platform. It is not primarily an NFT storefront.
 
 ## Product model
 
 ```text
 Account
-  → Secretum Privatum / Private Sanctum
-  → Project / Object Workbench
-  → Evidence Staging
+  → Perpetuum
+      └─ Project / Object Workbench
+          → Evidence Staging
   → READY_FOR_REVIEW
   → COMMIT_PENDING
   → COMMITTED
@@ -19,7 +21,7 @@ Account
   → Optional NFT / Digital Extension
 ```
 
-Secretum Privatum is private, mutable working space. The Immutable Vault is the authoritative append-only record. Uploading a file never makes it authoritative; only an explicit commit/seal operation crosses that boundary.
+Perpetuum is the account holder's private archive room and mutable working space, with local parsing, object-organization, packaging, and encryption tools. The Immutable Vault is the authoritative append-only record. Uploading a file never makes it authoritative; only an explicit commit/seal operation crosses that boundary.
 
 ## Current implementation
 
@@ -31,6 +33,7 @@ Secretum Privatum is private, mutable working space. The Immutable Vault is the 
 - Canonical manifest generation with a manifest hash; authority remains in the sealed evidence/Vault chain.
 - Human Support escalation channel, hidden by default, signed-session authenticated, account-scoped, and persisted in SQLite.
 - All mutable runtime state and generated artifacts are stored under [True_Mark_Vault_System](True_Mark_Vault_System), the single authoritative local Vault root.
+- Perpetuum organizer at [Perpetuum](Perpetuum), with local parsing, ingestion, package review, and ledger-oriented workspace flows. It is a standalone sibling repository, separate from `GOAT`.
 
 ## Compatibility boundary
 
@@ -42,6 +45,7 @@ The existing payment and token-issuance routes remain temporarily available for 
 - [Product Brochure and Dashboard Manual](docs/TRUE_MARK_PRODUCT_BROCHURE_AND_DASHBOARD_MANUAL.md)
 - [Prime Layer Architecture](docs/PRIME_LAYER_ARCHITECTURE.md)
 - [Development Log](DEVLOG.md)
+- [Repository Tree](true_mark_tree.txt)
 - [User Guide](UserGuide.md)
 - [Procedures Overview](ProceduresOverview.md)
 
